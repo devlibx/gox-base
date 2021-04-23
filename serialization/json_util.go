@@ -3,7 +3,7 @@ package serialization
 import (
 	"bytes"
 	"encoding/json"
-	. "github.com/harishb2k/gox-base/errors"
+	. "github.com/divlibx/gox-base/errors"
 	"io/ioutil"
 )
 
@@ -50,4 +50,14 @@ func ToBytesSuppressError(object interface{}) []byte {
 // Read string and fill up the input object
 func JsonToObject(input string, object interface{}) error {
 	return json.Unmarshal([]byte(input), object)
+}
+
+// Helper to convert byte data to a object
+func JsonBytesToObject(input []byte, out interface{}) (err error) {
+	return json.Unmarshal(input, out)
+}
+
+// Helper to convert byte data to a object
+func JsonBytesToObjectSuppressError(input []byte, out interface{}) {
+	_ = json.Unmarshal(input, out)
 }

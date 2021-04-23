@@ -19,7 +19,3 @@ func (t *DefaultTimeService) Now() time.Time {
 func (t *DefaultTimeService) Sleep(d time.Duration) {
 	time.Sleep(d)
 }
-
-func Version() string {
-	return "gox-base@v0.0.23"
-}

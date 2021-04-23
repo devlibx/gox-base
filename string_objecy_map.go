@@ -2,7 +2,7 @@ package gox
 
 import (
 	"encoding/json"
-	"github.com/harishb2k/gox-base/serialization"
+	"github.com/divlibx/gox-base/serialization"
 	"reflect"
 	"strconv"
 )

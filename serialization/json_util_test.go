@@ -1,7 +1,7 @@
 package serialization
 
 import (
-	"github.com/harishb2k/gox-base/errors"
+	"github.com/divlibx/gox-base/errors"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

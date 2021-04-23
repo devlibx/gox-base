@@ -27,9 +27,9 @@ type Counter interface {
 	WithLabels(labels Labels) MetricWithLabelValues
 }
 
-// Service represents a parent interface for metrics. It allows to register and
+// MetricService represents a parent interface for metrics. It allows to register and
 // get counter, timer etc
-type Service interface {
+type MetricService interface {
 	Initialize(configuration Configuration) error
 	RegisterCounter(name string, help string, labels []string) error
 	Counter(counterName string) Counter
@@ -37,7 +37,7 @@ type Service interface {
 }
 
 // Returns a service which does no-op
-func NewNoOpMetrics() Service {
+func NewNoOpMetrics() MetricService {
 	return &dummyService{}
 }
 

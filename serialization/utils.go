@@ -39,8 +39,6 @@ func Stringify(input interface{}) (out string, err error) {
 	case []byte:
 		out = string(v)
 
-
-
 	default:
 		if _out, err := json.Marshal(v); err != nil {
 			out = ""
@@ -49,14 +47,4 @@ func Stringify(input interface{}) (out string, err error) {
 		}
 	}
 	return
-}
-
-// Helper to convert byte data to a object
-func JsonBytesToObject(input []byte, out interface{}) (err error) {
-	return json.Unmarshal(input, out)
-}
-
-// Helper to convert byte data to a object
-func JsonBytesToObjectSuppressError(input []byte, out interface{}) {
-	_ = json.Unmarshal(input, out)
 }

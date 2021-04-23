@@ -1,23 +1,21 @@
 package gox
 
 import (
-	"github.com/harishb2k/gox-base/logger"
-	"github.com/harishb2k/gox-base/metrics"
+	"github.com/divlibx/gox-base/logger"
+	"github.com/divlibx/gox-base/metrics"
 )
-
-type Metrics metrics.Service
 
 // A holder to keep all cross function objects e.g. logger etc
 type CrossFunction interface {
 	logger.Logger
-	Metrics
+	metrics.MetricService
 	TimeService
 }
 
 // Implementation of cross function
 type crossFunction struct {
 	logger.Logger
-	Metrics
+	metrics.MetricService
 	TimeService
 }
 
@@ -28,8 +26,8 @@ func NewCrossFunction(args ...interface{}) CrossFunction {
 		switch o := arg.(type) {
 		case logger.Logger:
 			obj.Logger = o
-		case metrics.Service:
-			obj.Metrics = o
+		case metrics.MetricService:
+			obj.MetricService = o
 		}
 	}
 
@@ -46,6 +44,6 @@ func NewNoOpCrossFunction(args ...interface{}) CrossFunction {
 	obj := crossFunction{TimeService: &DefaultTimeService{}}
 	obj.Logger = logger.NoOpLogger(logger.Configuration{})
 	obj.TimeService = &DefaultTimeService{}
-	obj.Metrics = metrics.NewNoOpMetrics()
+	obj.MetricService = metrics.NewNoOpMetrics()
 	return &obj
 }

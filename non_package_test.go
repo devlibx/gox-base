@@ -1,7 +1,7 @@
 package gox
 
 import (
-	"github.com/harishb2k/gox-base/util"
+	"github.com/divlibx/gox-base/util"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

@@ -2,7 +2,7 @@ package gox
 
 import (
 	"fmt"
-	"github.com/harishb2k/gox-base/serialization"
+	"github.com/divlibx/gox-base/serialization"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
