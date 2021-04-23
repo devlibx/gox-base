@@ -1,0 +1,67 @@
+{
+  "states": [
+    {
+      "name": "initial",
+      "actions": [
+        {
+          "seq": 1,
+          "action": "gox.create",
+          "mandatory": true
+        },
+        {
+          "seq": 2,
+          "action": "gox.persist",
+          "mandatory": true
+        },
+        {
+          "seq": 3,
+          "action": "gox.notify",
+          "mandatory": false
+        }
+      ],
+      "target": "pending"
+    },
+    {
+      "name": "pending",
+      "actions": [
+        {
+          "seq": 1,
+          "action": "gox.create",
+          "mandatory": true
+        },
+        {
+          "seq": 2,
+          "action": "gox.persist",
+          "mandatory": true
+        },
+        {
+          "seq": 3,
+          "action": "gox.notify",
+          "mandatory": false
+        }
+      ],
+      "target": "closed"
+    },
+    {
+      "name": "closed",
+      "actions": [
+        {
+          "seq": 1,
+          "action": "gox.create",
+          "mandatory": true
+        },
+        {
+          "seq": 2,
+          "action": "gox.persist",
+          "mandatory": true
+        },
+        {
+          "seq": 3,
+          "action": "gox.notify",
+          "mandatory": false
+        }
+      ],
+      "terminal": true
+    }
+  ]
+}

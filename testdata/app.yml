@@ -1,0 +1,5 @@
+emissaryConfiguration:
+  clientConfiguration:
+    clientName: SomeApp
+    enableNewRelicLogging: true
+    newRelicLoggingPrefix: SomeApp-NewRelic
