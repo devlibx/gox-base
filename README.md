@@ -41,3 +41,43 @@ intOut1 := StringifySuppressError(10, "0")
 If there is a error when input is bad then you will get the default 
 value "0"
 ```
+
+### Logging
+You can use logger from Uber
+```go
+var cfg zap.Config
+cfg.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
+// cfg.Encoding = "console"
+cfg.Encoding = "json"
+cfg.OutputPaths = []string{"stdout", "/tmp/logs1"}
+cfg.ErrorOutputPaths = []string{"stdout", "/tmp/logs2"}
+cfg.EncoderConfig = zapcore.EncoderConfig{
+    MessageKey:     "message",
+    LevelKey:       "level",
+    EncodeLevel:    zapcore.LowercaseLevelEncoder,
+    EncodeDuration: zapcore.SecondsDurationEncoder,
+    EncodeCaller:   zapcore.ShortCallerEncoder,
+    StacktraceKey:  "stacktrace",
+    TimeKey:        "timestamp",
+    EncodeTime:     zapcore.ISO8601TimeEncoder,
+}
+
+// Production encoder
+// encoderCfg := zap.NewProductionEncoderConfig()
+// encoderCfg.TimeKey = "timestamp"
+// encoderCfg.EncodeTime = zapcore.ISO8601TimeEncoder
+// cfg.EncoderConfig = encoderCfg
+
+logger, _ := cfg.Build()
+defer logger.Sync()
+
+logger.Debug("Logger from parent level - it has not key-value")
+
+// A module level logger (you can log user Id or any param here)
+subModuleLogger := logger.With(zap.String("userId", "1234"))
+subModuleLogger.Debug("this is a logger for sub-module")
+
+logger.Debug("Logger from parent level - it has not key-value")
+```
+
+Some more example https://github.com/uber-go/zap/blob/master/example_test.go
