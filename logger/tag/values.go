@@ -24,7 +24,7 @@
 
 package tag
 
-var WorkflowActionWorkflowStarted       = workflowAction("add-workflow-started-event")
+var WorkflowActionWorkflowStarted = workflowAction("add-workflow-started-event")
 
 // Pre-defined values for TagSysComponent
 var (

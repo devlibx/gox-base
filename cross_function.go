@@ -1,8 +1,8 @@
 package gox
 
 import (
-	"github.com/divlibx/gox-base/logger"
-	"github.com/divlibx/gox-base/metrics"
+	"github.com/devlibx/gox-base/logger"
+	"github.com/devlibx/gox-base/metrics"
 )
 
 // A holder to keep all cross function objects e.g. logger etc

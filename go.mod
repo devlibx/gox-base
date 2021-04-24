@@ -1,4 +1,4 @@
-module github.com/divlibx/gox-base
+module github.com/devlibx/gox-base
 
 go 1.15
 

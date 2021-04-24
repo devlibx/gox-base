@@ -3,7 +3,7 @@ package serialization
 import (
 	"bytes"
 	"encoding/json"
-	. "github.com/divlibx/gox-base/errors"
+	. "github.com/devlibx/gox-base/errors"
 	"io/ioutil"
 )
 

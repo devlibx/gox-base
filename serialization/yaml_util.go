@@ -1,7 +1,7 @@
 package serialization
 
 import (
-	. "github.com/divlibx/gox-base/errors"
+	. "github.com/devlibx/gox-base/errors"
 	"gopkg.in/yaml.v3"
 	"io/ioutil"
 )

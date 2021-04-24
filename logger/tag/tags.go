@@ -486,4 +486,3 @@ func WorkflowNamespace(namespace string) ZapTag {
 func workflowAction(action string) ZapTag {
 	return NewStringTag("wf-action", action)
 }
-

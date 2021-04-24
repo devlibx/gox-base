@@ -24,7 +24,7 @@
 
 package logger
 
-import "github.com/divlibx/gox-base/logger/tag"
+import "github.com/devlibx/gox-base/logger/tag"
 
 type (
 	noopLogger struct{}

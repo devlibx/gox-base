@@ -22,11 +22,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-//go:generate mockgen -copyright_file ../../LICENSE -package $GOPACKAGE -source $GOFILE -destination interface_mock.go
+//go:generate mockgen -package $GOPACKAGE -source $GOFILE -destination interface_mock.go
 
 package logger
 
-import "github.com/divlibx/gox-base/logger/tag"
+import "github.com/devlibx/gox-base/logger/tag"
 
 type (
 	// Logger is the logging interface.
