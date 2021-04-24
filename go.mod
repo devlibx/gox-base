@@ -4,11 +4,10 @@ go 1.15
 
 require (
 	github.com/golang/mock v1.5.0
-	github.com/kr/pretty v0.1.0 // indirect
 	github.com/pkg/errors v0.9.1
-	github.com/sirupsen/logrus v1.7.0
 	github.com/stretchr/testify v1.7.0
-	golang.org/x/sys v0.0.0-20201214210602-f9fddec55a1e // indirect
-	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c
+	go.temporal.io/api v1.4.1-0.20210319015452-3dc250bb642a
+	go.temporal.io/server v1.8.2
+	go.uber.org/zap v1.16.0
+	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 )

@@ -42,7 +42,7 @@ func NewCrossFunction(args ...interface{}) CrossFunction {
 // A No Op cross function
 func NewNoOpCrossFunction(args ...interface{}) CrossFunction {
 	obj := crossFunction{TimeService: &DefaultTimeService{}}
-	obj.Logger = logger.NoOpLogger(logger.Configuration{})
+	obj.Logger = logger.NewNoopLogger()
 	obj.TimeService = &DefaultTimeService{}
 	obj.MetricService = metrics.NewNoOpMetrics()
 	return &obj
