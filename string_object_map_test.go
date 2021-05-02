@@ -305,3 +305,21 @@ func TestStringObjectMap_TestUsage(t *testing.T) {
 	assert.True(t, sm.BoolOrDefault("bool", false))
 	assert.Equal(t, "Some test string", sm.StringOrDefault("str", "bad"))
 }
+
+func TestStringObjectMap_MapOrDefault(t *testing.T) {
+	m := map[string]interface{}{"int": 10, "bool": "true", "str": "Some test string"}
+	mapSm := StringObjectMap{"a": 10}
+	sm := StringObjectMap{}
+	sm["map_obj"] = m
+	sm["map_obj_sm"] = mapSm
+
+	assert.NotNil(t, sm.MapOrDefault("map_obj", nil))
+	assert.NotNil(t, sm.MapOrDefault("map_obj_sm", nil))
+
+	assert.NotNil(t, sm.MapOrDefault("map_obj_not_present", map[string]interface{}{"k": "v"}))
+	assert.Equal(t, map[string]interface{}{"k": "v"}, sm.MapOrDefault("map_obj_not_present", map[string]interface{}{"k": "v"}))
+	assert.NotNil(t, sm.MapOrEmpty("map_obj_not_present"))
+
+	mapReturned := sm.MapOrEmpty("map_obj_sm")
+	assert.Equal(t, 10, mapReturned["a"])
+}

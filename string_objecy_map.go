@@ -217,6 +217,26 @@ func (s StringObjectMap) BoolOrDefault(name string, defaultValue bool) bool {
 	}
 }
 
+func (s StringObjectMap) MapOrDefault(name string, defaultValue map[string]interface{}) map[string]interface{} {
+	if value, ok := s[name].(map[string]interface{}); ok {
+		return value
+	} else if value, ok := s[name].(StringObjectMap); ok {
+		return value
+	} else {
+		return defaultValue
+	}
+}
+
+func (s StringObjectMap) MapOrEmpty(name string) map[string]interface{} {
+	if value, ok := s[name].(map[string]interface{}); ok {
+		return value
+	} else if value, ok := s[name].(StringObjectMap); ok {
+		return value
+	} else {
+		return map[string]interface{}{}
+	}
+}
+
 func (s StringObjectMap) String(name string) (string, bool) {
 	switch value := s[name].(type) {
 	case string:
