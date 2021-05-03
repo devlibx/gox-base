@@ -208,7 +208,9 @@ func TestStringObjectMap_BoolOrDefault(t *testing.T) {
 		{TestName: "1", Input: StringObjectMap{"int": 0}, Name: "int", DefaultValue: true, Output: false, err: nil},
 		{TestName: "2", Input: StringObjectMap{"int": 1}, Name: "int", DefaultValue: false, Output: true, err: nil},
 		{TestName: "3", Input: StringObjectMap{"int": "true"}, Name: "int", DefaultValue: false, Output: true, err: nil},
-		{TestName: "3", Input: StringObjectMap{"int": "false"}, Name: "int", DefaultValue: true, Output: false, err: nil},
+		{TestName: "4", Input: StringObjectMap{"int": "false"}, Name: "int", DefaultValue: true, Output: false, err: nil},
+		{TestName: "5", Input: StringObjectMap{"int": true}, Name: "int", DefaultValue: false, Output: true, err: nil},
+		{TestName: "6", Input: StringObjectMap{"int": false}, Name: "int", DefaultValue: true, Output: false, err: nil},
 	}
 
 	for _, tt := range tests {

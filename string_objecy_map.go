@@ -185,6 +185,8 @@ func (s StringObjectMap) Float64OrDefault(name string, defaultValue float64) flo
 
 func (s StringObjectMap) Bool(name string) (bool, bool) {
 	switch value := s[name].(type) {
+	case bool:
+		return value, true
 	case int:
 		return value == 1, true
 	case int32:
