@@ -154,9 +154,11 @@ func TestUsage(t *testing.T) {
 	}
 }
 
-func TestWrapf(t *testing.T) {
+func TestWrap(t *testing.T) {
 	err := errors.New("some error")
-	wrapError := Wrapf(err, "got some error - name=%s, value=%d", "code", 1)
-	assert.Error(t, wrapError)
+	wrapError := Wrap(err, "got some error - name=%s, value=%d", "code", 1)
+	fmt.Println(wrapError)
+
+	wrapError = Wrap(err, "got some error")
 	fmt.Println(wrapError)
 }

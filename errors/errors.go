@@ -63,10 +63,10 @@ func As(err error, target interface{}) bool {
 	return errors.As(err, target)
 }
 
-func Wrap(err error, message string) error {
-	return errors1.Wrap(err, message)
-}
-
-func Wrapf(err error, message string, obj ...interface{}) error {
-	return errors1.Wrap(err, fmt.Sprintf(message, obj...))
+func Wrap(err error, message string, obj ...interface{}) error {
+	if obj == nil || len(obj) == 0 {
+		return errors1.Wrap(err, message)
+	} else {
+		return errors1.Wrap(err, fmt.Sprintf(message, obj...))
+	}
 }
