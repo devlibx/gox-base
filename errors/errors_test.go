@@ -2,6 +2,7 @@ package errors
 
 import (
 	"errors"
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
@@ -151,4 +152,11 @@ func TestUsage(t *testing.T) {
 	} else {
 		assert.Equal(t, "2", errorAs.GetCode())
 	}
+}
+
+func TestWrapf(t *testing.T) {
+	err := errors.New("some error")
+	wrapError := Wrapf(err, "got some error - name=%s, value=%d", "code", 1)
+	assert.Error(t, wrapError)
+	fmt.Println(wrapError)
 }
