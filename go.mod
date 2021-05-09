@@ -3,7 +3,6 @@ module github.com/devlibx/gox-base
 go 1.15
 
 require (
-	github.com/aws/aws-sdk-go v1.36.17
 	github.com/golang/mock v1.5.0
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.7.0
