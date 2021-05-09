@@ -244,7 +244,9 @@ func (s StringObjectMap) String(name string) (string, bool) {
 	case string:
 		return value, true
 	default:
-		if val, err := serialization.Stringify(value); err != nil {
+		if value == nil {
+			return "", false
+		} else if val, err := serialization.Stringify(value); err != nil {
 			return "", false
 		} else {
 			return val, true
