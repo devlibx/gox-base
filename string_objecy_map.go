@@ -35,6 +35,10 @@ func (s StringObjectMap) Int(name string) (int, bool) {
 	return 0, false
 }
 
+func (s StringObjectMap) IntOrZero(name string) int {
+	return s.IntOrDefault(name, 0)
+}
+
 func (s StringObjectMap) IntOrDefault(name string, defaultValue int) int {
 	if value, ok := s.Int(name); ok {
 		return value
@@ -141,6 +145,10 @@ func (s StringObjectMap) Float32(name string) (float32, bool) {
 	return 0, false
 }
 
+func (s StringObjectMap) Float64OrZero(name string) float64 {
+	return s.Float64OrDefault(name, 0)
+}
+
 func (s StringObjectMap) Float32OrDefault(name string, defaultValue float32) float32 {
 	if value, ok := s.Float32(name); ok {
 		return value
@@ -211,6 +219,14 @@ func (s StringObjectMap) Bool(name string) (bool, bool) {
 	return false, false
 }
 
+func (s StringObjectMap) BoolOrFalse(name string) bool {
+	return s.BoolOrDefault(name, false)
+}
+
+func (s StringObjectMap) BoolOrTrue(name string) bool {
+	return s.BoolOrDefault(name, true)
+}
+
 func (s StringObjectMap) BoolOrDefault(name string, defaultValue bool) bool {
 	if value, ok := s.Bool(name); ok {
 		return value
@@ -230,6 +246,26 @@ func (s StringObjectMap) MapOrDefault(name string, defaultValue map[string]inter
 }
 
 func (s StringObjectMap) MapOrEmpty(name string) map[string]interface{} {
+	if value, ok := s[name].(map[string]interface{}); ok {
+		return value
+	} else if value, ok := s[name].(StringObjectMap); ok {
+		return value
+	} else {
+		return map[string]interface{}{}
+	}
+}
+
+func (s StringObjectMap) StringObjectMapOrDefault(name string, defaultValue map[string]interface{}) StringObjectMap {
+	if value, ok := s[name].(map[string]interface{}); ok {
+		return value
+	} else if value, ok := s[name].(StringObjectMap); ok {
+		return value
+	} else {
+		return defaultValue
+	}
+}
+
+func (s StringObjectMap) StringObjectMapOrEmpty(name string) StringObjectMap {
 	if value, ok := s[name].(map[string]interface{}); ok {
 		return value
 	} else if value, ok := s[name].(StringObjectMap); ok {
