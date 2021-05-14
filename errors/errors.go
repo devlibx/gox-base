@@ -70,3 +70,11 @@ func Wrap(err error, message string, obj ...interface{}) error {
 		return errors1.Wrap(err, fmt.Sprintf(message, obj...))
 	}
 }
+
+func New(message string, obj ...interface{}) error {
+	if obj == nil || len(obj) == 0 {
+		return errors1.New(message)
+	} else {
+		return errors1.New(fmt.Sprintf(message, obj...))
+	}
+}
