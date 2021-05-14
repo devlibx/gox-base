@@ -4,10 +4,18 @@ go 1.15
 
 require (
 	github.com/golang/mock v1.5.0
+	github.com/google/uuid v1.2.0
+	github.com/kr/text v0.2.0 // indirect
+	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.7.0
-	go.temporal.io/api v1.4.1-0.20210319015452-3dc250bb642a
-	go.temporal.io/server v1.8.2
+	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.16.0
+	golang.org/x/lint v0.0.0-20201208152925-83fdc39ff7b5 // indirect
+	golang.org/x/mod v0.4.0 // indirect
+	golang.org/x/tools v0.0.0-20210106214847-113979e3529a // indirect
+	gopkg.in/check.v1 v1.0.0-20200902074654-038fdea0a05b // indirect
+	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
+	honnef.co/go/tools v0.1.0 // indirect
 )

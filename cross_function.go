@@ -1,22 +1,19 @@
 package gox
 
 import (
-	"github.com/devlibx/gox-base/logger"
 	"github.com/devlibx/gox-base/metrics"
+	"go.uber.org/zap"
 )
 
-// A holder to keep all cross function objects e.g. logger etc
-type CrossFunction interface {
-	logger.Logger
+// Implementation of cross function
+type crossFunction struct {
+	logger *zap.Logger
 	metrics.MetricService
 	TimeService
 }
 
-// Implementation of cross function
-type crossFunction struct {
-	logger.Logger
-	metrics.MetricService
-	TimeService
+func (c *crossFunction) Logger() *zap.Logger {
+	return c.Logger()
 }
 
 // Create a new cross function object
@@ -24,8 +21,8 @@ func NewCrossFunction(args ...interface{}) CrossFunction {
 	obj := crossFunction{}
 	for _, arg := range args {
 		switch o := arg.(type) {
-		case logger.Logger:
-			obj.Logger = o
+		case *zap.Logger:
+			obj.logger = o
 		case metrics.MetricService:
 			obj.MetricService = o
 		}
@@ -42,7 +39,7 @@ func NewCrossFunction(args ...interface{}) CrossFunction {
 // A No Op cross function
 func NewNoOpCrossFunction(args ...interface{}) CrossFunction {
 	obj := crossFunction{TimeService: &DefaultTimeService{}}
-	obj.Logger = logger.NewNoopLogger()
+	obj.logger = zap.NewNop()
 	obj.TimeService = &DefaultTimeService{}
 	obj.MetricService = metrics.NewNoOpMetrics()
 	return &obj
