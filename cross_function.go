@@ -13,7 +13,7 @@ type crossFunction struct {
 }
 
 func (c *crossFunction) Logger() *zap.Logger {
-	return c.Logger()
+	return c.logger
 }
 
 // Create a new cross function object
