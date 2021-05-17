@@ -8,6 +8,26 @@ import (
 
 // Convert input to a string (object is converted to Json String)
 // This method will suppress error and will give default value on error
+func StringifyOrDefaultOnError(input interface{}, valueOnError string) (out string) {
+	if out, err := Stringify(input); err == nil {
+		return out
+	} else {
+		return valueOnError
+	}
+}
+
+// Convert input to a string (object is converted to Json String)
+// This method will suppress error and will give default value on error
+func StringifyOrEmptyOnError(input interface{}) (out string) {
+	if out, err := Stringify(input); err == nil {
+		return out
+	} else {
+		return ""
+	}
+}
+
+// Convert input to a string (object is converted to Json String)
+// This method will suppress error and will give default value on error
 func StringifySuppressError(input interface{}, valueOnError string) (out string) {
 	if out, err := Stringify(input); err == nil {
 		return out

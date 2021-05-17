@@ -62,6 +62,12 @@ func TestToBytes(t *testing.T) {
 	first := StringifySuppressError(sm, "BAD")
 	assert.NotEqual(t, "BAD", first)
 
+	first = StringifyOrEmptyOnError(sm)
+	assert.NotEqual(t, "", first)
+
+	first = StringifyOrDefaultOnError(sm, "BAD")
+	assert.NotEqual(t, "BAD", first)
+
 	second := string(data)
 	assert.Equal(t, first+"\n", second)
 }
