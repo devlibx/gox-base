@@ -2,6 +2,7 @@ package serialization
 
 import (
 	. "github.com/devlibx/gox-base/errors"
+	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
 	"io/ioutil"
 )
@@ -26,6 +27,14 @@ func ReadYamlFromString(yamlString string, object interface{}) (err error) {
 	if err == nil {
 		return nil
 	} else {
-		return NewError(UnmarshalFailedErrorCode, "could not unmarshal json from given yamlString ["+yamlString+"]", err, nil)
+		return NewError(UnmarshalFailedErrorCode, "could not unmarshal yaml from given yamlString ["+yamlString+"]", err, nil)
 	}
+}
+
+func ToYaml(object interface{}) (string, error) {
+	data, err := yaml.Marshal(object)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to write yaml from object")
+	}
+	return string(data), nil
 }
