@@ -2,6 +2,7 @@ package gox
 
 import (
 	"encoding/json"
+	"github.com/devlibx/gox-base/errors"
 	"github.com/devlibx/gox-base/serialization"
 	"reflect"
 	"strconv"
@@ -334,4 +335,12 @@ func (s StringObjectMap) ObjectOrDefault(name string, obj interface{}, defaultVa
 		return value
 	}
 	return defaultValue
+}
+
+func StringObjectMapFromString(input string) (StringObjectMap, error) {
+	out := StringObjectMap{}
+	if err := serialization.JsonToObject(input, &out); err != nil {
+		return nil, errors.Wrap(err, "failed to read map from input string")
+	}
+	return out, nil
 }

@@ -325,3 +325,20 @@ func TestStringObjectMap_MapOrDefault(t *testing.T) {
 	mapReturned := sm.MapOrEmpty("map_obj_sm")
 	assert.Equal(t, 10, mapReturned["a"])
 }
+
+func TestStringObjectMap_StringObjectMapFromString(t *testing.T) {
+	m := map[string]interface{}{"int": 10, "bool": "true", "str": "Some test string"}
+	mapSm := StringObjectMap{"a": 10}
+	sm := StringObjectMap{}
+	sm["map_obj"] = m
+	sm["map_obj_sm"] = mapSm
+
+	str, err := serialization.ToBytes(sm)
+	assert.NoError(t, err)
+
+	back, err := StringObjectMapFromString(string(str))
+	assert.NoError(t, err)
+
+	str1, err := serialization.ToBytes(back)
+	assert.Equal(t, str, str1)
+}
