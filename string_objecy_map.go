@@ -303,6 +303,39 @@ func (s StringObjectMap) StringOrEmpty(name string) string {
 	return s.StringOrDefault(name, "")
 }
 
+func (s StringObjectMap) Bytes(name string) ([]byte, bool) {
+	switch value := s[name].(type) {
+	case []byte:
+		return value, true
+	case string:
+		return []byte(value), true
+	default:
+		if value == nil {
+			return nil, false
+		} else if val, err := serialization.Stringify(value); err != nil {
+			return nil, false
+		} else {
+			return []byte(val), true
+		}
+	}
+}
+
+func (s StringObjectMap) BytesOrDefault(name string, defaultValue []byte) []byte {
+	if value, ok := s.Bytes(name); ok {
+		return value
+	} else {
+		return defaultValue
+	}
+}
+
+func (s StringObjectMap) BytesOrEmpty(name string) []byte {
+	if value, ok := s.Bytes(name); ok {
+		return value
+	} else {
+		return []byte{}
+	}
+}
+
 type NewObjectFunc func() interface{}
 
 func (s StringObjectMap) Object(name string, obj interface{}) (interface{}, bool) {
