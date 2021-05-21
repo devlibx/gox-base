@@ -8,8 +8,12 @@ import (
 // Implementation of cross function
 type crossFunction struct {
 	logger *zap.Logger
-	metrics.MetricService
+	metrics.Scope
 	TimeService
+}
+
+func (c *crossFunction) Metric() metrics.Scope {
+	return c.Scope
 }
 
 func (c *crossFunction) Logger() *zap.Logger {
@@ -23,8 +27,8 @@ func NewCrossFunction(args ...interface{}) CrossFunction {
 		switch o := arg.(type) {
 		case *zap.Logger:
 			obj.logger = o
-		case metrics.MetricService:
-			obj.MetricService = o
+		case metrics.Scope:
+			obj.Scope = o
 		}
 	}
 
@@ -41,6 +45,6 @@ func NewNoOpCrossFunction(args ...interface{}) CrossFunction {
 	obj := crossFunction{TimeService: &DefaultTimeService{}}
 	obj.logger = zap.NewNop()
 	obj.TimeService = &DefaultTimeService{}
-	obj.MetricService = metrics.NewNoOpMetrics()
+	obj.Scope = metrics.NoOpMetric()
 	return &obj
 }

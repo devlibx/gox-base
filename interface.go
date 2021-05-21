@@ -6,7 +6,8 @@ import (
 	"time"
 )
 
-//go:generate mockgen -source=interface.go -destination=mocks/mock_interface.go -package=mock_gox
+//go:generate mockgen -source=interface.go -destination=mocks/mock_interface.go -package=mockGox
+//go:generate mockgen -source=metrics/interface.go -destination=mocks/mock_metrics_interface.go -package=mockGox
 
 type TimeService interface {
 	Now() time.Time
@@ -16,6 +17,6 @@ type TimeService interface {
 // A holder to keep all cross function objects e.g. logger etc
 type CrossFunction interface {
 	Logger() *zap.Logger
-	metrics.MetricService
+	Metric() metrics.Scope
 	TimeService
 }

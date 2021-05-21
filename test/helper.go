@@ -2,16 +2,19 @@ package test
 
 import (
 	"github.com/devlibx/gox-base"
+	"github.com/devlibx/gox-base/metrics"
 	mockGox "github.com/devlibx/gox-base/mocks"
 	"github.com/golang/mock/gomock"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"go.uber.org/zap/zaptest"
 	"testing"
+	"time"
 )
 
 func MockCf(args ...interface{}) (gox.CrossFunction, *gomock.Controller) {
 	var controller *gomock.Controller
+	var scope metrics.Scope
 	var logger *zap.Logger
 	logLevel := zap.ErrorLevel
 
@@ -22,6 +25,8 @@ func MockCf(args ...interface{}) (gox.CrossFunction, *gomock.Controller) {
 			controller = o
 		case zapcore.Level:
 			logLevel = o
+		case metrics.Scope:
+			scope = o
 		}
 	}
 
@@ -41,9 +46,12 @@ func MockCf(args ...interface{}) (gox.CrossFunction, *gomock.Controller) {
 		}
 	}
 
+	scope = buildNoOfMetricsScope(controller)
+
 	// Build cross function and return
 	cf := mockGox.NewMockCrossFunction(controller)
 	cf.EXPECT().Logger().Return(logger).AnyTimes()
+	cf.EXPECT().Metric().Return(scope).AnyTimes()
 	return cf, controller
 }
 
@@ -59,4 +67,30 @@ func BuildMockCfB(b *testing.B, controller *gomock.Controller) gox.CrossFunction
 	logger := zaptest.NewLogger(b, zaptest.Level(zap.ErrorLevel))
 	cf.EXPECT().Logger().Return(logger).AnyTimes()
 	return cf
+}
+
+func buildNoOfMetricsScope(controller *gomock.Controller) metrics.Scope {
+	mockScope := mockGox.NewMockScope(controller)
+	mockCounter := mockGox.NewMockCounter(controller)
+	mockGauge := mockGox.NewMockGauge(controller)
+	mockTimer := mockGox.NewMockTimer(controller)
+	mockHistogram := mockGox.NewMockHistogram(controller)
+
+	mockScope.EXPECT().Counter(gomock.Any()).Return(mockCounter).AnyTimes()
+	mockScope.EXPECT().Gauge(gomock.Any()).Return(mockGauge).AnyTimes()
+	mockScope.EXPECT().Timer(gomock.Any()).Return(mockTimer).AnyTimes()
+	mockScope.EXPECT().Histogram(gomock.Any(), gomock.Any()).Return(mockHistogram).AnyTimes()
+
+	mockCounter.EXPECT().Inc(gomock.Any()).AnyTimes()
+
+	swr := mockGox.NewMockStopwatchRecorder(controller)
+	swr.EXPECT().RecordStopwatch(gomock.Any()).AnyTimes()
+	se := metrics.NewStopwatch(time.Now(), swr)
+	mockTimer.EXPECT().Start().Return(se).AnyTimes()
+
+	mockGauge.EXPECT().Update(gomock.Any()).AnyTimes()
+
+	mockHistogram.EXPECT().Start().Return(se).AnyTimes()
+
+	return mockScope
 }
