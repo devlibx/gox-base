@@ -45,7 +45,9 @@ func MockCf(args ...interface{}) (gox.CrossFunction, *gomock.Controller) {
 		}
 	}
 
-	scope = buildNoOfMetricsScope(controller)
+	if scope == nil {
+		scope = buildNoOfMetricsScope(controller)
+	}
 
 	// Build cross function and return
 	cf := mockGox.NewMockCrossFunction(controller)
