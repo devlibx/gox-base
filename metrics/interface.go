@@ -29,6 +29,18 @@ import (
 
 var DefaultBuckets Buckets
 
+type StatsdConfig struct {
+	Address         string `json:"address"`
+	FlushIntervalMs int    `json:"flush_interval_ms"`
+	FlushBytes      int    `json:"flush_bytes"`
+}
+
+type Config struct {
+	Prefix              string `json:"prefix"`
+	ReportingIntervalMs int    `json:"reporting_interval_ms"`
+	Statsd              StatsdConfig `json:"statsd"`
+}
+
 // Reporter is a Prometheus backed tally reporter.
 type Reporter interface {
 
@@ -113,19 +125,23 @@ type Histogram interface {
 // Stopwatch is a helper for simpler tracking of elapsed time, use the
 // Stop() method to report time elapsed since its created back to the
 // timer or histogram.
-type Stopwatch struct {
+type stopwatchImpl struct {
 	start    time.Time
 	recorder StopwatchRecorder
+}
+
+type Stopwatch interface {
+	Stop()
 }
 
 // NewStopwatch creates a new immutable stopwatch for recording the start
 // time to a stopwatch reporter.
 func NewStopwatch(start time.Time, r StopwatchRecorder) Stopwatch {
-	return Stopwatch{start: start, recorder: r}
+	return stopwatchImpl{start: start, recorder: r}
 }
 
 // Stop reports time elapsed since the stopwatch start to the recorder.
-func (sw Stopwatch) Stop() {
+func (sw stopwatchImpl) Stop() {
 	sw.recorder.RecordStopwatch(sw.start)
 }
 

@@ -9,7 +9,6 @@ import (
 	"go.uber.org/zap/zapcore"
 	"go.uber.org/zap/zaptest"
 	"testing"
-	"time"
 )
 
 func MockCf(args ...interface{}) (gox.CrossFunction, *gomock.Controller) {
@@ -82,15 +81,11 @@ func buildNoOfMetricsScope(controller *gomock.Controller) metrics.Scope {
 	mockScope.EXPECT().Histogram(gomock.Any(), gomock.Any()).Return(mockHistogram).AnyTimes()
 
 	mockCounter.EXPECT().Inc(gomock.Any()).AnyTimes()
-
-	swr := mockGox.NewMockStopwatchRecorder(controller)
-	swr.EXPECT().RecordStopwatch(gomock.Any()).AnyTimes()
-	se := metrics.NewStopwatch(time.Now(), swr)
-	mockTimer.EXPECT().Start().Return(se).AnyTimes()
-
+	mockStopWatch := mockGox.NewMockStopwatch(controller)
+	mockStopWatch.EXPECT().Stop().AnyTimes()
+	mockTimer.EXPECT().Start().Return(mockStopWatch).AnyTimes()
 	mockGauge.EXPECT().Update(gomock.Any()).AnyTimes()
-
-	mockHistogram.EXPECT().Start().Return(se).AnyTimes()
+	mockHistogram.EXPECT().Start().Return(mockStopWatch).AnyTimes()
 
 	return mockScope
 }
