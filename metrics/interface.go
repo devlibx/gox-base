@@ -86,6 +86,11 @@ type Scope interface {
 	Capabilities() Capabilities
 }
 
+type ClosableScope interface {
+	Scope
+	Stop() error
+}
+
 // Counter is the interface for emitting counter type metrics.
 type Counter interface {
 	// Inc increments the counter by a delta.

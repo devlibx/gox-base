@@ -171,6 +171,141 @@ func (mr *MockScopeMockRecorder) Timer(name interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Timer", reflect.TypeOf((*MockScope)(nil).Timer), name)
 }
 
+// MockClosableScope is a mock of ClosableScope interface.
+type MockClosableScope struct {
+	ctrl     *gomock.Controller
+	recorder *MockClosableScopeMockRecorder
+}
+
+// MockClosableScopeMockRecorder is the mock recorder for MockClosableScope.
+type MockClosableScopeMockRecorder struct {
+	mock *MockClosableScope
+}
+
+// NewMockClosableScope creates a new mock instance.
+func NewMockClosableScope(ctrl *gomock.Controller) *MockClosableScope {
+	mock := &MockClosableScope{ctrl: ctrl}
+	mock.recorder = &MockClosableScopeMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockClosableScope) EXPECT() *MockClosableScopeMockRecorder {
+	return m.recorder
+}
+
+// Capabilities mocks base method.
+func (m *MockClosableScope) Capabilities() metrics.Capabilities {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Capabilities")
+	ret0, _ := ret[0].(metrics.Capabilities)
+	return ret0
+}
+
+// Capabilities indicates an expected call of Capabilities.
+func (mr *MockClosableScopeMockRecorder) Capabilities() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Capabilities", reflect.TypeOf((*MockClosableScope)(nil).Capabilities))
+}
+
+// Counter mocks base method.
+func (m *MockClosableScope) Counter(name string) metrics.Counter {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Counter", name)
+	ret0, _ := ret[0].(metrics.Counter)
+	return ret0
+}
+
+// Counter indicates an expected call of Counter.
+func (mr *MockClosableScopeMockRecorder) Counter(name interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Counter", reflect.TypeOf((*MockClosableScope)(nil).Counter), name)
+}
+
+// Gauge mocks base method.
+func (m *MockClosableScope) Gauge(name string) metrics.Gauge {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Gauge", name)
+	ret0, _ := ret[0].(metrics.Gauge)
+	return ret0
+}
+
+// Gauge indicates an expected call of Gauge.
+func (mr *MockClosableScopeMockRecorder) Gauge(name interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Gauge", reflect.TypeOf((*MockClosableScope)(nil).Gauge), name)
+}
+
+// Histogram mocks base method.
+func (m *MockClosableScope) Histogram(name string, buckets metrics.Buckets) metrics.Histogram {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Histogram", name, buckets)
+	ret0, _ := ret[0].(metrics.Histogram)
+	return ret0
+}
+
+// Histogram indicates an expected call of Histogram.
+func (mr *MockClosableScopeMockRecorder) Histogram(name, buckets interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Histogram", reflect.TypeOf((*MockClosableScope)(nil).Histogram), name, buckets)
+}
+
+// Stop mocks base method.
+func (m *MockClosableScope) Stop() error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Stop")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Stop indicates an expected call of Stop.
+func (mr *MockClosableScopeMockRecorder) Stop() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Stop", reflect.TypeOf((*MockClosableScope)(nil).Stop))
+}
+
+// SubScope mocks base method.
+func (m *MockClosableScope) SubScope(name string) metrics.Scope {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SubScope", name)
+	ret0, _ := ret[0].(metrics.Scope)
+	return ret0
+}
+
+// SubScope indicates an expected call of SubScope.
+func (mr *MockClosableScopeMockRecorder) SubScope(name interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SubScope", reflect.TypeOf((*MockClosableScope)(nil).SubScope), name)
+}
+
+// Tagged mocks base method.
+func (m *MockClosableScope) Tagged(tags map[string]string) metrics.Scope {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Tagged", tags)
+	ret0, _ := ret[0].(metrics.Scope)
+	return ret0
+}
+
+// Tagged indicates an expected call of Tagged.
+func (mr *MockClosableScopeMockRecorder) Tagged(tags interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Tagged", reflect.TypeOf((*MockClosableScope)(nil).Tagged), tags)
+}
+
+// Timer mocks base method.
+func (m *MockClosableScope) Timer(name string) metrics.Timer {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Timer", name)
+	ret0, _ := ret[0].(metrics.Timer)
+	return ret0
+}
+
+// Timer indicates an expected call of Timer.
+func (mr *MockClosableScopeMockRecorder) Timer(name interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Timer", reflect.TypeOf((*MockClosableScope)(nil).Timer), name)
+}
+
 // MockCounter is a mock of Counter interface.
 type MockCounter struct {
 	ctrl     *gomock.Controller
