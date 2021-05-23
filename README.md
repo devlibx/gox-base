@@ -6,6 +6,45 @@ Gox-Base project provide utilities which is used commonly in all applications.
 4. XML file to object
 5. ...
 
+#Config
+You can use this for common application configuration
+```go
+type configToTest struct {
+	App    App    `json:"app" yaml:"app"`
+	Logger Logger `json:"logger" yaml:"logger"`
+}
+
+// Read struct with YAML
+conf := &configToTest{}
+err := serialization.ReadYamlFromString(yamlConfig, conf)
+assert.NoError(t, err)
+
+
+// Read struct with Json
+conf := &configToTest{}
+err := serialization.JsonToObject(jsonString, conf)
+assert.NoError(t, err)
+```
+
+You can also extend an existing type to include more. For example, we will add one more property called
+```some``` in ```App``` type
+```go
+
+// Extended "App" object with one more type "Some"
+// NOTE - in case you have YAM as source you must put `yaml:",inline"`
+type extendedAppObject struct {
+	 App 		 `yaml:",inline"`
+	 Some string `json:"some"`
+}
+
+type configToTestWithExtendedAppObject struct {
+	App    extendedAppObject `json:"app" yaml:"app"`
+	Logger Logger            `json:"logger" yaml:"logger"`
+}
+```
+
+
+
 # Utility
 
 ##### Setup cross function which is usd in almost all apis to be used in gox

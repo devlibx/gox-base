@@ -36,8 +36,8 @@ type StatsdConfig struct {
 }
 
 type Config struct {
-	Prefix              string `json:"prefix"`
-	ReportingIntervalMs int    `json:"reporting_interval_ms"`
+	Prefix              string       `json:"prefix"`
+	ReportingIntervalMs int          `json:"reporting_interval_ms"`
 	Statsd              StatsdConfig `json:"statsd"`
 }
 
