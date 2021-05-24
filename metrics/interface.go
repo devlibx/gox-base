@@ -22,6 +22,7 @@ package metrics
 
 import (
 	"fmt"
+	"github.com/devlibx/gox-base/util"
 	"net/http"
 	"sort"
 	"time"
@@ -30,15 +31,38 @@ import (
 var DefaultBuckets Buckets
 
 type StatsdConfig struct {
-	Address         string `json:"address"`
-	FlushIntervalMs int    `json:"flush_interval_ms"`
-	FlushBytes      int    `json:"flush_bytes"`
+	Address         string `json:"address" yaml:"address"`
+	FlushIntervalMs int    `json:"flush_interval_ms" yaml:"flush_interval_ms"`
+	FlushBytes      int    `json:"flush_bytes" yaml:"flush_bytes"`
+}
+
+func (c *StatsdConfig) SetupDefaults() {
+	if util.IsStringEmpty(c.Address) {
+		c.Address = "127.0.0.1:8125"
+	}
+	if c.FlushIntervalMs <= 0 {
+		c.FlushIntervalMs = 100
+	}
+	if c.FlushBytes <= 0 {
+		c.FlushBytes = 1440
+	}
 }
 
 type Config struct {
-	Prefix              string       `json:"prefix"`
-	ReportingIntervalMs int          `json:"reporting_interval_ms"`
-	Statsd              StatsdConfig `json:"statsd"`
+	Enabled         	bool 		 `json:"enabled" yaml:"enabled"`
+	Prefix              string       `json:"prefix" yaml:"prefix"`
+	ReportingIntervalMs int          `json:"reporting_interval_ms" yaml:"reporting_interval_ms"`
+	Statsd              StatsdConfig `json:"statsd" yaml:"statsd"`
+}
+
+func (c *Config) SetupDefaults() {
+	if util.IsStringEmpty(c.Prefix) {
+		c.Prefix = "app"
+	}
+	if c.ReportingIntervalMs <= 0 {
+		c.ReportingIntervalMs = 1000
+	}
+	c.Statsd.SetupDefaults()
 }
 
 // Reporter is a Prometheus backed tally reporter.
