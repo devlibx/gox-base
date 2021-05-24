@@ -37,6 +37,16 @@ func NewCrossFunction(args ...interface{}) CrossFunction {
 		obj.TimeService = &DefaultTimeService{}
 	}
 
+	// Setup no-op logger if it is not passed
+	if obj.logger == nil {
+		obj.logger = zap.NewNop()
+	}
+
+	// Setup no-op metrics
+	if obj.Scope == nil {
+		obj.Scope = metrics.NoOpMetric()
+	}
+
 	return &obj
 }
 

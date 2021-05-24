@@ -25,3 +25,9 @@ func TestTypes_Mock(t *testing.T) {
 	time.Sleep(time.Duration(rand.Float64() * float64(time.Second)))
 	hsw.Stop()
 }
+
+func TestCrossFunctionWithNoOp(t *testing.T) {
+	cf := NewCrossFunction()
+	cf.Logger().Debug("nothing")
+	cf.Metric().Counter("no").Inc(1)
+}
