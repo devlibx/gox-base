@@ -13,6 +13,7 @@ import (
 
 func MockCf(args ...interface{}) (gox.CrossFunction, *gomock.Controller) {
 	var controller *gomock.Controller
+	var config gox.StringObjectMap
 	var scope metrics.Scope
 	var logger *zap.Logger
 	logLevel := zap.ErrorLevel
@@ -26,6 +27,8 @@ func MockCf(args ...interface{}) (gox.CrossFunction, *gomock.Controller) {
 			logLevel = o
 		case metrics.Scope:
 			scope = o
+		case gox.StringObjectMap:
+			config = o
 		}
 	}
 
@@ -49,10 +52,15 @@ func MockCf(args ...interface{}) (gox.CrossFunction, *gomock.Controller) {
 		scope = buildNoOfMetricsScope(controller)
 	}
 
+	if config == nil {
+		config = gox.StringObjectMap{}
+	}
+
 	// Build cross function and return
 	cf := mockGox.NewMockCrossFunction(controller)
 	cf.EXPECT().Logger().Return(logger).AnyTimes()
 	cf.EXPECT().Metric().Return(scope).AnyTimes()
+	cf.EXPECT().Config().Return(config).AnyTimes()
 	return cf, controller
 }
 
@@ -61,6 +69,7 @@ func BuildMockCf(t *testing.T, controller *gomock.Controller) gox.CrossFunction 
 	logger := zaptest.NewLogger(t, zaptest.Level(zap.DebugLevel))
 	cf.EXPECT().Logger().Return(logger).AnyTimes()
 	cf.EXPECT().Metric().Return(metrics.NoOpMetric()).AnyTimes()
+	cf.EXPECT().Config().Return(gox.StringObjectMap{}).AnyTimes()
 	return cf
 }
 
@@ -69,6 +78,7 @@ func BuildMockCfB(b *testing.B, controller *gomock.Controller) gox.CrossFunction
 	logger := zaptest.NewLogger(b, zaptest.Level(zap.ErrorLevel))
 	cf.EXPECT().Logger().Return(logger).AnyTimes()
 	cf.EXPECT().Metric().Return(metrics.NoOpMetric()).AnyTimes()
+	cf.EXPECT().Config().Return(gox.StringObjectMap{}).AnyTimes()
 	return cf
 }
 

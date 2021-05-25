@@ -8,6 +8,7 @@ import (
 	reflect "reflect"
 	time "time"
 
+	gox "github.com/devlibx/gox-base"
 	metrics "github.com/devlibx/gox-base/metrics"
 	gomock "github.com/golang/mock/gomock"
 	zap "go.uber.org/zap"
@@ -83,6 +84,20 @@ func NewMockCrossFunction(ctrl *gomock.Controller) *MockCrossFunction {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockCrossFunction) EXPECT() *MockCrossFunctionMockRecorder {
 	return m.recorder
+}
+
+// Config mocks base method.
+func (m *MockCrossFunction) Config() gox.StringObjectMap {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Config")
+	ret0, _ := ret[0].(gox.StringObjectMap)
+	return ret0
+}
+
+// Config indicates an expected call of Config.
+func (mr *MockCrossFunctionMockRecorder) Config() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Config", reflect.TypeOf((*MockCrossFunction)(nil).Config))
 }
 
 // Logger mocks base method.

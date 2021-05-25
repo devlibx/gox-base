@@ -49,7 +49,7 @@ func (c *StatsdConfig) SetupDefaults() {
 }
 
 type Config struct {
-	Enabled         	bool 		 `json:"enabled" yaml:"enabled"`
+	Enabled             bool         `json:"enabled" yaml:"enabled"`
 	Prefix              string       `json:"prefix" yaml:"prefix"`
 	ReportingIntervalMs int          `json:"reporting_interval_ms" yaml:"reporting_interval_ms"`
 	Statsd              StatsdConfig `json:"statsd" yaml:"statsd"`

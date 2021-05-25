@@ -10,6 +10,7 @@ type crossFunction struct {
 	logger *zap.Logger
 	metrics.Scope
 	TimeService
+	config StringObjectMap
 }
 
 func (c *crossFunction) Metric() metrics.Scope {
@@ -18,6 +19,10 @@ func (c *crossFunction) Metric() metrics.Scope {
 
 func (c *crossFunction) Logger() *zap.Logger {
 	return c.logger
+}
+
+func (c *crossFunction) Config() StringObjectMap {
+	return c.config
 }
 
 // Create a new cross function object
@@ -29,6 +34,8 @@ func NewCrossFunction(args ...interface{}) CrossFunction {
 			obj.logger = o
 		case metrics.Scope:
 			obj.Scope = o
+		case StringObjectMap:
+			obj.config = o
 		}
 	}
 
@@ -47,6 +54,11 @@ func NewCrossFunction(args ...interface{}) CrossFunction {
 		obj.Scope = metrics.NoOpMetric()
 	}
 
+	// Set default config
+	if obj.config == nil {
+		obj.config = StringObjectMap{}
+	}
+
 	return &obj
 }
 
@@ -56,5 +68,6 @@ func NewNoOpCrossFunction(args ...interface{}) CrossFunction {
 	obj.logger = zap.NewNop()
 	obj.TimeService = &DefaultTimeService{}
 	obj.Scope = metrics.NoOpMetric()
+	obj.config = StringObjectMap{}
 	return &obj
 }

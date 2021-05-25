@@ -19,4 +19,5 @@ type CrossFunction interface {
 	Logger() *zap.Logger
 	Metric() metrics.Scope
 	TimeService
+	Config() StringObjectMap
 }
