@@ -49,10 +49,11 @@ func (c *StatsdConfig) SetupDefaults() {
 }
 
 type Config struct {
-	Enabled             bool         `json:"enabled" yaml:"enabled"`
-	Prefix              string       `json:"prefix" yaml:"prefix"`
-	ReportingIntervalMs int          `json:"reporting_interval_ms" yaml:"reporting_interval_ms"`
-	Statsd              StatsdConfig `json:"statsd" yaml:"statsd"`
+	Enabled                bool         `json:"enabled" yaml:"enabled"`
+	Prefix                 string       `json:"prefix" yaml:"prefix"`
+	ReportingIntervalMs    int          `json:"reporting_interval_ms" yaml:"reporting_interval_ms"`
+	Statsd                 StatsdConfig `json:"statsd" yaml:"statsd"`
+	EnableStatsdPrometheus bool         `json:"enable_statsd_prometheus" yaml:"enable_statsd_prometheus"`
 }
 
 func (c *Config) SetupDefaults() {
