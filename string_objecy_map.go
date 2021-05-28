@@ -377,3 +377,27 @@ func StringObjectMapFromString(input string) (StringObjectMap, error) {
 	}
 	return out, nil
 }
+
+// ------------------------------------------ Helper to get sub key ----------------------------------------------------
+func (s StringObjectMap) BoolOrFalse2(key1 string, key2 string) bool {
+	return s.StringObjectMapOrEmpty(key1).BoolOrFalse(key2)
+}
+
+func (s StringObjectMap) BoolOrFalse3(key1 string, key2 string, key3 string) bool {
+	return s.StringObjectMapOrEmpty(key1).StringObjectMapOrEmpty(key2).BoolOrFalse(key3)
+}
+
+func (s StringObjectMap) BoolOrFalse4(key1 string, key2 string, key3 string, key4 string) bool {
+	return s.StringObjectMapOrEmpty(key1).StringObjectMapOrEmpty(key2).StringObjectMapOrEmpty(key3).BoolOrFalse(key4)
+}
+
+func (s StringObjectMap) BoolOrTrue2(key1 string, key2 string) bool {
+	return s.StringObjectMapOrEmpty(key1).BoolOrTrue(key2)
+}
+func (s StringObjectMap) BoolOrTrue3(key1 string, key2 string, key3 string) bool {
+	return s.StringObjectMapOrEmpty(key1).StringObjectMapOrEmpty(key2).BoolOrTrue(key3)
+}
+
+func (s StringObjectMap) BoolOrTrue4(key1 string, key2 string, key3 string, key4 string) bool {
+	return s.StringObjectMapOrEmpty(key1).StringObjectMapOrEmpty(key2).StringObjectMapOrEmpty(key3).BoolOrTrue(key4)
+}

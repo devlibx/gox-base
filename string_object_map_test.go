@@ -347,3 +347,34 @@ func TestStringObjectMap_StringifyOrEmptyJsonOnError(t *testing.T) {
 	back := serialization.StringifyOrEmptyJsonOnError(nil)
 	assert.Equal(t, "{}", back)
 }
+
+func TestBoolFromSub(t *testing.T) {
+	l1 := StringObjectMap{
+		"key1": true,
+		"l2": StringObjectMap{
+			"key2": true,
+			"l3": StringObjectMap{
+				"key3": true,
+			},
+		},
+	}
+	assert.True(t, l1.BoolOrTrue("key1"))
+	assert.True(t, l1.BoolOrTrue2("key1", "key2"))
+	assert.True(t, l1.BoolOrTrue3("key1", "key2", "key3"))
+	assert.True(t, l1.BoolOrTrue4("key1", "key2", "key3", "key4"))
+
+
+	l1 = StringObjectMap{
+		"key1": false,
+		"l2": StringObjectMap{
+			"key2": false,
+			"l3": StringObjectMap{
+				"key3": false,
+			},
+		},
+	}
+	assert.False(t, l1.BoolOrTrue("key1"))
+	assert.False(t, l1.BoolOrTrue2("l2", "key2"))
+	assert.False(t, l1.BoolOrTrue3("l2", "l3", "key3"))
+	assert.True(t, l1.BoolOrTrue4("l2", "l3", "l4", "key4")) // Should be true as this level is missing
+}
