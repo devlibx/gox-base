@@ -9,7 +9,7 @@ import (
 
 // Convert input to a string (object is converted to Json String)
 // This method will suppress error and will give default value on error
-func StringifyOrEmptyJson(input interface{}) (out string) {
+func StringifyOrEmptyJsonOnError(input interface{}) (out string) {
 	if input == nil {
 		return "{}"
 	}

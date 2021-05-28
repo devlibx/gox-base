@@ -345,6 +345,6 @@ func TestStringObjectMap_StringObjectMapFromString(t *testing.T) {
 
 
 func TestStringObjectMap_StringifyOrEmptyJsonOnError(t *testing.T) {
-	back := serialization.StringifyOrEmptyJson(nil)
+	back := serialization.StringifyOrEmptyJsonOnError(nil)
 	assert.Equal(t, "{}", back)
 }
