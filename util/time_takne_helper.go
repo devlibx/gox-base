@@ -88,9 +88,13 @@ type timeTrackerImpl struct {
 
 func (t timeTrackerImpl) Capture() Capture {
 	if t.enable {
-		return &captureImpl{enable: true, times: make([]TimeTrack, 0)}
+		s := &captureImpl{enable: true, times: make([]TimeTrack, 0)}
+		s.Record("start")
+		return s
 	} else {
-		return &captureImpl{enable: false}
+		s := &captureImpl{enable: false}
+		s.Record("start")
+		return s
 	}
 }
 
