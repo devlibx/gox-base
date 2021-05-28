@@ -2,6 +2,7 @@ package gox
 
 import (
 	"github.com/devlibx/gox-base/metrics"
+	"github.com/devlibx/gox-base/util"
 	"go.uber.org/zap"
 )
 
@@ -10,7 +11,12 @@ type crossFunction struct {
 	logger *zap.Logger
 	metrics.Scope
 	TimeService
-	config StringObjectMap
+	config      StringObjectMap
+	timeTracker util.TimeTracker
+}
+
+func (c *crossFunction) TimeTracker() util.TimeTracker {
+	return c.timeTracker
 }
 
 func (c *crossFunction) Metric() metrics.Scope {
@@ -36,6 +42,8 @@ func NewCrossFunction(args ...interface{}) CrossFunction {
 			obj.Scope = o
 		case StringObjectMap:
 			obj.config = o
+		case util.TimeTracker:
+			obj.timeTracker = o
 		}
 	}
 
@@ -59,6 +67,11 @@ func NewCrossFunction(args ...interface{}) CrossFunction {
 		obj.config = StringObjectMap{}
 	}
 
+	// Set dummy trim tracker if not provided
+	if obj.timeTracker == nil {
+		obj.timeTracker = util.NewNoOpTimeTracker()
+	}
+
 	return &obj
 }
 
@@ -69,5 +82,6 @@ func NewNoOpCrossFunction(args ...interface{}) CrossFunction {
 	obj.TimeService = &DefaultTimeService{}
 	obj.Scope = metrics.NoOpMetric()
 	obj.config = StringObjectMap{}
+	obj.timeTracker = util.NewNoOpTimeTracker()
 	return &obj
 }

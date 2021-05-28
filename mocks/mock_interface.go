@@ -10,6 +10,7 @@ import (
 
 	gox "github.com/devlibx/gox-base"
 	metrics "github.com/devlibx/gox-base/metrics"
+	util "github.com/devlibx/gox-base/util"
 	gomock "github.com/golang/mock/gomock"
 	zap "go.uber.org/zap"
 )
@@ -152,4 +153,18 @@ func (m *MockCrossFunction) Sleep(d time.Duration) {
 func (mr *MockCrossFunctionMockRecorder) Sleep(d interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Sleep", reflect.TypeOf((*MockCrossFunction)(nil).Sleep), d)
+}
+
+// TimeTracker mocks base method.
+func (m *MockCrossFunction) TimeTracker() util.TimeTracker {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "TimeTracker")
+	ret0, _ := ret[0].(util.TimeTracker)
+	return ret0
+}
+
+// TimeTracker indicates an expected call of TimeTracker.
+func (mr *MockCrossFunctionMockRecorder) TimeTracker() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TimeTracker", reflect.TypeOf((*MockCrossFunction)(nil).TimeTracker))
 }

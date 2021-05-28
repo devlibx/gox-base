@@ -4,6 +4,7 @@ import (
 	"github.com/devlibx/gox-base"
 	"github.com/devlibx/gox-base/metrics"
 	mockGox "github.com/devlibx/gox-base/mocks"
+	"github.com/devlibx/gox-base/util"
 	"github.com/golang/mock/gomock"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -15,6 +16,7 @@ func MockCf(args ...interface{}) (gox.CrossFunction, *gomock.Controller) {
 	var controller *gomock.Controller
 	var config gox.StringObjectMap
 	var scope metrics.Scope
+	var timeTracker util.TimeTracker
 	var logger *zap.Logger
 	logLevel := zap.ErrorLevel
 
@@ -29,6 +31,8 @@ func MockCf(args ...interface{}) (gox.CrossFunction, *gomock.Controller) {
 			scope = o
 		case gox.StringObjectMap:
 			config = o
+		case util.TimeTracker:
+			timeTracker = o
 		}
 	}
 
@@ -56,11 +60,16 @@ func MockCf(args ...interface{}) (gox.CrossFunction, *gomock.Controller) {
 		config = gox.StringObjectMap{}
 	}
 
+	if timeTracker == nil {
+		timeTracker = util.NewNoOpTimeTracker()
+	}
+
 	// Build cross function and return
 	cf := mockGox.NewMockCrossFunction(controller)
 	cf.EXPECT().Logger().Return(logger).AnyTimes()
 	cf.EXPECT().Metric().Return(scope).AnyTimes()
 	cf.EXPECT().Config().Return(config).AnyTimes()
+	cf.EXPECT().TimeTracker().Return(timeTracker).AnyTimes()
 	return cf, controller
 }
 
@@ -70,6 +79,7 @@ func BuildMockCf(t *testing.T, controller *gomock.Controller) gox.CrossFunction 
 	cf.EXPECT().Logger().Return(logger).AnyTimes()
 	cf.EXPECT().Metric().Return(metrics.NoOpMetric()).AnyTimes()
 	cf.EXPECT().Config().Return(gox.StringObjectMap{}).AnyTimes()
+	cf.EXPECT().TimeTracker().Return(util.NewNoOpTimeTracker()).AnyTimes()
 	return cf
 }
 
@@ -79,6 +89,7 @@ func BuildMockCfB(b *testing.B, controller *gomock.Controller) gox.CrossFunction
 	cf.EXPECT().Logger().Return(logger).AnyTimes()
 	cf.EXPECT().Metric().Return(metrics.NoOpMetric()).AnyTimes()
 	cf.EXPECT().Config().Return(gox.StringObjectMap{}).AnyTimes()
+	cf.EXPECT().Config().Return(util.NewNoOpTimeTracker()).AnyTimes()
 	return cf
 }
 

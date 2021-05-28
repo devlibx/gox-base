@@ -2,6 +2,7 @@ package gox
 
 import (
 	"github.com/devlibx/gox-base/metrics"
+	"github.com/devlibx/gox-base/util"
 	"go.uber.org/zap"
 	"time"
 )
@@ -20,4 +21,5 @@ type CrossFunction interface {
 	Metric() metrics.Scope
 	TimeService
 	Config() StringObjectMap
+	TimeTracker() util.TimeTracker
 }
