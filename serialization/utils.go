@@ -3,8 +3,26 @@ package serialization
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/devlibx/gox-base/util"
 	"strconv"
 )
+
+// Convert input to a string (object is converted to Json String)
+// This method will suppress error and will give default value on error
+func StringifyOrEmptyJson(input interface{}) (out string) {
+	if input == nil {
+		return "{}"
+	}
+	if out, err := Stringify(input); err == nil {
+		if util.IsStringEmpty(out) {
+			return "{}"
+		} else {
+			return out
+		}
+	} else {
+		return "{}"
+	}
+}
 
 // Convert input to a string (object is converted to Json String)
 // This method will suppress error and will give default value on error
@@ -19,8 +37,15 @@ func StringifyOrDefaultOnError(input interface{}, valueOnError string) (out stri
 // Convert input to a string (object is converted to Json String)
 // This method will suppress error and will give default value on error
 func StringifyOrEmptyOnError(input interface{}) (out string) {
+	if input == nil {
+		return ""
+	}
 	if out, err := Stringify(input); err == nil {
-		return out
+		if util.IsStringEmpty(out) {
+			return ""
+		} else {
+			return out
+		}
 	} else {
 		return ""
 	}
