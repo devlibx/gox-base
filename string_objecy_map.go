@@ -401,3 +401,25 @@ func (s StringObjectMap) BoolOrTrue3(key1 string, key2 string, key3 string) bool
 func (s StringObjectMap) BoolOrTrue4(key1 string, key2 string, key3 string, key4 string) bool {
 	return s.StringObjectMapOrEmpty(key1).StringObjectMapOrEmpty(key2).StringObjectMapOrEmpty(key3).BoolOrTrue(key4)
 }
+
+func (s StringObjectMap) StringOrEmpty2(key1 string, key2 string) string {
+	return s.StringObjectMapOrEmpty(key1).StringOrEmpty(key2)
+}
+func (s StringObjectMap) StringOrEmpty3(key1 string, key2 string, key3 string) string {
+	return s.StringObjectMapOrEmpty(key1).StringObjectMapOrEmpty(key2).StringOrEmpty(key3)
+}
+
+func (s StringObjectMap) StringOrEmpty4(key1 string, key2 string, key3 string, key4 string) string {
+	return s.StringObjectMapOrEmpty(key1).StringObjectMapOrEmpty(key2).StringObjectMapOrEmpty(key3).StringOrEmpty(key4)
+}
+
+func (s StringObjectMap) IntOrZero2(key1 string, key2 string) int {
+	return s.StringObjectMapOrEmpty(key1).IntOrZero(key2)
+}
+func (s StringObjectMap) IntOrZero3(key1 string, key2 string, key3 string) int {
+	return s.StringObjectMapOrEmpty(key1).StringObjectMapOrEmpty(key2).IntOrZero(key3)
+}
+
+func (s StringObjectMap) IntOrZero4(key1 string, key2 string, key3 string, key4 string) int {
+	return s.StringObjectMapOrEmpty(key1).StringObjectMapOrEmpty(key2).StringObjectMapOrEmpty(key3).IntOrZero(key4)
+}
