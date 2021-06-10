@@ -5,6 +5,7 @@ import (
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
 	"io/ioutil"
+	"os"
 )
 
 func ReadYaml(file string, object interface{}) (err error) {
@@ -31,6 +32,29 @@ func ReadYamlFromString(yamlString string, object interface{}) (err error) {
 	}
 }
 
+func ReadYamlWithEnvVar(file string, object interface{}) (err error) {
+	data, err := ioutil.ReadFile(file)
+	if err == nil {
+
+		// Resolve env variable
+		yamlString := os.ExpandEnv(string(data))
+		err = yaml.Unmarshal([]byte(yamlString), object)
+		if err == nil {
+			return nil
+		} else {
+			return NewError(UnmarshalFailedErrorCode, "could not unmarshal json from given file ["+file+"]", err, nil)
+		}
+	} else {
+		return NewError(
+			FileOpenErrorCode, "could not open file to read ["+file+"]", err, nil)
+	}
+}
+
+func ReadYamlFromStringWithEnvVar(yamlString string, object interface{}) (err error) {
+	yamlString = os.ExpandEnv(yamlString)
+	return ReadYamlFromString(yamlString, object)
+}
+
 func ToYaml(object interface{}) (string, error) {
 	data, err := yaml.Marshal(object)
 	if err != nil {
@@ -38,3 +62,5 @@ func ToYaml(object interface{}) (string, error) {
 	}
 	return string(data), nil
 }
+
+//
