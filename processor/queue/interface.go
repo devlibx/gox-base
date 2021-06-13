@@ -18,7 +18,8 @@ type Config struct {
 }
 
 type RawEvent struct {
-	Data gox.StringObjectMap
+	Data          gox.StringObjectMap
+	OriginalEvent interface{}
 }
 
 type ProcessedEvent struct {

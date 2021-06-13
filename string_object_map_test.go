@@ -363,7 +363,6 @@ func TestBoolFromSub(t *testing.T) {
 	assert.True(t, l1.BoolOrTrue3("key1", "key2", "key3"))
 	assert.True(t, l1.BoolOrTrue4("key1", "key2", "key3", "key4"))
 
-
 	l1 = StringObjectMap{
 		"key1": false,
 		"l2": StringObjectMap{
