@@ -1,5 +1,15 @@
-emissaryConfiguration:
-  clientConfiguration:
-    clientName: SomeApp
-    enableNewRelicLogging: true
-    newRelicLoggingPrefix: SomeApp-NewRelic
+server_config:
+  servers:
+    testServer:
+      host: "env:string: prod=$PRDO_testServer; stage=$STAGE_testServer; default=localhost"
+      port: "env:int: prod=80; stage=80; dev=8080; default=8090"
+  apis:
+    getPost:
+      method: POST
+      path: /get
+      timeout: "env:int: prod=10; stage=20; dev=30; default=1000"
+
+client:
+  id: "env:string: prod=prod_client; stage=stage_client; dev=dev_client; default=random_client"
+  enabled: "env:bool: prod=true; stage=false; dev=false; default=false"
+  price: "env:float: prod=10.001; stage=10.002; dev=10.003; default=10.004"

@@ -9,6 +9,7 @@ import (
 type ParameterizedString string
 type ParameterizedInt string
 type ParameterizedBool string
+type ParameterizedFloat string
 
 func (p ParameterizedString) Get(env string) (string, error) {
 
@@ -85,6 +86,57 @@ func (p ParameterizedInt) Get(env string) (int, error) {
 			return 0, errors.New("expected a key=value but got [%s]", token)
 		} else if strings.TrimSpace(parts[0]) == "default" {
 			if val, err := strconv.Atoi(parts[1]); err == nil {
+				return val, err
+			} else {
+				return 0, errors.Wrap(err, "expected the value to be a int buf got [%s]", str)
+			}
+		}
+	}
+
+	return 0, errors.New("env not found")
+}
+
+func (p ParameterizedFloat) Get(env string) (float64, error) {
+
+	// If it is already a integer then just return it
+	str := string(p)
+	if val, err := strconv.ParseFloat(str, 64); err == nil {
+		return val, err
+	}
+
+	// See if this is a parameterized string or not - if not then just give back the data
+	if !strings.HasPrefix(str, "env:") {
+		if val, err := strconv.ParseFloat(str, 64); err == nil {
+			return val, err
+		} else {
+			return 0, err
+		}
+	}
+
+	str = strings.Replace(str, "env:", "", 1)
+	tokens := strings.Split(str, ";")
+
+	// Find matching env string
+	for _, token := range tokens {
+		parts := strings.Split(token, "=")
+		if len(parts) < 2 {
+			return 0, errors.New("expected a key=value but got [%s]", token)
+		} else if strings.TrimSpace(parts[0]) == env {
+			if val, err := strconv.ParseFloat(parts[1], 64); err == nil {
+				return val, err
+			} else {
+				return 0, errors.Wrap(err, "expected the value to be a int buf got [%s]", str)
+			}
+		}
+	}
+
+	// Find default string
+	for _, token := range tokens {
+		parts := strings.Split(token, "=")
+		if len(parts) < 2 {
+			return 0, errors.New("expected a key=value but got [%s]", token)
+		} else if strings.TrimSpace(parts[0]) == "default" {
+			if val, err := strconv.ParseFloat(parts[1], 64); err == nil {
 				return val, err
 			} else {
 				return 0, errors.Wrap(err, "expected the value to be a int buf got [%s]", str)
