@@ -70,8 +70,14 @@ func processMap(m map[string]interface{}, newMap map[string]interface{}, env str
 			} else {
 				newMap[key] = val
 			}
+		} else if val, ok := value.([]interface{}); ok && false { // FIXME - we need to handle this
+			subList := make([]interface{}, 0)
+			for _, v := range val {
+				_ = v
+			}
+			newMap[key] = subList
 		} else {
-			newMap[key] = val
+			newMap[key] = value
 		}
 	}
 }

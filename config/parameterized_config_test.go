@@ -50,6 +50,44 @@ type Client struct {
 	Price   float64 `yaml:"price"`
 }
 
+var strTestReadParameterizedConfigYamlFile_Prod_List = `
+client:
+  id: "env:string: prod=prod_client; stage=stage_client; dev=dev_client; default=random_client"
+  enabled: "env:bool: prod=true; stage=false; dev=false; default=false"
+  price: "env:float: prod=10.001; stage=10.002; dev=10.003; default=10.004"
+  option:
+    - "env:string: prod=call_prod; stage=call_stage; dev=call_dev; default=call_prod_default"
+    - "env:string: prod=sms_prod; stage=sms_stage; dev=sms_dev; default=sms_prod_default"
+    - email
+`
+
+func TestReadParameterizedConfigYamlFile_Prod_List(t *testing.T) {
+	_ = os.Setenv("PRDO_testServer", "test.prod")
+	_ = os.Setenv("STAGE_testServer", "test.stage")
+
+	type internalClient struct {
+		Enabled bool    `yaml:"enabled"`
+		Id      string  `yaml:"id"`
+		Price   float64 `yaml:"price"`
+		Option  []string `yaml:"option"`
+	}
+
+	type Yaml2GoInternal struct {
+		Client internalClient `yaml:"client"`
+	}
+	yaml2Go := Yaml2GoInternal{}
+	err := ReadParameterizedYaml(strTestReadParameterizedConfigYamlFile_Prod_List, &yaml2Go, "prod")
+	assert.NoError(t, err)
+
+	assert.Equal(t, "prod_client", yaml2Go.Client.Id)
+	assert.Equal(t, 10.001, yaml2Go.Client.Price)
+	assert.Equal(t, true, yaml2Go.Client.Enabled)
+
+	yaml, err := serialization.ToYaml(yaml2Go)
+	assert.NoError(t, err)
+	fmt.Println(yaml)
+}
+
 func TestReadParameterizedConfigYamlFile_Prod(t *testing.T) {
 
 	_ = os.Setenv("PRDO_testServer", "test.prod")
