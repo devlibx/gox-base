@@ -22,13 +22,14 @@ func ReadParameterizedYaml(data string, object interface{}, env string) (err err
 
 	// Process map in final result map
 	newMap := map[string]interface{}{}
-	newMap, _ = processMap(firstMap, env)
+	newMap, err = processMap(firstMap, env)
+	if err != nil {
+		return errors.Wrap(err, "error in parsing yaml content ["+data+"]", err, nil)
+	}
 
 	yaml, err := serialization.ToYaml(newMap)
 	if err != nil {
 		return errors.Wrap(err, "could not parse final yaml content ["+data+"]", err, nil)
-	} else {
-		// fmt.Println(yaml)
 	}
 
 	return serialization.ReadYamlFromString(yaml, object)
