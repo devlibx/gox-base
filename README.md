@@ -6,14 +6,15 @@ Gox-Base project provide utilities which is used commonly in all applications.
 4. XML file to object
 5. ...
 
-# Config
+---
 
+### Config
 You can use this for common application configuration
 
 ```go
 type configToTest struct {
-App    App    `json:"app" yaml:"app"`
-Logger Logger `json:"logger" yaml:"logger"`
+    App    App    `json:"app" yaml:"app"`
+    Logger Logger `json:"logger" yaml:"logger"`
 }
 
 // Read struct with YAML
@@ -36,17 +37,17 @@ You can also extend an existing type to include more. For example, we will add o
 // Extended "App" object with one more type "Some"
 // NOTE - in case you have YAM as source you must put `yaml:",inline"`
 type extendedAppObject struct {
-App         `yaml:",inline"`
-Some string `json:"some"`
+    App         `yaml:",inline"`
+    Some string `json:"some"`
 }
 
 type configToTestWithExtendedAppObject struct {
-App    extendedAppObject `json:"app" yaml:"app"`
-Logger Logger            `json:"logger" yaml:"logger"`
+    App    extendedAppObject `json:"app" yaml:"app"`
+    Logger Logger            `json:"logger" yaml:"logger"`
 }
 ```
 
-# Utility
+### Utility
 
 ##### Setup cross function which is usd in almost all apis to be used in gox
 
@@ -78,15 +79,15 @@ boolOut, _ := Stringify(true)
 // Output = "true"
 
 type utilTestStruct struct {
-IntValue    int    `json:"int"`
-BoolValue   bool   `json:"bool"`
-StringValue string `json:"string"`
+    IntValue    int    `json:"int"`
+    BoolValue   bool   `json:"bool"`
+    StringValue string `json:"string"`
 }
 
 objectOut, _ := Stringify(utilTestStruct{
-IntValue:    10,
-BoolValue:   false,
-StringValue: "some value",
+    IntValue:    10,
+    BoolValue:   false,
+    StringValue: "some value",
 })
 // Output = {"int":10,"bool":false,"string":"some value"}
 ```
