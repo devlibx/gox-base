@@ -6,6 +6,8 @@ import (
 	"strings"
 )
 
+type ParameterizedValue string
+
 type ParameterizedString string
 type ParameterizedInt string
 type ParameterizedBool string
@@ -196,4 +198,72 @@ func (p ParameterizedBool) Get(env string) (bool, error) {
 	}
 
 	return false, errors.New("env not found")
+}
+
+type parseFunction func(in string) (interface{}, string, error)
+
+func (p ParameterizedValue) Get(env string) (interface{}, error) {
+	str := strings.TrimSpace(string(p))
+	var pf parseFunction = func(in string) (interface{}, string, error) {
+		return in, "string", nil
+	}
+
+	if strings.HasPrefix(str, "env:string:") {
+		str = strings.Replace(str, "env:string:", "", 1)
+		pf = func(in string) (interface{}, string, error) {
+			return in, "string", nil
+		}
+	} else if strings.HasPrefix(str, "env:int:") {
+		str = strings.Replace(str, "env:int:", "", 1)
+		pf = func(in string) (interface{}, string, error) {
+			val, err := strconv.Atoi(in)
+			return val, "int", err
+		}
+	} else if strings.HasPrefix(str, "env:bool:") {
+		str = strings.Replace(str, "env:bool:", "", 1)
+		pf = func(in string) (interface{}, string, error) {
+			val, err := strconv.ParseBool(in)
+			return val, "bool", err
+		}
+	} else if strings.HasPrefix(str, "env:float:") {
+		str = strings.Replace(str, "env:float:", "", 1)
+		pf = func(in string) (interface{}, string, error) {
+			val, err := strconv.ParseFloat(in, 64)
+			return val, "float", err
+		}
+	}
+
+	tokens := strings.Split(str, ";")
+
+	// Find matching env string
+	for _, token := range tokens {
+		parts := strings.Split(token, "=")
+		if len(parts) < 2 {
+			return false, errors.New("expected a key=value but got [%s]", token)
+		} else if strings.TrimSpace(parts[0]) == env {
+			part := strings.TrimSpace(parts[1])
+			if val, tname, err := pf(part); err == nil {
+				return val, err
+			} else {
+				return false, errors.Wrap(err, "expected the value to be a %s buf got [%s]", tname, str)
+			}
+		}
+	}
+
+	// Find default string
+	for _, token := range tokens {
+		parts := strings.Split(token, "=")
+		if len(parts) < 2 {
+			return false, errors.New("expected a key=value but got [%s]", token)
+		} else if strings.TrimSpace(parts[0]) == "default" {
+			part := strings.TrimSpace(parts[1])
+			if val, tname, err := pf(part); err == nil {
+				return val, err
+			} else {
+				return false, errors.Wrap(err, "expected the value to be a %s buf got [%s]", tname, str)
+			}
+		}
+	}
+
+	return nil, nil
 }

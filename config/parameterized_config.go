@@ -56,6 +56,8 @@ func processMap(input map[string]interface{}, env string) (map[string]interface{
 			out[k], _ = processMap(val, env)
 		} else if val, ok := v.([]interface{}); ok {
 			out[k], _ = processList(val, env)
+		} else {
+			out[k] = v
 		}
 	}
 	return out, nil
@@ -73,27 +75,17 @@ func processList(input []interface{}, env string) ([]interface{}, error) {
 		} else if val, ok := v.([]interface{}); ok {
 			r, _ := processList(val, env)
 			out = append(out, r)
+		} else {
+			out = append(out, v)
 		}
 	}
 	return out, nil
 }
 
 func processString(input string, env string) (interface{}, error) {
-	if strings.HasPrefix(input, "env:string:") {
-		input = strings.Replace(input, "env:string:", "env:", 1)
-		p := ParameterizedString(input)
-		return p.Get(env)
-	} else if strings.HasPrefix(input, "env:bool:") {
-		input = strings.Replace(input, "env:bool:", "env:", 1)
-		p := ParameterizedBool(input)
-		return p.Get(env)
-	} else if strings.HasPrefix(input, "env:int:") {
-		input = strings.Replace(input, "env:int:", "env:", 1)
-		p := ParameterizedInt(input)
-		return p.Get(env)
-	} else if strings.HasPrefix(input, "env:float:") {
-		input = strings.Replace(input, "env:float:", "env:", 1)
-		p := ParameterizedFloat(input)
+	input = strings.TrimSpace(input)
+	if strings.HasPrefix(input, "env:") {
+		p := ParameterizedValue(input)
 		return p.Get(env)
 	} else {
 		return input, nil
