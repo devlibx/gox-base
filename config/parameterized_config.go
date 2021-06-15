@@ -11,12 +11,7 @@ import (
 func ReadParameterizedYaml(data string, object interface{}, env string) (err error) {
 
 	// Read all environment var and replace it in input string
-	for _, e := range os.Environ() {
-		pair := strings.SplitN(e, "=", 2)
-		if len(pair) >= 2 {
-			data = strings.ReplaceAll(data, "$"+pair[0], pair[1])
-		}
-	}
+	data = os.ExpandEnv(data)
 
 	// Read config as map to resolve parameterized variables
 	firstMap := map[string]interface{}{}
