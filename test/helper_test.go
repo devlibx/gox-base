@@ -22,6 +22,14 @@ func TestBuildMockCf(t *testing.T) {
 	cf.Logger().Debug("make sure I do not crash.")
 }
 
+func BenchmarkName(b *testing.B) {
+	ctrl := gomock.NewController(b)
+	cf := BuildMockCfB(b, ctrl)
+	_ = cf
+	for i := 0; i < b.N; i++ {
+	}
+}
+
 func TestMockCf(t *testing.T) {
 	cf, _ := MockCf(t, zap.DebugLevel)
 	cf.Logger().Debug("make sure I do not crash.")

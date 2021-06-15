@@ -89,7 +89,7 @@ func BuildMockCfB(b *testing.B, controller *gomock.Controller) gox.CrossFunction
 	cf.EXPECT().Logger().Return(logger).AnyTimes()
 	cf.EXPECT().Metric().Return(metrics.NoOpMetric()).AnyTimes()
 	cf.EXPECT().Config().Return(gox.StringObjectMap{}).AnyTimes()
-	cf.EXPECT().Config().Return(util.NewNoOpTimeTracker()).AnyTimes()
+	cf.EXPECT().TimeTracker().Return(util.NewNoOpTimeTracker()).AnyTimes()
 	return cf
 }
 
