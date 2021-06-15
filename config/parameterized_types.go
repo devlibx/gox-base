@@ -90,6 +90,8 @@ func (p ParameterizedValue) Get(env string) (interface{}, error) {
 			val, err := strconv.ParseFloat(in, 64)
 			return val, "float", err
 		}
+	} else {
+		return nil, errors.New("['env:string:', 'env:int:', 'env:bool:', 'env:float:'] are supported env types: input is=[%s]", str)
 	}
 
 	tokens := strings.Split(str, ";")
