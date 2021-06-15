@@ -1,8 +1,7 @@
-package config
+package serialization
 
 import (
 	"github.com/devlibx/gox-base/errors"
-	"github.com/devlibx/gox-base/serialization"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -15,7 +14,7 @@ func ReadParameterizedYaml(data string, object interface{}, env string) (err err
 
 	// Read config as map to resolve parameterized variables
 	firstMap := map[string]interface{}{}
-	err = serialization.ReadYamlFromStringWithEnvVar(data, &firstMap)
+	err = ReadYamlFromStringWithEnvVar(data, &firstMap)
 	if err != nil {
 		return errors.Wrap(err, "could not parse yaml content ["+data+"]", err, nil)
 	}
@@ -27,12 +26,12 @@ func ReadParameterizedYaml(data string, object interface{}, env string) (err err
 		return errors.Wrap(err, "error in parsing yaml content ["+data+"]", err, nil)
 	}
 
-	yaml, err := serialization.ToYaml(newMap)
+	yaml, err := ToYaml(newMap)
 	if err != nil {
 		return errors.Wrap(err, "could not parse final yaml content ["+data+"]", err, nil)
 	}
 
-	return serialization.ReadYamlFromString(yaml, object)
+	return ReadYamlFromString(yaml, object)
 }
 
 func ReadParameterizedYamlFile(file string, object interface{}, env string) (err error) {

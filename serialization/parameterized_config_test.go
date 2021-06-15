@@ -1,8 +1,7 @@
-package config
+package serialization
 
 import (
 	"fmt"
-	"github.com/devlibx/gox-base/serialization"
 	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
@@ -197,7 +196,7 @@ func TestReadParameterizedConfigYamlFile_Prod_List(t *testing.T) {
 	assert.Equal(t, 10, yaml2Go.Client.Option[6])
 	assert.Equal(t, 10.011, yaml2Go.Client.Option[7])
 
-	yaml, err := serialization.ToYaml(yaml2Go)
+	yaml, err := ToYaml(yaml2Go)
 	assert.NoError(t, err)
 	// fmt.Println(yaml)
 	_ = yaml
@@ -257,7 +256,7 @@ func TestReadParameterizedConfigYamlFile_Prod(t *testing.T) {
 	assert.Equal(t, "test.prod", yaml2Go.ServerConfig.Servers.TestServer.Host)
 	assert.Equal(t, 80, yaml2Go.ServerConfig.Servers.TestServer.Port)
 
-	yaml, err := serialization.ToYaml(yaml2Go)
+	yaml, err := ToYaml(yaml2Go)
 	assert.NoError(t, err)
 	// fmt.Println(yaml)
 	_ = yaml

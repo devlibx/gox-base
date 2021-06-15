@@ -1,4 +1,4 @@
-package config
+package serialization
 
 import (
 	"github.com/devlibx/gox-base/errors"
