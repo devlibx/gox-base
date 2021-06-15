@@ -104,9 +104,26 @@ If there is a error when input is bad then you will get the default
 value "0"
 ```
 
+---
+
 ### Logging
 
-You can use logger from Uber
+You can build the logger with CrossFunction.
+
+```shell
+func TestLoggerUsingCrossFunction(t *testing.T) {
+
+	// Cross function gives you the logger 
+	zapConfig := zap.NewDevelopmentConfig()
+	zapConfig.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
+	cf := NewCrossFunction(zapConfig.Build())
+
+	cf.Logger().Info("log info", zap.String("key", "value"))
+	cf.Logger().Debug("log debug", zap.String("key", "value"))
+}
+```
+
+Or you can use logger from Uber
 
 ```shell
 var cfg zap.Config

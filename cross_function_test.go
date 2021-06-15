@@ -3,6 +3,7 @@ package gox
 import (
 	"github.com/devlibx/gox-base/metrics"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 	"math/rand"
 	"testing"
 	"time"
@@ -30,4 +31,15 @@ func TestCrossFunctionWithNoOp(t *testing.T) {
 	cf := NewCrossFunction()
 	cf.Logger().Debug("nothing")
 	cf.Metric().Counter("no").Inc(1)
+}
+
+func TestLoggerUsingCrossFunction(t *testing.T) {
+
+	// Cross function gives you the logger
+	zapConfig := zap.NewDevelopmentConfig()
+	zapConfig.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
+	cf := NewCrossFunction(zapConfig.Build())
+
+	cf.Logger().Info("log info", zap.String("key", "value"))
+	cf.Logger().Debug("log debug", zap.String("key", "value"))
 }
