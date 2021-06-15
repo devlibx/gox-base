@@ -209,7 +209,7 @@ Note - if you copy/paste this example to try then ensure that the yaml string do
 
 var testStringTestReadParameterizedConfigYamlWithListAndListMap = `
 client:
-  id: "env:string: prod=prod_client; stage=stage_client; dev=dev_client; default=random_client"
+  id: "env:string: prod=$PROD_ID_acbdefgh; stage=$STAGE_ID_acbdefgh; dev=$DEV_ID_acbdefgh; default=$RANDOM_CLIENT_acbdefgh"
   enabled: "env:bool: prod=true; stage=false; dev=false; default=false"
   price: "env:float: prod=10.001; stage=10.002; dev=10.003; default=10.004"
   option:
@@ -232,9 +232,13 @@ client:
 `
 
 func TestReadParameterizedConfigYamlWithListAndListMap(t *testing.T) {
+    // You will get a env variable from outside but setting it for test here
+	_ = os.Setenv("PROD_ID_acbdefgh", "prod_client")
+	
 	// ---------------------------------- Wrapper Json Struct ----------------------------------------------------------
 	// Internal nodes
-	type internalNode struct {
+	type internalNode struct
+	} {
 		Name string `yaml:"name"`
 	}
 
