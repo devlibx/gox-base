@@ -378,6 +378,39 @@ func StringObjectMapFromString(input string) (StringObjectMap, error) {
 	return out, nil
 }
 
+// Convert input json string to StringObjectMap
+func StringObjectMapFromJson(input string) (StringObjectMap, error) {
+	out := StringObjectMap{}
+	if err := serialization.JsonToObject(input, &out); err != nil {
+		return nil, errors.Wrap(err, "failed to read map from input string")
+	}
+	return out, nil
+}
+
+// Convert input json string to StringObjectMap, and give empty map in case of error
+func StringObjectMapFromJsonOrEmpty(input string) StringObjectMap {
+	out := StringObjectMap{}
+	if err := serialization.JsonToObject(input, &out); err != nil {
+		return out
+	}
+	return out
+}
+
+// Convert StringObjectMap to a Json string
+func (s StringObjectMap) JsonString() (string, error) {
+	return serialization.Stringify(s)
+}
+
+// Convert StringObjectMap to a Json string, or give empty json "{}" on error
+func (s StringObjectMap) JsonStringOrEmptyJson() string {
+	str, err := serialization.Stringify(s)
+	if err != nil {
+		return "{}"
+	} else {
+		return str
+	}
+}
+
 // ------------------------------------------ Helper to get sub key ----------------------------------------------------
 func (s StringObjectMap) BoolOrFalse2(key1 string, key2 string) bool {
 	return s.StringObjectMapOrEmpty(key1).BoolOrFalse(key2)

@@ -377,3 +377,35 @@ func TestBoolFromSub(t *testing.T) {
 	assert.False(t, l1.BoolOrTrue3("l2", "l3", "key3"))
 	assert.True(t, l1.BoolOrTrue4("l2", "l3", "l4", "key4")) // Should be true as this level is missing
 }
+
+func TestJsonMethods(t *testing.T) {
+	l1 := StringObjectMap{
+		"key1": true,
+		"l2": StringObjectMap{
+			"key2":  true,
+			"key_2": false,
+			"l3": StringObjectMap{
+				"key3": true,
+			},
+		},
+	}
+	str, err := l1.JsonString()
+	assert.NoError(t, err)
+	fmt.Println(l1)
+
+	s, err := StringObjectMapFromJson(str)
+	assert.NoError(t, err)
+
+	assert.True(t, l1.BoolOrTrue("key1"))
+	assert.True(t, l1.BoolOrTrue2("key1", "key2"))
+	assert.True(t, l1.BoolOrTrue3("key1", "key2", "key3"))
+	assert.True(t, l1.BoolOrTrue4("key1", "key2", "key3", "key4"))
+
+	// Here we expected default as true but the actual value is true
+	assert.False(t, l1.BoolOrTrue2("l2", "key_2"))
+
+	assert.True(t, s.BoolOrTrue("key1"))
+	assert.True(t, s.BoolOrTrue2("key1", "key2"))
+	assert.True(t, s.BoolOrTrue3("key1", "key2", "key3"))
+	assert.True(t, s.BoolOrTrue4("key1", "key2", "key3", "key4"))
+}
