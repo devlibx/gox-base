@@ -8,6 +8,43 @@ Gox-Base project provide utilities which is used commonly in all applications.
 
 ---
 
+### Set up an RestApp
+This section provides a setup code to launch a rest app.
+```go
+// Mux router
+import "github.com/gorilla/mux"
+import "github.com/devlibx/gox-base/config"
+import "github.com/opentracing-contrib/go-gorilla/gorilla"
+import opentracing "github.com/opentracing/opentracing-go"
+import goxServer "github.com/devlibx/gox-base/server"
+
+// Create router and add handlers (Add your handler)
+router := mux.NewRouter()
+
+// (Optional) Add tracing to all routes (Open tracing)
+_ = router.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
+    route.Handler(gorilla.Middleware(opentracing.GlobalTracer(), route.GetHandler()))
+    return nil
+})
+
+// Setup
+appConfig := config.App{
+    AppName:     "my_app",
+    HttpPort:    8080,
+    Environment: "dev",
+}
+
+cf := // Read "Setup cross function which is usd in almost all apis to be used in gox" serction
+
+// Run server
+serverInstance, err := goxServer.NewServer(cf)
+if err := serverInstance.Start(router, &appConfig); err != nil {
+    state.Cf.Logger().Error("failed to run http server", zap.Error(err))
+}
+```
+
+---
+
 ### Config
 You can use this for common application configuration
 
