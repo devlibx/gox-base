@@ -464,7 +464,7 @@ func ConvertStringObjectMapToMap(in StringObjectMap, out map[string]interface{})
 		case StringObjectMap:
 			{
 				m := map[string]interface{}{}
-				Map(val, m)
+				ConvertStringObjectMapToMap(val, m)
 				out[k] = m
 			}
 
@@ -472,7 +472,7 @@ func ConvertStringObjectMapToMap(in StringObjectMap, out map[string]interface{})
 			l := make([]interface{}, 0)
 			for _, _v := range val {
 				m := map[string]interface{}{}
-				Map(_v, m)
+				ConvertStringObjectMapToMap(_v, m)
 				l = append(l, m)
 			}
 			out[k] = l
@@ -483,7 +483,7 @@ func ConvertStringObjectMapToMap(in StringObjectMap, out map[string]interface{})
 				switch _val := _v.(type) {
 				case StringObjectMap:
 					m := map[string]interface{}{}
-					Map(_val, m)
+					ConvertStringObjectMapToMap(_val, m)
 					l = append(l, m)
 				default:
 					l = append(l, _val)
