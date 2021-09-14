@@ -409,3 +409,40 @@ func TestJsonMethods(t *testing.T) {
 	assert.True(t, s.BoolOrTrue3("key1", "key2", "key3"))
 	assert.True(t, s.BoolOrTrue4("key1", "key2", "key3", "key4"))
 }
+
+type testT struct {
+	User     string `json:"1"`
+	Password string `json:"2"`
+}
+
+type testTList struct {
+	Users []*testT `json:"devices"`
+}
+
+func TestTopMap(t *testing.T) {
+
+	users := []testT{
+		{
+			User:     "a",
+			Password: "b",
+		},
+	}
+
+	l1 := StringObjectMap{
+		"key1": true,
+		"l2": StringObjectMap{
+			"key2":  true,
+			"key_2": false,
+			"l3": StringObjectMap{
+				"key3": true,
+			},
+		},
+		"users": users,
+	}
+	jsonStringL1 := serialization.StringifyOrDefaultOnError(l1, "{}")
+	mapResult, err := ToMap(l1)
+	assert.NoError(t, err)
+	jsonStringMapResult := serialization.StringifyOrDefaultOnError(mapResult, "{}")
+	assert.Equal(t, jsonStringL1, jsonStringMapResult)
+	fmt.Println(jsonStringMapResult)
+}

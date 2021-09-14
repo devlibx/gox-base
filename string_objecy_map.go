@@ -529,3 +529,23 @@ func ConvertStringObjectMapToMap(in StringObjectMap, out map[string]interface{})
 
 	return nil
 }
+
+func ToMap(s interface{}) (map[string]interface{}, error) {
+
+	// If it is nil then send error
+	if s == nil {
+		return nil, errors.New("nil")
+	}
+
+	// Convert back to Map because avro needs all maps, it does not work with Struct
+	mapData := map[string]interface{}{}
+	if dataString, err := serialization.Stringify(s); err != nil {
+		return nil, err
+	} else {
+		if err := serialization.JsonToObject(dataString, &mapData); err != nil {
+			return nil, err
+		}
+	}
+
+	return mapData, nil
+}
