@@ -456,3 +456,42 @@ func (s StringObjectMap) IntOrZero3(key1 string, key2 string, key3 string) int {
 func (s StringObjectMap) IntOrZero4(key1 string, key2 string, key3 string, key4 string) int {
 	return s.StringObjectMapOrEmpty(key1).StringObjectMapOrEmpty(key2).StringObjectMapOrEmpty(key3).IntOrZero(key4)
 }
+
+// Convert map to String Object Map
+func ConvertStringObjectMapToMap(in StringObjectMap, out map[string]interface{}) {
+	for k, v := range in {
+		switch val := v.(type) {
+		case StringObjectMap:
+			{
+				m := map[string]interface{}{}
+				Map(val, m)
+				out[k] = m
+			}
+
+		case []StringObjectMap:
+			l := make([]interface{}, 0)
+			for _, _v := range val {
+				m := map[string]interface{}{}
+				Map(_v, m)
+				l = append(l, m)
+			}
+			out[k] = l
+
+		case []interface{}:
+			l := make([]interface{}, 0)
+			for _, _v := range val {
+				switch _val := _v.(type) {
+				case StringObjectMap:
+					m := map[string]interface{}{}
+					Map(_val, m)
+					l = append(l, m)
+				default:
+					l = append(l, _val)
+				}
+			}
+			out[k] = l
+		default:
+			out[k] = v
+		}
+	}
+}
