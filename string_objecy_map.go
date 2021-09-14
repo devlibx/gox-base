@@ -530,6 +530,7 @@ func ConvertStringObjectMapToMap(in StringObjectMap, out map[string]interface{})
 	return nil
 }
 
+// Convert anu object to a map
 func ToMap(s interface{}) (map[string]interface{}, error) {
 
 	// If it is nil then send error
