@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/devlibx/gox-base/errors"
 	"github.com/devlibx/gox-base/serialization"
+	"github.com/fatih/structs"
 	"reflect"
 	"strconv"
 )
@@ -458,13 +459,15 @@ func (s StringObjectMap) IntOrZero4(key1 string, key2 string, key3 string, key4 
 }
 
 // Convert map to String Object Map
-func ConvertStringObjectMapToMap(in StringObjectMap, out map[string]interface{}) {
+func ConvertStringObjectMapToMap(in StringObjectMap, out map[string]interface{}) error {
 	for k, v := range in {
 		switch val := v.(type) {
 		case StringObjectMap:
 			{
 				m := map[string]interface{}{}
-				ConvertStringObjectMapToMap(val, m)
+				if err := ConvertStringObjectMapToMap(val, m); err != nil {
+					return err
+				}
 				out[k] = m
 			}
 
@@ -472,7 +475,9 @@ func ConvertStringObjectMapToMap(in StringObjectMap, out map[string]interface{})
 			l := make([]interface{}, 0)
 			for _, _v := range val {
 				m := map[string]interface{}{}
-				ConvertStringObjectMapToMap(_v, m)
+				if err := ConvertStringObjectMapToMap(_v, m); err != nil {
+					return err
+				}
 				l = append(l, m)
 			}
 			out[k] = l
@@ -483,15 +488,44 @@ func ConvertStringObjectMapToMap(in StringObjectMap, out map[string]interface{})
 				switch _val := _v.(type) {
 				case StringObjectMap:
 					m := map[string]interface{}{}
-					ConvertStringObjectMapToMap(_val, m)
+					if err := ConvertStringObjectMapToMap(_val, m); err != nil {
+						return err
+					}
 					l = append(l, m)
 				default:
-					l = append(l, _val)
+					if reflect.ValueOf(_val).Kind() == reflect.Ptr {
+						m := structs.Map(_val)
+						l = append(l, m)
+					} else {
+						l = append(l, _val)
+					}
 				}
 			}
 			out[k] = l
+
 		default:
-			out[k] = v
+			switch reflect.TypeOf(v).Kind() {
+			case reflect.Slice:
+				l := make([]interface{}, 0)
+				s := reflect.ValueOf(v)
+				for i := 0; i < s.Len(); i++ {
+					obj := s.Index(i).Interface()
+					if jsonData, err := serialization.Stringify(obj); err != nil {
+						return err
+					} else {
+						m := map[string]interface{}{}
+						if err := serialization.JsonToObject(jsonData, &m); err != nil {
+							return err
+						}
+						l = append(l, m)
+					}
+				}
+				out[k] = l
+			default:
+				out[k] = v
+			}
 		}
 	}
+
+	return nil
 }
