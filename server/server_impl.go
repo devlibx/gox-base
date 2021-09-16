@@ -2,17 +2,20 @@ package goxServer
 
 import (
 	"fmt"
+	"net/http"
+	"time"
+
 	"github.com/devlibx/gox-base"
 	"github.com/devlibx/gox-base/config"
 	"github.com/devlibx/gox-base/errors"
 	"github.com/urfave/negroni"
 	"go.uber.org/zap"
-	"net/http"
-	"time"
+	"gopkg.in/tylerb/graceful.v1"
 )
 
 type serverImpl struct {
-	server *http.Server
+	server         *http.Server
+	gracefulServer *graceful.Server
 	gox.CrossFunction
 }
 
@@ -38,7 +41,12 @@ func (s *serverImpl) Start(handler http.Handler, applicationConfig *config.App) 
 		IdleTimeout:  time.Duration(applicationConfig.IdleTimeoutMs) * time.Millisecond,
 	}
 
-	return s.server.ListenAndServe()
+	s.gracefulServer = &graceful.Server{
+		Timeout: time.Duration(applicationConfig.OutstandingRequestTimeoutMs) * time.Second,
+		Server:  s.server,
+	}
+
+	return s.gracefulServer.ListenAndServe()
 }
 
 func (s *serverImpl) setupTimeLogging() negroni.HandlerFunc {
