@@ -1,8 +1,10 @@
 package goxServer
 
 import (
+	"context"
 	"fmt"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/devlibx/gox-base"
@@ -16,6 +18,8 @@ import (
 type serverImpl struct {
 	server         *http.Server
 	gracefulServer *graceful.Server
+	serverRunning  chan bool
+	stopOnce       *sync.Once
 	gox.CrossFunction
 }
 
@@ -23,6 +27,9 @@ func (s *serverImpl) Start(handler http.Handler, applicationConfig *config.App) 
 	if applicationConfig == nil {
 		return errors.New("application config is nil")
 	}
+
+	// Channel to wait for server to stop
+	s.serverRunning = make(chan bool, 1)
 
 	// Setup default values
 	applicationConfig.SetupDefaults()
@@ -47,6 +54,17 @@ func (s *serverImpl) Start(handler http.Handler, applicationConfig *config.App) 
 	}
 
 	return s.gracefulServer.ListenAndServe()
+}
+
+func (s *serverImpl) Stop() chan bool {
+	s.stopOnce.Do(func() {
+		go func() {
+			_ = s.gracefulServer.Shutdown(context.TODO())
+			s.serverRunning <- true
+			close(s.serverRunning)
+		}()
+	})
+	return s.serverRunning
 }
 
 func (s *serverImpl) setupTimeLogging() negroni.HandlerFunc {
