@@ -48,6 +48,16 @@ func (c *StatsdConfig) SetupDefaults() {
 	}
 }
 
+type Tracing struct {
+	Enabled bool `json:"enabled" yaml:"enabled"`
+	DD      struct {
+		Enabled bool   `json:"enabled" yaml:"enabled"`
+		Host    string `json:"host" yaml:"host"`
+		Port    int    `json:"port" yaml:"port"`
+		Env     string `json:"env" yaml:"env"`
+	} `json:"dd" yaml:"dd"`
+}
+
 type Config struct {
 	Enabled             bool         `json:"enabled" yaml:"enabled"`
 	Prefix              string       `json:"prefix" yaml:"prefix"`
@@ -55,7 +65,14 @@ type Config struct {
 	Statsd              StatsdConfig `json:"statsd" yaml:"statsd"`
 	EnablePrometheus    bool         `json:"enable_prometheus" yaml:"enable_prometheus"`
 	EnableStatsd        bool         `json:"enable_statsd" yaml:"enable_statsd"`
+	Tracing             Tracing      `json:"tracing" yaml:"tracing"`
 }
+
+// dd:
+//    enabled: true
+//    host: localhost
+//    port: 8126
+//    env: "env:string: prod=prod; stage=stage; dev=dev; default=dev;"
 
 func (c *Config) SetupDefaults() {
 	if util.IsStringEmpty(c.Prefix) {
