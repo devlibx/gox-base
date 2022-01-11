@@ -34,6 +34,7 @@ type StatsdConfig struct {
 	Address         string `json:"address" yaml:"address"`
 	FlushIntervalMs int    `json:"flush_interval_ms" yaml:"flush_interval_ms"`
 	FlushBytes      int    `json:"flush_bytes" yaml:"flush_bytes"`
+	StatsReporter   interface{}
 }
 
 func (c *StatsdConfig) SetupDefaults() {
