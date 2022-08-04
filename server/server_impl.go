@@ -35,7 +35,7 @@ func (s *serverImpl) Start(handler http.Handler, applicationConfig *config.App) 
 	applicationConfig.SetupDefaults()
 
 	// Setup server
-	rootHandler := negroni.Classic()
+	rootHandler := negroni.New(negroni.NewRecovery(), negroni.NewStatic(http.Dir("public")))
 	rootHandler.Use(s.setupTimeLogging())
 	rootHandler.UseHandler(handler)
 
