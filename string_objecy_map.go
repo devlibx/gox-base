@@ -242,6 +242,14 @@ func (s StringObjectMap) MapOrDefault(name string, defaultValue map[string]inter
 		return value
 	} else if value, ok := s[name].(StringObjectMap); ok {
 		return value
+	} else if value, ok := s[name].(map[interface{}]interface{}); ok {
+		out := map[string]interface{}{}
+		for k, v := range value {
+			if key, err := serialization.Stringify(k); err == nil {
+				out[key] = v
+			}
+		}
+		return out
 	} else {
 		return defaultValue
 	}
@@ -252,6 +260,14 @@ func (s StringObjectMap) MapOrEmpty(name string) map[string]interface{} {
 		return value
 	} else if value, ok := s[name].(StringObjectMap); ok {
 		return value
+	} else if value, ok := s[name].(map[interface{}]interface{}); ok {
+		out := StringObjectMap{}
+		for k, v := range value {
+			if key, err := serialization.Stringify(k); err == nil {
+				out[key] = v
+			}
+		}
+		return out
 	} else {
 		return map[string]interface{}{}
 	}
@@ -262,6 +278,14 @@ func (s StringObjectMap) StringObjectMapOrDefault(name string, defaultValue map[
 		return value
 	} else if value, ok := s[name].(StringObjectMap); ok {
 		return value
+	} else if value, ok := s[name].(map[interface{}]interface{}); ok {
+		out := StringObjectMap{}
+		for k, v := range value {
+			if key, err := serialization.Stringify(k); err == nil {
+				out[key] = v
+			}
+		}
+		return out
 	} else {
 		return defaultValue
 	}
@@ -272,6 +296,14 @@ func (s StringObjectMap) StringObjectMapOrEmpty(name string) StringObjectMap {
 		return value
 	} else if value, ok := s[name].(StringObjectMap); ok {
 		return value
+	} else if value, ok := s[name].(map[interface{}]interface{}); ok {
+		out := StringObjectMap{}
+		for k, v := range value {
+			if key, err := serialization.Stringify(k); err == nil {
+				out[key] = v
+			}
+		}
+		return out
 	} else {
 		return map[string]interface{}{}
 	}
