@@ -1,6 +1,8 @@
 package util
 
 import (
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
@@ -25,5 +27,19 @@ func TestIsStringEmpty(t *testing.T) {
 				t.Errorf("got %t, want %t", out, tt.Output)
 			}
 		})
+	}
+}
+
+func TestStringToHashMod(t *testing.T) {
+	for i := 0; i < 10000; i++ {
+		id := StringToHashMod(uuid.NewString(), 10)
+		assert.True(t, id >= 0)
+		assert.True(t, id < 10)
+	}
+
+	for i := 0; i < 10000; i++ {
+		id := StringToHashMod(uuid.NewString(), 1)
+		assert.True(t, id >= 0)
+		assert.True(t, id < 1)
 	}
 }
