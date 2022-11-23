@@ -9,7 +9,7 @@ import (
 func SafeRun(toRun func(), errorMessage string) {
 	defer func() {
 		if r := recover(); r != nil {
-			fmt.Println("Got panic which was recovered: errorMessage={}", errorMessage, "info={}", r)
+			fmt.Printf("Got panic which was recovered: errorMessage=%s, info=%v\n", errorMessage, r)
 		}
 	}()
 	toRun()
