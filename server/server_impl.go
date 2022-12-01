@@ -36,7 +36,9 @@ func (s *serverImpl) Start(handler http.Handler, applicationConfig *config.App) 
 
 	// Setup server
 	rootHandler := negroni.New(negroni.NewRecovery(), negroni.NewStatic(http.Dir("public")))
-	rootHandler.Use(s.setupTimeLogging())
+	if applicationConfig.IsServerTimeLoggingEnabled() {
+		rootHandler.Use(s.setupTimeLogging())
+	}
 	rootHandler.UseHandler(handler)
 
 	// Setup http server
