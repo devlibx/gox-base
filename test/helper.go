@@ -100,6 +100,7 @@ func buildNoOfMetricsScope(controller *gomock.Controller) metrics.Scope {
 	mockTimer := mockGox.NewMockTimer(controller)
 	mockHistogram := mockGox.NewMockHistogram(controller)
 
+	mockScope.EXPECT().Tagged(gomock.Any()).Return(mockScope).AnyTimes()
 	mockScope.EXPECT().Counter(gomock.Any()).Return(mockCounter).AnyTimes()
 	mockScope.EXPECT().Gauge(gomock.Any()).Return(mockGauge).AnyTimes()
 	mockScope.EXPECT().Timer(gomock.Any()).Return(mockTimer).AnyTimes()
