@@ -48,6 +48,9 @@ func (c *StatsdConfig) SetupDefaults() {
 	if c.FlushBytes <= 0 {
 		c.FlushBytes = 1440
 	}
+	if c.Properties == nil {
+		c.Properties = map[string]interface{}{}
+	}
 }
 
 type Tracing struct {
