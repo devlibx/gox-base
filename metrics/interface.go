@@ -22,6 +22,7 @@ package metrics
 
 import (
 	"fmt"
+	"github.com/devlibx/gox-base"
 	"github.com/devlibx/gox-base/util"
 	"net/http"
 	"sort"
@@ -35,6 +36,7 @@ type StatsdConfig struct {
 	FlushIntervalMs int    `json:"flush_interval_ms" yaml:"flush_interval_ms"`
 	FlushBytes      int    `json:"flush_bytes" yaml:"flush_bytes"`
 	StatsReporter   interface{}
+	Properties      gox.StringObjectMap `json:"properties" yaml:"properties"`
 }
 
 func (c *StatsdConfig) SetupDefaults() {
