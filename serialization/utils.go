@@ -86,7 +86,7 @@ func Stringify(input interface{}) (out string, err error) {
 
 	default:
 		if _out, err := json.Marshal(v); err != nil {
-			out = ""
+			return "", err
 		} else {
 			out = string(_out)
 		}
