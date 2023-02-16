@@ -16,3 +16,8 @@ func NewServer(cf gox.CrossFunction) (Server, error) {
 	s := &serverImpl{CrossFunction: cf, stopOnce: &sync.Once{}}
 	return s, nil
 }
+
+func NewServerWithShutdownHookFunc(cf gox.CrossFunction, shutdownHookFunc func()) (Server, error) {
+	s := &serverImpl{CrossFunction: cf, shutdownHookFunc: shutdownHookFunc, stopOnce: &sync.Once{}}
+	return s, nil
+}

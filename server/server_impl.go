@@ -16,10 +16,11 @@ import (
 )
 
 type serverImpl struct {
-	server         *http.Server
-	gracefulServer *graceful.Server
-	serverRunning  chan bool
-	stopOnce       *sync.Once
+	server           *http.Server
+	gracefulServer   *graceful.Server
+	serverRunning    chan bool
+	stopOnce         *sync.Once
+	shutdownHookFunc func()
 	gox.CrossFunction
 }
 
@@ -51,8 +52,9 @@ func (s *serverImpl) Start(handler http.Handler, applicationConfig *config.App) 
 	}
 
 	s.gracefulServer = &graceful.Server{
-		Timeout: time.Duration(applicationConfig.OutstandingRequestTimeoutMs) * time.Second,
-		Server:  s.server,
+		Timeout:           time.Duration(applicationConfig.OutstandingRequestTimeoutMs) * time.Second,
+		Server:            s.server,
+		ShutdownInitiated: s.shutdownHookFunc,
 	}
 
 	return s.gracefulServer.ListenAndServe()
