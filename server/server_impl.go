@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/http/pprof"
+	"strings"
 	"sync"
 	"time"
 
@@ -36,7 +38,12 @@ func (s *serverImpl) Start(handler http.Handler, applicationConfig *config.App) 
 	applicationConfig.SetupDefaults()
 
 	// Setup server
-	rootHandler := negroni.New(negroni.NewRecovery(), negroni.NewStatic(http.Dir("public")))
+	var rootHandler *negroni.Negroni
+	if applicationConfig.EnablePProf {
+		rootHandler = negroni.New(negroni.NewRecovery(), negroni.NewStatic(http.Dir("public")), newPprofHandler())
+	} else {
+		rootHandler = negroni.New(negroni.NewRecovery(), negroni.NewStatic(http.Dir("public")))
+	}
 	if applicationConfig.IsServerTimeLoggingEnabled() {
 		rootHandler.Use(s.setupTimeLogging())
 	}
@@ -83,4 +90,26 @@ func (s *serverImpl) setupTimeLogging() negroni.HandlerFunc {
 			zap.Int64("duration", end.Sub(start).Milliseconds()),
 		)
 	}
+}
+
+type pprofHandler struct {
+	mux *http.ServeMux
+}
+
+func (rec *pprofHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+	if strings.Contains(r.RequestURI, "/debug/pprof") {
+		rec.mux.ServeHTTP(rw, r)
+	} else {
+		next(rw, r)
+	}
+}
+
+func newPprofHandler() *pprofHandler {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/debug/pprof/", pprof.Index)
+	mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+	mux.HandleFunc("/debug/pprof/profile", pprof.Profile)
+	mux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+	mux.HandleFunc("/debug/pprof/trace", pprof.Trace)
+	return &pprofHandler{mux: mux}
 }

@@ -11,6 +11,7 @@ type App struct {
 	OutstandingRequestTimeoutMs int                 `json:"outstanding_request_timeout_ms" yaml:"outstanding_request_timeout_ms"`
 	IdleTimeoutMs               int                 `json:"idle_timeout_ms" yaml:"idle_timeout_ms"`
 	Properties                  gox.StringObjectMap `json:"properties" yaml:"properties"`
+	EnablePProf                 bool                `json:"enable_pprof" yaml:"enable_pprof"`
 }
 
 func (a *App) SetupDefaults() {
