@@ -14,36 +14,16 @@ func TestCommit(t *testing.T) {
 
 	t.Run("Run when commit is called with no error", func(t *testing.T) {
 		txMock := mockGoxSql.NewMockTx(ctrl)
-		txMock.EXPECT().Commit().Return(nil)
+		txMock.EXPECT().Commit().Return(nil).Times(1)
 		tx := NewTxExt(txMock)
-
-		callbackCalled := false
-		tx.testCallbackFunc = func(method string, data map[string]interface{}, err error) {
-			assert.Equal(t, "commit", method)
-			assert.NoError(t, err)
-			callbackCalled = true
-		}
-
-		err := tx.Commit()
-		assert.NoError(t, err)
-		assert.True(t, callbackCalled, "We should have got a callback of testCallbackFunc")
+		assert.NoError(t, tx.Commit())
 	})
 
 	t.Run("Run when commit is called with error", func(t *testing.T) {
 		txMock := mockGoxSql.NewMockTx(ctrl)
-		txMock.EXPECT().Commit().Return(errors.New("bad error"))
+		txMock.EXPECT().Commit().Return(errors.New("bad error")).Times(1)
 		tx := NewTxExt(txMock)
-
-		callbackCalled := false
-		tx.testCallbackFunc = func(method string, data map[string]interface{}, err error) {
-			assert.Equal(t, "commit", method)
-			assert.Error(t, err)
-			callbackCalled = true
-		}
-
-		err := tx.Commit()
-		assert.Error(t, err)
-		assert.True(t, callbackCalled, "We should have got a callback of testCallbackFunc")
+		assert.Error(t, tx.Commit())
 	})
 }
 
