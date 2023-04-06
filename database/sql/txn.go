@@ -70,9 +70,6 @@ type txImpl struct {
 	mu             *sync.Mutex
 	rollbackTx     *txImpl
 	isCommitCalled bool
-
-	// This is a callback method to be used in test
-	testCallbackFunc func(method string, data map[string]interface{}, err error)
 }
 
 func NewTxExt(tx Tx) *txImpl {
@@ -91,12 +88,6 @@ func (tx *txImpl) WithName(name string) *txImpl {
 func (tx *txImpl) Commit() (err error) {
 	tx.mu.Lock()
 	defer tx.mu.Unlock()
-
-	defer func() {
-		if tx.testCallbackFunc != nil {
-			tx.testCallbackFunc("commit", nil, err)
-		}
-	}()
 
 	if !tx.isChild {
 		if tx.rollbackTx == nil {
@@ -131,13 +122,12 @@ func Begin(ctx context.Context, txnBeginner TxnBeginner, name string) (context.C
 		if tx, ok := ctx.Value(txnKey).(*txImpl); ok && !tx.isCommitCalled {
 			return ctx,
 				&txImpl{
-					Tx:               tx.Tx,
-					testCallbackFunc: tx.testCallbackFunc,
-					uniqueId:         tx.uniqueId,
-					name:             name,
-					isChild:          true,
-					mu:               tx.mu,
-					topLevelTx:       tx,
+					Tx:         tx.Tx,
+					uniqueId:   tx.uniqueId,
+					name:       name,
+					isChild:    true,
+					mu:         tx.mu,
+					topLevelTx: tx,
 				},
 				nil
 		}
