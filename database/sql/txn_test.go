@@ -2,6 +2,7 @@ package goxSql
 
 import (
 	"context"
+	"fmt"
 	mockGoxSql "github.com/devlibx/gox-base/database/sql/mocks"
 	"github.com/devlibx/gox-base/errors"
 	"github.com/golang/mock/gomock"
@@ -110,7 +111,10 @@ func TestCommitForRecursiveTxWithErrorInChild(t *testing.T) {
 
 		// Commit a transaction
 		err = tx.Commit()
-		assert.NoError(t, err)
+		assert.Error(t, err)
+		e, ok := err.(*ErrCommitFailedDueToChildTxnFailed)
+		assert.True(t, ok)
+		fmt.Println(e.Error())
 	}
 
 	ctx := context.Background()

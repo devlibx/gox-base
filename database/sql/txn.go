@@ -72,7 +72,7 @@ type txImpl struct {
 	isCommitCalled bool
 }
 
-func NewTxExt(tx Tx) *txImpl {
+func NewTxExt(tx Tx) Tx {
 	return &txImpl{
 		Tx:       tx,
 		uniqueId: uuid.NewString(),
@@ -80,7 +80,7 @@ func NewTxExt(tx Tx) *txImpl {
 	}
 }
 
-func (tx *txImpl) WithName(name string) *txImpl {
+func (tx *txImpl) WithName(name string) Tx {
 	tx.name = name
 	return tx
 }
@@ -89,12 +89,19 @@ func (tx *txImpl) Commit() (err error) {
 	tx.mu.Lock()
 	defer tx.mu.Unlock()
 
-	if !tx.isChild {
+	if tx.isChild {
+		tx.isCommitCalled = true
+	} else {
+		// If this is a parent then we do the final commit
+		// However, if we have seen a rollback in a child then we return error
 		if tx.rollbackTx == nil {
 			err = tx.Tx.Commit()
+		} else {
+			err = &ErrCommitFailedDueToChildTxnFailed{
+				Tx:             tx,
+				ChildFailedTxn: tx.rollbackTx,
+			}
 		}
-	} else {
-		tx.isCommitCalled = true
 	}
 	return err
 }
@@ -114,6 +121,9 @@ func (tx *txImpl) Rollback() (err error) {
 }
 
 func (tx *txImpl) String() string {
+	if tx == nil {
+		return "{nil transaction}"
+	}
 	return fmt.Sprintf("{Name=%s, Child=%t UniqueId=%s}", tx.name, tx.isChild, tx.uniqueId)
 }
 
@@ -134,11 +144,21 @@ func Begin(ctx context.Context, txnBeginner TxnBeginner, name string) (context.C
 	}
 
 	if tx, err := txnBeginner.Begin(); err == nil {
-		txWrapper := NewTxExt(tx).WithName(name)
-		txWrapper.isChild = false
+		t := NewTxExt(tx).(*txImpl)
+		t.isChild = false
+		txWrapper := t.WithName(name)
 		ctx = context.WithValue(ctx, txnKey, txWrapper)
 		return ctx, txWrapper, nil
 	} else {
 		return ctx, nil, err
 	}
+}
+
+type ErrCommitFailedDueToChildTxnFailed struct {
+	Tx             *txImpl
+	ChildFailedTxn *txImpl
+}
+
+func (e ErrCommitFailedDueToChildTxnFailed) Error() string {
+	return fmt.Sprintf("commit failed - some child txn has failed: parentTxn=%s, failedTxn=%s", e.Tx.String(), e.ChildFailedTxn.String())
 }
