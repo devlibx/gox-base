@@ -44,7 +44,7 @@ func TestCommitForRecursiveTx(t *testing.T) {
 	// Child function to test transaction
 	child := func(ctx context.Context, t *testing.T, txMock Tx) {
 		// Begin a transaction
-		ctx, tx, err := Begin(ctx, &tb{tx: txMock, err: nil}, "child")
+		ctx, tx, err := Begin(ctx, TxBeginOptions{TxnBeginner: &tb{tx: txMock, err: nil}, Name: "child", ContinueExistingTxnIfExists: true})
 		assert.NoError(t, err)
 		defer tx.Rollback()
 
@@ -56,7 +56,7 @@ func TestCommitForRecursiveTx(t *testing.T) {
 	// Parent function to test transaction
 	parent := func(ctx context.Context, t *testing.T, txMock Tx) {
 		// Begin a transaction
-		ctx, tx, err := Begin(ctx, &tb{tx: txMock, err: nil}, "parent")
+		ctx, tx, err := Begin(ctx, TxBeginOptions{TxnBeginner: &tb{tx: txMock, err: nil}, Name: "parent", ContinueExistingTxnIfExists: true})
 		assert.NoError(t, err)
 		defer tx.Rollback()
 
@@ -89,7 +89,7 @@ func TestCommitForRecursiveTxWithErrorInChild(t *testing.T) {
 	// Child function to test transaction
 	child := func(ctx context.Context, t *testing.T, txMock Tx) {
 		// Begin a transaction
-		ctx, tx, err := Begin(ctx, &tb{tx: txMock, err: nil}, "child")
+		ctx, tx, err := Begin(ctx, TxBeginOptions{TxnBeginner: &tb{tx: txMock, err: nil}, Name: "child", ContinueExistingTxnIfExists: true})
 		assert.NoError(t, err)
 		defer tx.Rollback()
 
@@ -102,7 +102,7 @@ func TestCommitForRecursiveTxWithErrorInChild(t *testing.T) {
 	// Parent function to test transaction
 	parent := func(ctx context.Context, t *testing.T, txMock Tx) {
 		// Begin a transaction
-		ctx, tx, err := Begin(ctx, &tb{tx: txMock, err: nil}, "parent")
+		ctx, tx, err := Begin(ctx, TxBeginOptions{TxnBeginner: &tb{tx: txMock, err: nil}, Name: "parent", ContinueExistingTxnIfExists: true})
 		assert.NoError(t, err)
 		defer tx.Rollback()
 
@@ -120,6 +120,47 @@ func TestCommitForRecursiveTxWithErrorInChild(t *testing.T) {
 	ctx := context.Background()
 	parent(ctx, t, txMock)
 	assert.Equal(t, 1, rollbackCallCount, "Rollback should be called only once - don't worry we do it it deffer so no impact")
+}
+
+func TestCommitForRecursiveTxWithErrorInChildButChildOptedForNewTxn(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	txMock := mockGoxSql.NewMockTx(ctrl)
+
+	// We should not get a commit call, only one rollback call
+	txMock.EXPECT().Commit().Return(nil).Times(1)
+	txMock.EXPECT().Rollback().Return(nil).Times(2)
+
+	// Child function to test transaction
+	child := func(ctx context.Context, t *testing.T, txMock Tx) {
+		// Begin a transaction
+		ctx, tx, err := Begin(ctx, TxBeginOptions{TxnBeginner: &tb{tx: txMock, err: nil}, Name: "child", ContinueExistingTxnIfExists: false})
+		assert.NoError(t, err)
+		defer tx.Rollback()
+
+		// NOTE - here child did not committed
+		// Commit a transaction
+		// err = tx.Commit()
+		// assert.NoError(t, err)
+	}
+
+	// Parent function to test transaction
+	// Note - child opted to "Not continue with existing Txn" so parent will not fail even if child failed
+	parentContinueToCommitEvenIfChildFailed := func(ctx context.Context, t *testing.T, txMock Tx) {
+		// Begin a transaction
+		ctx, tx, err := Begin(ctx, TxBeginOptions{TxnBeginner: &tb{tx: txMock, err: nil}, Name: "parent", ContinueExistingTxnIfExists: true})
+		assert.NoError(t, err)
+		defer tx.Rollback()
+
+		// Make a recursive call to child to test a child call
+		child(ctx, t, txMock)
+
+		// Commit a transaction
+		err = tx.Commit()
+		assert.NoError(t, err)
+	}
+
+	ctx := context.Background()
+	parentContinueToCommitEvenIfChildFailed(ctx, t, txMock)
 }
 
 type tb struct {

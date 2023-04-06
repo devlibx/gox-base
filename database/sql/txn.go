@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/devlibx/gox-base/errors"
 	"github.com/google/uuid"
 	"sync"
 )
@@ -127,14 +128,20 @@ func (tx *txImpl) String() string {
 	return fmt.Sprintf("{Name=%s, Child=%t UniqueId=%s}", tx.name, tx.isChild, tx.uniqueId)
 }
 
-func Begin(ctx context.Context, txnBeginner TxnBeginner, name string) (context.Context, Tx, error) {
-	if ctx != nil && ctx.Value(txnKey) != nil {
+type TxBeginOptions struct {
+	TxnBeginner                 TxnBeginner
+	Name                        string
+	ContinueExistingTxnIfExists bool
+}
+
+func Begin(ctx context.Context, options TxBeginOptions) (context.Context, Tx, error) {
+	if options.ContinueExistingTxnIfExists && ctx != nil && ctx.Value(txnKey) != nil {
 		if tx, ok := ctx.Value(txnKey).(*txImpl); ok && !tx.isCommitCalled {
 			return ctx,
 				&txImpl{
 					Tx:         tx.Tx,
 					uniqueId:   tx.uniqueId,
-					name:       name,
+					name:       options.Name,
 					isChild:    true,
 					mu:         tx.mu,
 					topLevelTx: tx,
@@ -143,10 +150,14 @@ func Begin(ctx context.Context, txnBeginner TxnBeginner, name string) (context.C
 		}
 	}
 
-	if tx, err := txnBeginner.Begin(); err == nil {
+	if options.TxnBeginner == nil {
+		return ctx, nil, errors.New("missing TxnBeginner in options")
+	}
+
+	if tx, err := options.TxnBeginner.Begin(); err == nil {
 		t := NewTxExt(tx).(*txImpl)
 		t.isChild = false
-		txWrapper := t.WithName(name)
+		txWrapper := t.WithName(options.Name)
 		ctx = context.WithValue(ctx, txnKey, txWrapper)
 		return ctx, txWrapper, nil
 	} else {
