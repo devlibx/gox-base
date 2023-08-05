@@ -62,6 +62,7 @@ func (s *serverImpl) Start(handler http.Handler, applicationConfig *config.App) 
 		Timeout:           time.Duration(applicationConfig.OutstandingRequestTimeoutMs) * time.Second,
 		Server:            s.server,
 		ShutdownInitiated: s.shutdownHookFunc,
+		NoSignalHandling: true,
 	}
 
 	return s.gracefulServer.ListenAndServe()
