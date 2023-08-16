@@ -15,7 +15,7 @@ func ReadYaml(file string, object interface{}) (err error) {
 		if err == nil {
 			return nil
 		} else {
-			return NewError(UnmarshalFailedErrorCode, "could not unmarshal json from given file ["+file+"]", err, nil)
+			return NewError(UnmarshalFailedErrorCode, "could not unmarshal yaml from given file ["+file+"]", err, nil)
 		}
 	} else {
 		return NewError(
@@ -42,7 +42,7 @@ func ReadYamlWithEnvVar(file string, object interface{}) (err error) {
 		if err == nil {
 			return nil
 		} else {
-			return NewError(UnmarshalFailedErrorCode, "could not unmarshal json from given file ["+file+"]", err, nil)
+			return NewError(UnmarshalFailedErrorCode, "could not unmarshal yaml from given file ["+file+"]", err, nil)
 		}
 	} else {
 		return NewError(
