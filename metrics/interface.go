@@ -22,10 +22,11 @@ package metrics
 
 import (
 	"fmt"
-	"github.com/devlibx/gox-base/util"
 	"net/http"
 	"sort"
 	"time"
+
+	"github.com/devlibx/gox-base/util"
 )
 
 var DefaultBuckets Buckets
@@ -56,10 +57,12 @@ func (c *StatsdConfig) SetupDefaults() {
 type Tracing struct {
 	Enabled bool `json:"enabled" yaml:"enabled"`
 	DD      struct {
-		Enabled bool   `json:"enabled" yaml:"enabled"`
-		Host    string `json:"host" yaml:"host"`
-		Port    int    `json:"port" yaml:"port"`
-		Env     string `json:"env" yaml:"env"`
+		Enabled     bool   `json:"enabled" yaml:"enabled"`
+		ServiceName string `json:"service_name" yaml:"service_name"`
+		Host        string `json:"host" yaml:"host"`
+		Port        int    `json:"port" yaml:"port"`
+		Env         string `json:"env" yaml:"env"`
+		Version     string `json:"version" yaml:"version"`
 	} `json:"dd" yaml:"dd"`
 }
 
