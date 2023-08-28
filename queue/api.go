@@ -65,6 +65,13 @@ type ScheduleRequest struct {
 	Properties map[string]interface{}
 }
 
+func (s ScheduleRequest) String() string {
+	return fmt.Sprintf(
+		"ScheduleRequest{At:%s, JobType:%s, JobSubType:%s, CorrelationId:%s, RemainingExecution:%d, RetryBackoffAlgo:%v, StringUdf1:%s, StringUdf2:%s, IntUdf1:%d, IntUdf2:%d, Properties:%v}",
+		s.At, s.JobType, s.JobSubType, s.CorrelationId, s.RemainingExecution, s.RetryBackoffAlgo, s.StringUdf1, s.StringUdf2, s.IntUdf1, s.IntUdf2, s.Properties,
+	)
+}
+
 // ScheduleResponse response of schedule
 type ScheduleResponse struct {
 	Id string
@@ -103,6 +110,17 @@ type RetryBackoffAlgo interface {
 
 type IdGenerator interface {
 	GenerateId(input interface{}) string
+}
+
+type RandomUuidIdGenerator struct {
+}
+
+func (r RandomUuidIdGenerator) GenerateId(input interface{}) string {
+	return uuid.NewString()
+}
+
+func NewRandomUuidIdGenerator() (IdGenerator, error) {
+	return &RandomUuidIdGenerator{}, nil
 }
 
 type TimeBasedIdGenerator struct {
