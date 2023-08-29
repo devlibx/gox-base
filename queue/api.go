@@ -6,11 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/devlibx/gox-base"
-	"github.com/google/uuid"
-	"github.com/oklog/ulid/v2"
-	"math/rand"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -42,11 +38,15 @@ type Queue interface {
 
 // ScheduleRequest is a request to schedule a run of this job
 type ScheduleRequest struct {
-	At time.Time
+	At                  time.Time
+	DeleteAfter         time.Time
+	DeleteAfterDuration time.Duration
 
 	// Job types
-	JobType    string
-	JobSubType string
+	JobType string
+
+	// Tenant - default is 0
+	Tenant int
 
 	// CorrelationId will help jobs to be linked together - when a job succeeds it will mark all jobs to be completed
 	CorrelationId string
@@ -67,8 +67,8 @@ type ScheduleRequest struct {
 
 func (s ScheduleRequest) String() string {
 	return fmt.Sprintf(
-		"ScheduleRequest{At:%s, JobType:%s, JobSubType:%s, CorrelationId:%s, RemainingExecution:%d, RetryBackoffAlgo:%v, StringUdf1:%s, StringUdf2:%s, IntUdf1:%d, IntUdf2:%d, Properties:%v}",
-		s.At, s.JobType, s.JobSubType, s.CorrelationId, s.RemainingExecution, s.RetryBackoffAlgo, s.StringUdf1, s.StringUdf2, s.IntUdf1, s.IntUdf2, s.Properties,
+		"ScheduleRequest{At:%s, JobType:%s, Tenant:%s, CorrelationId:%s, RemainingExecution:%d, RetryBackoffAlgo:%v, StringUdf1:%s, StringUdf2:%s, IntUdf1:%d, IntUdf2:%d, Properties:%v}",
+		s.At, s.JobType, s.Tenant, s.CorrelationId, s.RemainingExecution, s.RetryBackoffAlgo, s.StringUdf1, s.StringUdf2, s.IntUdf1, s.IntUdf2, s.Properties,
 	)
 }
 
@@ -103,66 +103,12 @@ type StoreBackend interface {
 	Close() error
 }
 
-// RetryBackoffAlgo will help to schedule next retry
-type RetryBackoffAlgo interface {
-	NextRetryAfter(attempt int, maxExecution int) (time.Duration, error)
-}
-
-type IdGenerator interface {
-	GenerateId(input interface{}) string
-}
-
-type RandomUuidIdGenerator struct {
-}
-
-func (r RandomUuidIdGenerator) GenerateId(input interface{}) string {
-	return uuid.NewString()
-}
-
-func NewRandomUuidIdGenerator() (IdGenerator, error) {
-	return &RandomUuidIdGenerator{}, nil
-}
-
-type TimeBasedIdGenerator struct {
-	entropy *rand.Rand
-	m       *sync.Mutex
-}
-
-func (t *TimeBasedIdGenerator) GenerateId(input interface{}) string {
-	if inTime, ok := input.(time.Time); ok {
-		t.m.Lock()
-		defer t.m.Unlock()
-		ms := ulid.Timestamp(inTime)
-		if r, err := ulid.New(ms, t.entropy); err == nil {
-			return r.String()
-		} else {
-			fmt.Println("[WARN] failed to generate ulid from TimeBasedIdGenerator", err)
-			return uuid.NewString()
-		}
-	} else {
-		fmt.Println("[WARN] failed to generate ulid from TimeBasedIdGenerator because input is not time.Time. input=", input)
-		return uuid.NewString()
-	}
-}
-
-func NewTimeBasedIdGenerator() (IdGenerator, error) {
-	t := &TimeBasedIdGenerator{
-		entropy: rand.New(rand.NewSource(time.Now().UnixNano())),
-		m:       &sync.Mutex{},
-	}
-	return t, nil
-}
-
 type QueryRewriter interface {
-	RewriteQuery(input string) string
+	RewriteQuery(table string, input string) string
 }
 
 func NewUdfAndTableNameQueryRewriter(tableName string) QueryRewriter {
 	return &UdfAndTableNameQueryRewriter{tableName: tableName}
-}
-
-func NewUdfAndTableNameQueryRewriterWithUdfRemapping(tableName, udfString1, udfString2, udfInt1, udfInt2 string) QueryRewriter {
-	return &UdfAndTableNameQueryRewriter{tableName: tableName, udfString1: udfString1, udfString2: udfString2, udfInt1: udfInt1, udfInt2: udfInt2}
 }
 
 type UdfAndTableNameQueryRewriter struct {
@@ -173,19 +119,28 @@ type UdfAndTableNameQueryRewriter struct {
 	udfInt2    string
 }
 
-func (n *UdfAndTableNameQueryRewriter) RewriteQuery(input string) string {
-	input = strings.ReplaceAll(input, "jobs", n.tableName)
-	if n.udfString1 != "" {
-		input = strings.ReplaceAll(input, "string_udf_1", n.udfString1)
+func (n *UdfAndTableNameQueryRewriter) RewriteQuery(table string, input string) string {
+	switch table {
+	case "jobs":
+		input = strings.ReplaceAll(input, "jobs", n.tableName)
+		break
+
+	case "jobs_data":
+		input = strings.ReplaceAll(input, "jobs_data", n.tableName+"_data")
+		if n.udfString1 != "" {
+			input = strings.ReplaceAll(input, "string_udf_1", n.udfString1)
+		}
+		if n.udfString2 != "" {
+			input = strings.ReplaceAll(input, "string_udf_2", n.udfString2)
+		}
+		if n.udfInt1 != "" {
+			input = strings.ReplaceAll(input, "int_udf_1", n.udfInt1)
+		}
+		if n.udfInt2 != "" {
+			input = strings.ReplaceAll(input, "int_udf_2", n.udfInt2)
+		}
+		break
 	}
-	if n.udfString2 != "" {
-		input = strings.ReplaceAll(input, "string_udf_2", n.udfString2)
-	}
-	if n.udfInt1 != "" {
-		input = strings.ReplaceAll(input, "int_udf_1", n.udfInt1)
-	}
-	if n.udfInt2 != "" {
-		input = strings.ReplaceAll(input, "int_udf_2", n.udfInt2)
-	}
+
 	return input
 }

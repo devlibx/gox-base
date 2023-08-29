@@ -33,6 +33,7 @@ func main() {
 	}
 
 	appQueue, err := mysqlQueue.NewQueue(
+		gox.NewNoOpCrossFunction(),
 		storeBackend,
 		queue.MySqlBackedQueueConfig{},
 		idGenerator,
@@ -72,7 +73,7 @@ func push(appQueue queue.Queue) {
 			fmt.Println("Error", err)
 			time.Sleep(1 * time.Second)
 		} else {
-			fmt.Println("Ok", rs.Id, " h=", h, " m=", m, "       TimeTaken=", (time.Now().UnixMilli() - start.UnixMilli()))
+			fmt.Printf("Result = Ok: Id=%-30s  Hour=%-3d Min=%-3d  TimeTakne=%-4d \n", rs.Id, h, m, time.Now().UnixMilli()-start.UnixMilli())
 			time.Sleep(100 * time.Microsecond)
 		}
 		_ = rs
