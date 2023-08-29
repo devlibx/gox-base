@@ -44,7 +44,10 @@ func main() {
 	appQueue, err := mysqlQueue.NewQueue(
 		crossFunction,
 		storeBackend,
-		queue.MySqlBackedQueueConfig{},
+		queue.MySqlBackedQueueConfig{
+			Tenant:     11,
+			MaxJobType: 1,
+		},
 		idGenerator,
 		queue.NewUdfAndTableNameQueryRewriter("jobs"),
 	)
@@ -57,6 +60,15 @@ func main() {
 		for i := 0; i < 10; i++ {
 			go func() {
 				push(appQueue)
+			}()
+		}
+
+	}()
+
+	go func() {
+		for i := 0; i < 10; i++ {
+			go func() {
+				poll(appQueue)
 			}()
 		}
 
@@ -77,8 +89,10 @@ func push(appQueue queue.Queue) {
 		m := rand.Intn(50)
 		_, _, _ = start, h, m
 		now := time.Now().Add(time.Duration(h) * time.Hour).Add(time.Duration(m) * time.Second)
+		now = time.Now()
 		rs, err := appQueue.Schedule(context.Background(), queue.ScheduleRequest{
 			JobType:    1,
+			Tenant:     11,
 			At:         now,
 			Properties: map[string]interface{}{"info": fmt.Sprintf("%d", count)},
 		})
@@ -87,9 +101,30 @@ func push(appQueue queue.Queue) {
 			time.Sleep(1 * time.Second)
 		} else {
 			// fmt.Printf("Result = Ok: Id=%-30s  Hour=%-3d Min=%-3d  TimeTakne=%-4d \n", rs.Id, h, m, time.Now().UnixMilli()-start.UnixMilli())
-			time.Sleep(100 * time.Microsecond)
+			time.Sleep(10 * time.Microsecond)
 		}
 		_ = rs
 		count++
+
+		if count > 3000 {
+			break
+		}
+	}
+}
+
+func poll(appQueue queue.Queue) {
+	for {
+		rs, err := appQueue.Poll(context.Background(), queue.PollRequest{
+			Tenant:  11,
+			JobType: 1,
+		})
+		if err != nil {
+			fmt.Println("Error", err)
+			time.Sleep(1 * time.Second)
+		} else {
+			// fmt.Printf("Result = Ok: Id=%-30s  Hour=%-3d Min=%-3d  TimeTakne=%-4d \n", rs.Id, h, m, time.Now().UnixMilli()-start.UnixMilli())
+			fmt.Println("Result Ok", rs)
+			time.Sleep(10 * time.Millisecond)
+		}
 	}
 }

@@ -21,6 +21,7 @@ var (
 	SubStatusDone                   = StatusDone*10 + 0
 	SubStatusDoneDueToCorrelatedJob = StatusDone*10 + 1
 	SubStatusInternalError          = StatusFailed*10 + 1
+	SubStatusNoRetryPendingError    = StatusFailed*10 + 2
 )
 
 // ErrNoMoreRetry indicate that no more retries are needed
@@ -36,6 +37,9 @@ type Queue interface {
 
 	// Schedule method will put this request on the queue to be executed on the time
 	Schedule(ctx context.Context, req ScheduleRequest) (*ScheduleResponse, error)
+
+	// Poll method will put this request on the queue to be executed on the time
+	Poll(ctx context.Context, req PollRequest) (*PollResponse, error)
 }
 
 // ScheduleRequest is a request to schedule a run of this job
@@ -76,6 +80,17 @@ func (s ScheduleRequest) String() string {
 
 // ScheduleResponse response of schedule
 type ScheduleResponse struct {
+	Id string
+}
+
+// PollRequest response of schedule
+type PollRequest struct {
+	Tenant  int
+	JobType int
+}
+
+// PollResponse response of schedule
+type PollResponse struct {
 	Id string
 }
 

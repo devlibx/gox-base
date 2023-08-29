@@ -46,6 +46,7 @@ func (q *queueImpl) internalSchedule(ctx context.Context, req queue.ScheduleRequ
 		archiveAfter = archiveAfter.Add(req.DeleteAfterDuration)
 	}
 	archiveAfter = archiveAfter.Truncate(time.Hour)
+	archiveAfter = archiveAfter.Add(time.Duration(-1*archiveAfter.Hour()) * time.Hour)
 
 	// Metadata
 	var properties interface{}
@@ -82,6 +83,7 @@ func (q *queueImpl) internalSchedule(ctx context.Context, req queue.ScheduleRequ
 			VALUES
 			    (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)			
 	`
+	insertJobQuery = q.queryRewriter.RewriteQuery("jobs", insertJobQuery)
 	if _, err = tx.ExecContext(ctx, insertJobQuery, id, req.Tenant, req.CorrelationId, req.JobType, processAt, state, subState, 1, remainingExecution, archiveAfter); err != nil {
 		return nil, errors.Wrap(err, "failed to schedule: %v", req)
 	}
@@ -93,6 +95,7 @@ func (q *queueImpl) internalSchedule(ctx context.Context, req queue.ScheduleRequ
 			VALUES 
 			    (?, ?, ?, ?, ?, ?, ?, ?)
 	`
+	insertJobDataQuery = q.queryRewriter.RewriteQuery("jobs_data", insertJobDataQuery)
 	if _, err = tx.ExecContext(ctx, insertJobDataQuery, id, req.Tenant, req.StringUdf1, req.StringUdf2, req.IntUdf1, req.IntUdf2, properties, archiveAfter); err != nil {
 		return nil, errors.Wrap(err, "failed to schedule: %v", req)
 	}
