@@ -12,20 +12,39 @@ import (
 )
 
 func (t *topRowFinder) Start() {
-	go t.internalStart()
+	t.internalStart(true)
+	go t.internalStart(false)
 }
 
 func (t *topRowFinder) Stop() {
 	t.stop = true
 }
 
-func (t *topRowFinder) internalStart() {
+func (t *topRowFinder) internalStart(runOnce bool) {
 	errorCount := 1
+
+	query := "SELECT process_at FROM jobs WHERE tenant=? AND state=? AND job_type=? order by process_at asc"
+	query = t.queryRewriter.RewriteQuery("jobs", query)
+	if t.usePreparedStatement && t.findTopProcessAtQueryStmt == nil {
+		t.findTopProcessAtQueryStmt, _ = t.db.PrepareContext(context.Background(), query)
+	}
+
 	for {
 		var _time string
-		err := t.db.QueryRow("SELECT process_at FROM jobs WHERE tenant=? AND state=? AND job_type=? order by process_at asc", t.tenant, queue.StatusScheduled, t.jobType).Scan(&_time)
+		var err error
+		if t.findTopProcessAtQueryStmt != nil {
+			err = t.findTopProcessAtQueryStmt.QueryRowContext(context.Background(), t.tenant, queue.StatusScheduled, t.jobType).Scan(&_time)
+		} else {
+			err = t.db.QueryRow("SELECT process_at FROM jobs WHERE tenant=? AND state=? AND job_type=? order by process_at asc", t.tenant, queue.StatusScheduled, t.jobType).Scan(&_time)
+		}
 		if err == nil && _time != "" {
 			t.smallestProcessAtTime, _ = time.Parse("2006-01-02 15:04:05", _time)
+
+			// We are done return - this has to run only once at boot
+			// NOTE - runOnce is true only at the time of boot
+			if runOnce {
+				return
+			}
 
 			// Wait for sometime
 			select {
@@ -55,6 +74,10 @@ func (t *topRowFinder) internalStart() {
 			t.logger.Info("Stopping top row finder", zap.Int("jobType", t.jobType), zap.Int("tenant", t.tenant))
 			break
 		}
+
+		if runOnce {
+			break
+		}
 	}
 }
 
@@ -63,7 +86,6 @@ func (q *queueImpl) Poll(ctx context.Context, req queue.PollRequest) (*queue.Pol
 }
 
 func (q *queueImpl) internalPoll(ctx context.Context, req queue.PollRequest) (result *queue.PollResponse, err error) {
-
 	var rowFinder *topRowFinder
 	var ok bool
 	if rowFinder, ok = q.topRowFinderCron[req.JobType]; !ok {
@@ -97,7 +119,26 @@ func (q *queueImpl) internalPoll(ctx context.Context, req queue.PollRequest) (re
 
 	pollQuery := "SELECT id, pending_execution FROM jobs WHERE process_at=? AND tenant=? AND job_type=? AND state=? AND part=? LIMIT 1 FOR UPDATE SKIP LOCKED"
 	pollQuery = q.queryRewriter.RewriteQuery("jobs", pollQuery)
-	err = tx.QueryRowContext(ctx, pollQuery, processAt, req.Tenant, req.JobType, queue.StatusScheduled, partitionTime).Scan(&result.Id, &remainingRetries)
+
+	updatePollResultQuery := "UPDATE jobs SET state=?, version=version+1, pending_execution=pending_execution-1 WHERE id=? AND part=?"
+	updatePollResultQuery = q.queryRewriter.RewriteQuery("jobs", updatePollResultQuery)
+
+	if q.usePreparedStatement {
+		var failed string
+		q.pollQueryStatementInitOnce.Do(func() {
+			if q.pollQueryStatement, err = q.db.Prepare(pollQuery); err != nil {
+				failed = "poll query statement"
+			} else if q.updatePollRecordStatement, err = q.db.Prepare(updatePollResultQuery); err != nil {
+				failed = "poll update result statement"
+			}
+		})
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to create %s", failed)
+		}
+		err = tx.Stmt(q.pollQueryStatement).QueryRowContext(ctx, processAt, req.Tenant, req.JobType, queue.StatusScheduled, partitionTime).Scan(&result.Id, &remainingRetries)
+	} else {
+		err = tx.QueryRowContext(ctx, pollQuery, processAt, req.Tenant, req.JobType, queue.StatusScheduled, partitionTime).Scan(&result.Id, &remainingRetries)
+	}
 	if errors1.Is(err, sql.ErrNoRows) {
 		err = errors.Wrap(queue.NoJobsToRunAtCurrently, "jobType=%d tenant=%d topTime=%s", req.JobType, req.Tenant, processAt.String())
 
@@ -108,7 +149,7 @@ func (q *queueImpl) internalPoll(ctx context.Context, req queue.PollRequest) (re
 
 		return nil, err
 	} else if err != nil {
-		err = fmt.Errorf("failed to find top row for jobType=%d tenant=%d topTime=%s", req.JobType, req.Tenant, processAt.String())
+		err = fmt.Errorf("failed to find top row for jobType=%d tenant=%d topTime=%s err=%w", req.JobType, req.Tenant, processAt.String(), err)
 		return nil, err
 	}
 
@@ -119,7 +160,12 @@ func (q *queueImpl) internalPoll(ctx context.Context, req queue.PollRequest) (re
 	}
 
 	// Update the row within the same transaction
-	res, err := tx.ExecContext(ctx, "UPDATE jobs SET state=?, version=version+1, pending_execution=pending_execution-1 WHERE id=? AND part=?", queue.StatusProcessing, result.Id, partitionTime)
+	var res sql.Result
+	if q.usePreparedStatement {
+		res, err = tx.Stmt(q.updatePollRecordStatement).ExecContext(ctx, queue.StatusProcessing, result.Id, partitionTime)
+	} else {
+		res, err = tx.ExecContext(ctx, "UPDATE jobs SET state=?, version=version+1, pending_execution=pending_execution-1 WHERE id=? AND part=?", queue.StatusProcessing, result.Id, partitionTime)
+	}
 	var t int64
 	if err != nil {
 		err = fmt.Errorf("failed to update the job table pending_execution: %w id=%s", err, result.Id)

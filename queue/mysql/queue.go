@@ -17,6 +17,10 @@ type queueImpl struct {
 
 	smallestProcessedAt map[string]time.Time
 
+	pollQueryStatement         *sql.Stmt
+	updatePollRecordStatement  *sql.Stmt
+	pollQueryStatementInitOnce *sync.Once
+
 	initOnce  *sync.Once
 	closeOnce *sync.Once
 
@@ -29,6 +33,8 @@ type queueImpl struct {
 
 	topRowFinderCronMutex *sync.RWMutex
 	topRowFinderCron      map[int]*topRowFinder
+
+	usePreparedStatement bool
 }
 
 type refreshEvent struct {
@@ -42,8 +48,11 @@ type topRowFinder struct {
 	db                    *sql.DB
 	logger                *zap.Logger
 	stop                  bool
+	queryRewriter         queue.QueryRewriter
+	refreshChannel        chan refreshEvent
 
-	refreshChannel chan refreshEvent
+	usePreparedStatement      bool
+	findTopProcessAtQueryStmt *sql.Stmt
 }
 
 func NewQueue(cf gox.CrossFunction, storeBackend queue.StoreBackend, queueConfig queue.MySqlBackedQueueConfig, idGenerator queue.IdGenerator, queryRewriter queue.QueryRewriter) (*queueImpl, error) {
@@ -64,6 +73,10 @@ func NewQueue(cf gox.CrossFunction, storeBackend queue.StoreBackend, queueConfig
 
 		topRowFinderCron:      map[int]*topRowFinder{},
 		topRowFinderCronMutex: &sync.RWMutex{},
+
+		pollQueryStatementInitOnce: &sync.Once{},
+
+		usePreparedStatement: true,
 	}
 
 	// Run job top finder - we can configure max job type id
@@ -72,11 +85,13 @@ func NewQueue(cf gox.CrossFunction, storeBackend queue.StoreBackend, queueConfig
 	}
 	for i := 1; i <= queueConfig.MaxJobType; i++ {
 		q.topRowFinderCron[i] = &topRowFinder{
-			db:             db,
-			jobType:        i,
-			tenant:         queueConfig.Tenant,
-			logger:         q.logger,
-			refreshChannel: make(chan refreshEvent, 10),
+			db:                   db,
+			jobType:              i,
+			tenant:               queueConfig.Tenant,
+			logger:               q.logger,
+			queryRewriter:        queryRewriter,
+			usePreparedStatement: q.usePreparedStatement,
+			refreshChannel:       make(chan refreshEvent, 10),
 		}
 		q.topRowFinderCron[i].refreshChannel <- refreshEvent{}
 		q.topRowFinderCron[i].Start()
