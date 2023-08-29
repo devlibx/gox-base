@@ -27,6 +27,8 @@ var (
 var ErrNoMoreRetry = errors.New("do not retry anymore")
 
 type MySqlBackedQueueConfig struct {
+	Tenant     int `json:"tenant,omitempty"`
+	MaxJobType int `json:"max_job_type,omitempty"`
 }
 
 // Queue is an interface to provide all queue related methods. It allows you to schedule, poll etc
@@ -43,7 +45,7 @@ type ScheduleRequest struct {
 	DeleteAfterDuration time.Duration
 
 	// Job types
-	JobType string
+	JobType int
 
 	// Tenant - default is 0
 	Tenant int

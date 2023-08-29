@@ -26,6 +26,18 @@ type queueImpl struct {
 	queryRewriter queue.QueryRewriter
 
 	logger *zap.Logger
+
+	topRowFinderCronMutex *sync.RWMutex
+	topRowFinderCron      map[int]*topRowFinder
+}
+
+type topRowFinder struct {
+	jobType               int
+	tenant                int
+	smallestProcessAtTime time.Time
+	db                    *sql.DB
+	logger                *zap.Logger
+	stop                  bool
 }
 
 func NewQueue(cf gox.CrossFunction, storeBackend queue.StoreBackend, queueConfig queue.MySqlBackedQueueConfig, idGenerator queue.IdGenerator, queryRewriter queue.QueryRewriter) (*queueImpl, error) {
@@ -43,6 +55,18 @@ func NewQueue(cf gox.CrossFunction, storeBackend queue.StoreBackend, queueConfig
 		idGenerator:   idGenerator,
 		queryRewriter: queryRewriter,
 		logger:        cf.Logger().Named("scheduler"),
+
+		topRowFinderCron:      map[int]*topRowFinder{},
+		topRowFinderCronMutex: &sync.RWMutex{},
+	}
+
+	// Run job top finder - we can configure max job type id
+	if queueConfig.MaxJobType <= 0 {
+		queueConfig.MaxJobType = 1
+	}
+	for i := 1; i <= queueConfig.MaxJobType; i++ {
+		q.topRowFinderCron[i] = &topRowFinder{db: db, jobType: i, tenant: queueConfig.Tenant, logger: q.logger}
+		q.topRowFinderCron[i].Start()
 	}
 
 	return q, nil
