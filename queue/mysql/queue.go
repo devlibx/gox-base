@@ -76,7 +76,7 @@ func NewQueue(cf gox.CrossFunction, storeBackend queue.StoreBackend, queueConfig
 
 		pollQueryStatementInitOnce: &sync.Once{},
 
-		usePreparedStatement: false,
+		usePreparedStatement: true,
 	}
 
 	// Run job top finder - we can configure max job type id
