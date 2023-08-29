@@ -97,7 +97,7 @@ func (q *queueImpl) internalPoll(ctx context.Context, req queue.PollRequest) (re
 
 	pollQuery := "SELECT id, pending_execution FROM jobs WHERE process_at=? AND tenant=? AND job_type=? AND state=? AND part=? LIMIT 1 FOR UPDATE SKIP LOCKED"
 	pollQuery = q.queryRewriter.RewriteQuery("jobs", pollQuery)
-	err = tx.QueryRow(pollQuery, processAt, req.Tenant, req.JobType, queue.StatusScheduled, partitionTime).Scan(&result.Id, &remainingRetries)
+	err = tx.QueryRowContext(ctx, pollQuery, processAt, req.Tenant, req.JobType, queue.StatusScheduled, partitionTime).Scan(&result.Id, &remainingRetries)
 	if errors1.Is(err, sql.ErrNoRows) {
 		err = errors.Wrap(queue.NoJobsToRunAtCurrently, "jobType=%d tenant=%d topTime=%s", req.JobType, req.Tenant, processAt.String())
 
@@ -113,13 +113,13 @@ func (q *queueImpl) internalPoll(ctx context.Context, req queue.PollRequest) (re
 	}
 
 	if remainingRetries <= 0 {
-		if _, err = tx.Exec("UPDATE jobs SET state=?, sub_state=? WHERE id=?", queue.StatusFailed, queue.SubStatusNoRetryPendingError, result.Id); err != nil {
+		if _, err = tx.ExecContext(ctx, "UPDATE jobs SET state=?, sub_state=? WHERE id=?", queue.StatusFailed, queue.SubStatusNoRetryPendingError, result.Id); err != nil {
 			return nil, fmt.Errorf("we found a record which is already dead: id=%s mark it failed and set it retries < 0", result.Id)
 		}
 	}
 
 	// Update the row within the same transaction
-	res, err := tx.Exec("UPDATE jobs SET state=?, version=version+1, pending_execution=pending_execution-1 WHERE id=? AND part=?", queue.StatusProcessing, result.Id, partitionTime)
+	res, err := tx.ExecContext(ctx, "UPDATE jobs SET state=?, version=version+1, pending_execution=pending_execution-1 WHERE id=? AND part=?", queue.StatusProcessing, result.Id, partitionTime)
 	var t int64
 	if err != nil {
 		err = fmt.Errorf("failed to update the job table pending_execution: %w id=%s", err, result.Id)
