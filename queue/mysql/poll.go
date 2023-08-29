@@ -135,7 +135,7 @@ func (q *queueImpl) internalPoll(ctx context.Context, req queue.PollRequest) (re
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to create %s", failed)
 		}
-		err = tx.Stmt(q.pollQueryStatement).QueryRowContext(ctx, processAt, req.Tenant, req.JobType, queue.StatusScheduled, partitionTime).Scan(&result.Id, &remainingRetries)
+		err = tx.StmtContext(ctx, q.pollQueryStatement).QueryRowContext(ctx, processAt, req.Tenant, req.JobType, queue.StatusScheduled, partitionTime).Scan(&result.Id, &remainingRetries)
 	} else {
 		err = tx.QueryRowContext(ctx, pollQuery, processAt, req.Tenant, req.JobType, queue.StatusScheduled, partitionTime).Scan(&result.Id, &remainingRetries)
 	}
@@ -162,7 +162,7 @@ func (q *queueImpl) internalPoll(ctx context.Context, req queue.PollRequest) (re
 	// Update the row within the same transaction
 	var res sql.Result
 	if q.usePreparedStatement {
-		res, err = tx.Stmt(q.updatePollRecordStatement).ExecContext(ctx, queue.StatusProcessing, result.Id, partitionTime)
+		res, err = tx.StmtContext(ctx, q.updatePollRecordStatement).ExecContext(ctx, queue.StatusProcessing, result.Id, partitionTime)
 	} else {
 		res, err = tx.ExecContext(ctx, "UPDATE jobs SET state=?, version=version+1, pending_execution=pending_execution-1 WHERE id=? AND part=?", queue.StatusProcessing, result.Id, partitionTime)
 	}
