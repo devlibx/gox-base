@@ -70,13 +70,14 @@ func (q *queueImpl) internalPoll(ctx context.Context, req queue.PollRequest) (re
 		}
 	}()
 
-	result = &queue.PollResponse{}
 	processAt := rowFinder.smallestProcessAtTime.Truncate(time.Second)
 	remainingRetries := 0
+	partitionTime := endOfWeekPlusOneWeek(processAt)
+	result = &queue.PollResponse{RecordPartitionTime: partitionTime}
 
-	pollQuery := "SELECT id, pending_execution FROM jobs WHERE process_at=? AND tenant=? AND job_type=? AND state=? LIMIT 1 FOR UPDATE SKIP LOCKED"
+	pollQuery := "SELECT id, pending_execution FROM jobs WHERE process_at=? AND tenant=? AND job_type=? AND state=? AND archive_after=? LIMIT 1 FOR UPDATE SKIP LOCKED"
 	pollQuery = q.queryRewriter.RewriteQuery("jobs", pollQuery)
-	err = tx.QueryRow(pollQuery, processAt, req.Tenant, req.JobType, queue.StatusScheduled).Scan(&result.Id, &remainingRetries)
+	err = tx.QueryRow(pollQuery, processAt, req.Tenant, req.JobType, queue.StatusScheduled, partitionTime).Scan(&result.Id, &remainingRetries)
 	if err != nil {
 		err = fmt.Errorf("failed to find top row for jobType=%d tenant=%d topTime=%s", req.JobType, req.Tenant, processAt.String())
 		return nil, err
@@ -89,10 +90,10 @@ func (q *queueImpl) internalPoll(ctx context.Context, req queue.PollRequest) (re
 	}
 
 	// Update the row within the same transaction
-	res, err := tx.Exec("UPDATE jobs SET state=?, version=version+1, pending_execution=pending_execution-1 WHERE id=?", queue.StatusProcessing, result.Id)
+	res, err := tx.Exec("UPDATE jobs SET state=?, version=version+1, pending_execution=pending_execution-1 WHERE id=? AND archive_after=?", queue.StatusProcessing, result.Id, partitionTime)
 	var t int64
 	if err != nil {
-		err = fmt.Errorf("failed to update the job table: %w id=%s", err, result.Id)
+		err = fmt.Errorf("failed to update the job table pending_execution: %w id=%s", err, result.Id)
 		return nil, err
 	} else if t, err = res.RowsAffected(); err == nil && t == 0 {
 		err = fmt.Errorf("failed to update the job table (concurrent update): %w id=%s", err, result.Id)

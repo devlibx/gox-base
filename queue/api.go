@@ -91,7 +91,8 @@ type PollRequest struct {
 
 // PollResponse response of schedule
 type PollResponse struct {
-	Id string
+	Id                  string
+	RecordPartitionTime time.Time
 }
 
 // MySqlBackedStoreBackendConfig is the config to be used for MySQL backed queue

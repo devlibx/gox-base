@@ -39,14 +39,15 @@ func (q *queueImpl) internalSchedule(ctx context.Context, req queue.ScheduleRequ
 
 	// Set when this record will be archived - default is after 7 days of processing
 	// Min time between process at and delete is 24 Hr
-	archiveAfter := processAt.Add((7 * 24) * time.Hour)
+	archiveAfter := processAt
 	if !req.DeleteAfter.IsZero() && req.DeleteAfter.After(processAt.Add(24*time.Hour)) {
 		archiveAfter = req.DeleteAfter
 	} else if req.DeleteAfterDuration.Hours() >= 24 {
 		archiveAfter = archiveAfter.Add(req.DeleteAfterDuration)
 	}
-	archiveAfter = archiveAfter.Truncate(time.Hour)
-	archiveAfter = archiveAfter.Add(time.Duration(-1*archiveAfter.Hour()) * time.Hour)
+	// archiveAfter = archiveAfter.Truncate(time.Hour)
+	// archiveAfter = archiveAfter.Add(time.Duration(-1*archiveAfter.Hour()) * time.Hour)
+	archiveAfter = endOfWeekPlusOneWeek(archiveAfter)
 
 	// Metadata
 	var properties interface{}

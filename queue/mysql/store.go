@@ -30,7 +30,7 @@ func (m *mySqlStore) Init() error {
 		dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", m.config.User, m.config.Password, m.config.Host, m.config.Port, m.config.Database)
 		db, err := sql.Open("mysql", dsn)
 		if err != nil {
-			err = errors.Wrap(err, "failed to open the db", err)
+			err = errors.Wrap(err, "failed to open the db")
 			m.initErr = err
 			return
 		}
