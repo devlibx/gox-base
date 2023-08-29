@@ -35,7 +35,8 @@ func (t *topRowFinder) internalStart(runOnce bool) {
 		if t.findTopProcessAtQueryStmt != nil {
 			err = t.findTopProcessAtQueryStmt.QueryRowContext(context.Background(), t.tenant, queue.StatusScheduled, t.jobType).Scan(&_time)
 		} else {
-			err = t.db.QueryRow("SELECT process_at FROM jobs WHERE tenant=? AND state=? AND job_type=? order by process_at asc", t.tenant, queue.StatusScheduled, t.jobType).Scan(&_time)
+			// err = t.db.QueryRow("SELECT process_at FROM jobs WHERE tenant=? AND state=? AND job_type=? order by process_at asc", t.tenant, queue.StatusScheduled, t.jobType).Scan(&_time)
+			err = t.db.QueryRow(query, t.tenant, queue.StatusScheduled, t.jobType).Scan(&_time)
 		}
 		if err == nil && _time != "" {
 			t.smallestProcessAtTime, _ = time.Parse("2006-01-02 15:04:05", _time)
@@ -164,7 +165,8 @@ func (q *queueImpl) internalPoll(ctx context.Context, req queue.PollRequest) (re
 	if q.usePreparedStatement {
 		res, err = tx.StmtContext(ctx, q.updatePollRecordStatement).ExecContext(ctx, queue.StatusProcessing, result.Id, partitionTime)
 	} else {
-		res, err = tx.ExecContext(ctx, "UPDATE jobs SET state=?, version=version+1, pending_execution=pending_execution-1 WHERE id=? AND part=?", queue.StatusProcessing, result.Id, partitionTime)
+		// res, err = tx.ExecContext(ctx, "UPDATE jobs SET state=?, version=version+1, pending_execution=pending_execution-1 WHERE id=? AND part=?", queue.StatusProcessing, result.Id, partitionTime)
+		res, err = tx.ExecContext(ctx, updatePollResultQuery, queue.StatusProcessing, result.Id, partitionTime)
 	}
 	var t int64
 	if err != nil {
