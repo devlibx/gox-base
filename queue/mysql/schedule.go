@@ -37,17 +37,8 @@ func (q *queueImpl) internalSchedule(ctx context.Context, req queue.ScheduleRequ
 	state := queue.StatusScheduled
 	subState := queue.SubStatusScheduledOk
 
-	// Set when this record will be archived - default is after 7 days of processing
-	// Min time between process at and delete is 24 Hr
-	archiveAfter := processAt
-	if !req.DeleteAfter.IsZero() && req.DeleteAfter.After(processAt.Add(24*time.Hour)) {
-		archiveAfter = req.DeleteAfter
-	} else if req.DeleteAfterDuration.Hours() >= 24 {
-		archiveAfter = archiveAfter.Add(req.DeleteAfterDuration)
-	}
-	// archiveAfter = archiveAfter.Truncate(time.Hour)
-	// archiveAfter = archiveAfter.Add(time.Duration(-1*archiveAfter.Hour()) * time.Hour)
-	archiveAfter = endOfWeekPlusOneWeek(archiveAfter)
+	// We get the partition based on the process At - by default it is end of next week
+	archiveAfter := partitionBasedOnProcessAtTime(processAt)
 
 	// Metadata
 	var properties interface{}
@@ -80,7 +71,7 @@ func (q *queueImpl) internalSchedule(ctx context.Context, req queue.ScheduleRequ
 
 	insertJobQuery := `
 			INSERT INTO jobs 
-			    (id, tenant, correlation_id, job_type, process_at, state, sub_state, version, pending_execution, archive_after) 
+			    (id, tenant, correlation_id, job_type, process_at, state, sub_state, version, pending_execution, part) 
 			VALUES
 			    (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)			
 	`
@@ -92,7 +83,7 @@ func (q *queueImpl) internalSchedule(ctx context.Context, req queue.ScheduleRequ
 	// Generate insert job data statement
 	insertJobDataQuery := `
 			INSERT INTO jobs_data
-				(id, tenant, string_udf_1, string_udf_2, int_udf_1, int_udf_2, properties, archive_after)
+				(id, tenant, string_udf_1, string_udf_2, int_udf_1, int_udf_2, properties, part)
 			VALUES 
 			    (?, ?, ?, ?, ?, ?, ?, ?)
 	`

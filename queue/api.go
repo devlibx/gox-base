@@ -27,6 +27,8 @@ var (
 // ErrNoMoreRetry indicate that no more retries are needed
 var ErrNoMoreRetry = errors.New("do not retry anymore")
 
+var NoJobsToRunAtCurrently = errors.New("queue does not have a job to run now")
+
 type MySqlBackedQueueConfig struct {
 	Tenant     int `json:"tenant,omitempty"`
 	MaxJobType int `json:"max_job_type,omitempty"`
@@ -44,9 +46,7 @@ type Queue interface {
 
 // ScheduleRequest is a request to schedule a run of this job
 type ScheduleRequest struct {
-	At                  time.Time
-	DeleteAfter         time.Time
-	DeleteAfterDuration time.Duration
+	At time.Time
 
 	// Job types
 	JobType int
@@ -93,6 +93,11 @@ type PollRequest struct {
 type PollResponse struct {
 	Id                  string
 	RecordPartitionTime time.Time
+	ProcessAtTimeUsed   time.Time
+}
+
+func (s PollResponse) String() string {
+	return fmt.Sprintf("PollResponse{Id:%s, ProcessAtTimeUsed:%s, RecordPartitionTime:%s}", s.Id, s.ProcessAtTimeUsed.Local().Format(time.RFC3339), s.RecordPartitionTime.Local().Format(time.RFC3339))
 }
 
 // MySqlBackedStoreBackendConfig is the config to be used for MySQL backed queue

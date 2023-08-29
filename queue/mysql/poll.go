@@ -2,9 +2,11 @@ package queue
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"github.com/devlibx/gox-base/errors"
 	"github.com/devlibx/gox-base/queue"
+	errors1 "github.com/pkg/errors"
 	"go.uber.org/zap"
 	"time"
 )
@@ -72,13 +74,16 @@ func (q *queueImpl) internalPoll(ctx context.Context, req queue.PollRequest) (re
 
 	processAt := rowFinder.smallestProcessAtTime.Truncate(time.Second)
 	remainingRetries := 0
-	partitionTime := endOfWeekPlusOneWeek(processAt)
-	result = &queue.PollResponse{RecordPartitionTime: partitionTime}
+	partitionTime := partitionBasedOnProcessAtTime(processAt)
+	result = &queue.PollResponse{RecordPartitionTime: partitionTime, ProcessAtTimeUsed: processAt}
 
-	pollQuery := "SELECT id, pending_execution FROM jobs WHERE process_at=? AND tenant=? AND job_type=? AND state=? AND archive_after=? LIMIT 1 FOR UPDATE SKIP LOCKED"
+	pollQuery := "SELECT id, pending_execution FROM jobs WHERE process_at=? AND tenant=? AND job_type=? AND state=? AND part=? LIMIT 1 FOR UPDATE SKIP LOCKED"
 	pollQuery = q.queryRewriter.RewriteQuery("jobs", pollQuery)
 	err = tx.QueryRow(pollQuery, processAt, req.Tenant, req.JobType, queue.StatusScheduled, partitionTime).Scan(&result.Id, &remainingRetries)
-	if err != nil {
+	if errors1.Is(err, sql.ErrNoRows) {
+		err = errors.Wrap(queue.NoJobsToRunAtCurrently, "jobType=%d tenant=%d topTime=%s", req.JobType, req.Tenant, processAt.String())
+		return nil, err
+	} else if err != nil {
 		err = fmt.Errorf("failed to find top row for jobType=%d tenant=%d topTime=%s", req.JobType, req.Tenant, processAt.String())
 		return nil, err
 	}
@@ -90,7 +95,7 @@ func (q *queueImpl) internalPoll(ctx context.Context, req queue.PollRequest) (re
 	}
 
 	// Update the row within the same transaction
-	res, err := tx.Exec("UPDATE jobs SET state=?, version=version+1, pending_execution=pending_execution-1 WHERE id=? AND archive_after=?", queue.StatusProcessing, result.Id, partitionTime)
+	res, err := tx.Exec("UPDATE jobs SET state=?, version=version+1, pending_execution=pending_execution-1 WHERE id=? AND part=?", queue.StatusProcessing, result.Id, partitionTime)
 	var t int64
 	if err != nil {
 		err = fmt.Errorf("failed to update the job table pending_execution: %w id=%s", err, result.Id)

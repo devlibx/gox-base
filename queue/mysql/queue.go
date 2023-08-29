@@ -72,6 +72,10 @@ func NewQueue(cf gox.CrossFunction, storeBackend queue.StoreBackend, queueConfig
 	return q, nil
 }
 
+func partitionBasedOnProcessAtTime(t time.Time) time.Time {
+	return endOfWeek(t)
+}
+
 func endOfWeekPlusOneWeek(inputTime time.Time) time.Time {
 	return endOfWeek(inputTime).Add(7 * 24 * time.Hour)
 }

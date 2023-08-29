@@ -6,6 +6,7 @@ import (
 	"github.com/devlibx/gox-base"
 	queue "github.com/devlibx/gox-base/queue"
 	mysqlQueue "github.com/devlibx/gox-base/queue/mysql"
+	errors1 "github.com/pkg/errors"
 	"go.uber.org/zap"
 	"math/rand"
 	"os"
@@ -119,8 +120,12 @@ func poll(appQueue queue.Queue) {
 			JobType: 1,
 		})
 		if err != nil {
-			fmt.Println("Error", err)
-			time.Sleep(1 * time.Second)
+			if errors1.Is(err, queue.NoJobsToRunAtCurrently) {
+				time.Sleep(1 * time.Second)
+			} else {
+				fmt.Println("Error", err)
+				time.Sleep(1 * time.Second)
+			}
 		} else {
 			// fmt.Printf("Result = Ok: Id=%-30s  Hour=%-3d Min=%-3d  TimeTakne=%-4d \n", rs.Id, h, m, time.Now().UnixMilli()-start.UnixMilli())
 			fmt.Println("Result Ok", rs)
