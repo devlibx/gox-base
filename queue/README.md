@@ -31,7 +31,6 @@ When can `process_at` go out of `archive_after`:
 
 ```sql
 
-
 CREATE TABLE `jobs`
 (
     `id`                varchar(40)      NOT NULL,
