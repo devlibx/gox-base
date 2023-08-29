@@ -20,15 +20,33 @@ func (t *topRowFinder) Stop() {
 }
 
 func (t *topRowFinder) internalStart() {
+	errorCount := 1
 	for {
 		var _time string
 		err := t.db.QueryRow("SELECT process_at FROM jobs WHERE tenant=? AND state=? AND job_type=? order by process_at asc", t.tenant, queue.StatusScheduled, t.jobType).Scan(&_time)
 		if err == nil && _time != "" {
 			t.smallestProcessAtTime, _ = time.Parse("2006-01-02 15:04:05", _time)
-			time.Sleep(100 * time.Millisecond)
+
+			// Wait for sometime
+			select {
+			case <-time.After(1 * time.Second):
+				break // No op
+			case ev, closed := <-t.refreshChannel:
+				if closed {
+					if ev.time.IsZero() {
+						time.Sleep(10 * time.Millisecond)
+					} else {
+						if t.smallestProcessAtTime.After(ev.time) {
+							time.Sleep(10 * time.Millisecond)
+						}
+					}
+				}
+			}
+
 		} else {
 			time.Sleep(1 * time.Second)
-			if t.smallestProcessAtTime.IsZero() {
+			errorCount++
+			if t.smallestProcessAtTime.IsZero() && errorCount%9 == 0 {
 				t.logger.Info("[WARN - expected at boot-up] did not find smallest processed at time or if there is not job for given job type", zap.Int("jobType", t.jobType), zap.Int("tenant", t.tenant))
 			}
 		}
@@ -82,6 +100,12 @@ func (q *queueImpl) internalPoll(ctx context.Context, req queue.PollRequest) (re
 	err = tx.QueryRow(pollQuery, processAt, req.Tenant, req.JobType, queue.StatusScheduled, partitionTime).Scan(&result.Id, &remainingRetries)
 	if errors1.Is(err, sql.ErrNoRows) {
 		err = errors.Wrap(queue.NoJobsToRunAtCurrently, "jobType=%d tenant=%d topTime=%s", req.JobType, req.Tenant, processAt.String())
+
+		// Push event to make sure we refresh asap
+		if rf, ok := q.topRowFinderCron[req.JobType]; ok {
+			rf.refreshChannel <- refreshEvent{time: processAt}
+		}
+
 		return nil, err
 	} else if err != nil {
 		err = fmt.Errorf("failed to find top row for jobType=%d tenant=%d topTime=%s", req.JobType, req.Tenant, processAt.String())

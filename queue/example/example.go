@@ -66,8 +66,9 @@ func main() {
 
 	}()
 
+	time.Sleep(2 * time.Second)
 	go func() {
-		for i := 0; i < 10; i++ {
+		for i := 0; i < 50; i++ {
 			go func() {
 				poll(appQueue)
 			}()
@@ -119,6 +120,7 @@ func poll(appQueue queue.Queue) {
 			Tenant:  11,
 			JobType: 1,
 		})
+		_ = rs
 		if err != nil {
 			if errors1.Is(err, queue.NoJobsToRunAtCurrently) {
 				time.Sleep(1 * time.Second)
@@ -128,7 +130,7 @@ func poll(appQueue queue.Queue) {
 			}
 		} else {
 			// fmt.Printf("Result = Ok: Id=%-30s  Hour=%-3d Min=%-3d  TimeTakne=%-4d \n", rs.Id, h, m, time.Now().UnixMilli()-start.UnixMilli())
-			fmt.Println("Result Ok", rs)
+			// fmt.Println("Result Ok", rs)
 			time.Sleep(10 * time.Millisecond)
 		}
 	}

@@ -31,6 +31,10 @@ type queueImpl struct {
 	topRowFinderCron      map[int]*topRowFinder
 }
 
+type refreshEvent struct {
+	time time.Time
+}
+
 type topRowFinder struct {
 	jobType               int
 	tenant                int
@@ -38,6 +42,8 @@ type topRowFinder struct {
 	db                    *sql.DB
 	logger                *zap.Logger
 	stop                  bool
+
+	refreshChannel chan refreshEvent
 }
 
 func NewQueue(cf gox.CrossFunction, storeBackend queue.StoreBackend, queueConfig queue.MySqlBackedQueueConfig, idGenerator queue.IdGenerator, queryRewriter queue.QueryRewriter) (*queueImpl, error) {
@@ -65,7 +71,14 @@ func NewQueue(cf gox.CrossFunction, storeBackend queue.StoreBackend, queueConfig
 		queueConfig.MaxJobType = 1
 	}
 	for i := 1; i <= queueConfig.MaxJobType; i++ {
-		q.topRowFinderCron[i] = &topRowFinder{db: db, jobType: i, tenant: queueConfig.Tenant, logger: q.logger}
+		q.topRowFinderCron[i] = &topRowFinder{
+			db:             db,
+			jobType:        i,
+			tenant:         queueConfig.Tenant,
+			logger:         q.logger,
+			refreshChannel: make(chan refreshEvent, 10),
+		}
+		q.topRowFinderCron[i].refreshChannel <- refreshEvent{}
 		q.topRowFinderCron[i].Start()
 	}
 
