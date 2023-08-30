@@ -3,6 +3,7 @@ module github.com/devlibx/gox-base
 go 1.15
 
 require (
+	github.com/bombsimon/mysql-error-numbers v1.1.0
 	github.com/fatih/structs v1.1.0
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/go-sql-driver/mysql v1.7.1

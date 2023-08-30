@@ -4,16 +4,24 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	_ "github.com/bombsimon/mysql-error-numbers"
+	mysqlerrnum "github.com/bombsimon/mysql-error-numbers"
 	"github.com/devlibx/gox-base/errors"
 	"github.com/devlibx/gox-base/queue"
+	"github.com/go-sql-driver/mysql"
 	"github.com/sethvargo/go-retry"
+	"go.uber.org/zap"
 	"time"
 )
 
 func (q *queueImpl) Schedule(ctx context.Context, req queue.ScheduleRequest) (result *queue.ScheduleResponse, err error) {
 	if err = retry.Exponential(ctx, 1*time.Second, func(ctx context.Context) error {
 		if result, err = q.internalSchedule(ctx, req); err != nil {
-			fmt.Println("TODO - put retry")
+			var e *mysql.MySQLError
+			if errors.As(err, &e) && e.Number == mysqlerrnum.ER_LOCK_WAIT_TIMEOUT {
+				q.logger.Info("[retry] error in scheduling job", zap.String("error", e.Error()))
+				return nil
+			}
 			return err
 		}
 		return err
