@@ -12,7 +12,12 @@ import (
 	"time"
 )
 
+var useV1 = true
+
 func (t *topRowFinder) Start() {
+	if useV1 {
+		return
+	}
 	t.internalStart(true)
 	go t.internalStart(false)
 }
@@ -98,6 +103,9 @@ func (t *topRowFinder) internalStart(runOnce bool) {
 }
 
 func (q *queueImpl) Poll(ctx context.Context, req queue.PollRequest) (*queue.PollResponse, error) {
+	if useV1 {
+		return q.internalPollV1(ctx, req)
+	}
 	return q.internalPoll(ctx, req)
 }
 
