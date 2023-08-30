@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/devlibx/gox-base/errors"
 	"github.com/devlibx/gox-base/queue"
+	"github.com/oklog/ulid/v2"
 	errors1 "github.com/pkg/errors"
 	"go.uber.org/zap"
 	"time"
@@ -23,7 +24,7 @@ func (t *topRowFinder) Stop() {
 func (t *topRowFinder) internalStart(runOnce bool) {
 	errorCount := 1
 
-	query := "SELECT process_at FROM jobs WHERE tenant=? AND state=? AND job_type=? order by process_at asc"
+	query := "select MIN(id) FROM jobs WHERE tenant=? AND state=? AND job_type=?"
 	query = t.queryRewriter.RewriteQuery("jobs", query)
 	if t.usePreparedStatement && t.findTopProcessAtQueryStmt == nil {
 		t.findTopProcessAtQueryStmt, _ = t.db.PrepareContext(context.Background(), query)
@@ -32,14 +33,20 @@ func (t *topRowFinder) internalStart(runOnce bool) {
 	for {
 		var _time string
 		var err error
+		ctxQ, cancelFunc := context.WithTimeout(context.Background(), 10*time.Second)
+		t.logger.Debug("[start] find the top process at from queue", zap.Int("jobType", t.jobType), zap.Int("tenant", t.tenant))
 		if t.findTopProcessAtQueryStmt != nil {
-			err = t.findTopProcessAtQueryStmt.QueryRowContext(context.Background(), t.tenant, queue.StatusScheduled, t.jobType).Scan(&_time)
+			err = t.findTopProcessAtQueryStmt.QueryRowContext(ctxQ, t.tenant, queue.StatusScheduled, t.jobType).Scan(&_time)
 		} else {
-			// err = t.db.QueryRow("SELECT process_at FROM jobs WHERE tenant=? AND state=? AND job_type=? order by process_at asc", t.tenant, queue.StatusScheduled, t.jobType).Scan(&_time)
-			err = t.db.QueryRow(query, t.tenant, queue.StatusScheduled, t.jobType).Scan(&_time)
+			err = t.db.QueryRowContext(ctxQ, query, t.tenant, queue.StatusScheduled, t.jobType).Scan(&_time)
 		}
+		cancelFunc()
+
+		t.logger.Debug("[end] find the top process at from queue", zap.Int("jobType", t.jobType), zap.Int("tenant", t.tenant))
 		if err == nil && _time != "" {
-			t.smallestProcessAtTime, _ = time.Parse("2006-01-02 15:04:05", _time)
+			a := ulid.MustParse(_time)
+			t.smallestProcessAtTime = time.UnixMilli(int64(a.Time()))
+			// t.smallestProcessAtTime, _ = time.Parse("2006-01-02 15:04:05", _time)
 
 			// We are done return - this has to run only once at boot
 			// NOTE - runOnce is true only at the time of boot
@@ -48,22 +55,30 @@ func (t *topRowFinder) internalStart(runOnce bool) {
 			}
 
 			// Wait for sometime
+		noOp:
 			select {
 			case <-time.After(1 * time.Second):
 				break // No op
 			case ev, closed := <-t.refreshChannel:
 				if closed {
 					if ev.time.IsZero() {
-						time.Sleep(10 * time.Millisecond)
+						// time.Sleep(10 * time.Millisecond)
 					} else {
 						if t.smallestProcessAtTime.After(ev.time) {
-							time.Sleep(10 * time.Millisecond)
+							// time.Sleep(10 * time.Millisecond)
+							t.logger.Debug("* ignore - request to find the top process at from queue *")
+							goto noOp
+						} else {
+							t.logger.Debug("request to find the top process at from queue", zap.Int("jobType", t.jobType), zap.Int("tenant", t.tenant), zap.String("time", ev.time.Local().String()))
 						}
 					}
+				} else {
+					time.Sleep(10 * time.Millisecond)
 				}
 			}
 
 		} else {
+			t.logger.Debug("not able to fetch the smallest value", zap.Error(err))
 			time.Sleep(1 * time.Second)
 			errorCount++
 			if t.smallestProcessAtTime.IsZero() && errorCount%9 == 0 {

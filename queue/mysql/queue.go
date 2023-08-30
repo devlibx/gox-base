@@ -76,14 +76,14 @@ func NewQueue(cf gox.CrossFunction, storeBackend queue.StoreBackend, queueConfig
 
 		pollQueryStatementInitOnce: &sync.Once{},
 
-		usePreparedStatement: true,
+		usePreparedStatement: queueConfig.UsePreparedStatement,
 	}
 
 	// Run job top finder - we can configure max job type id
 	if queueConfig.MaxJobType <= 0 {
 		queueConfig.MaxJobType = 1
 	}
-	for i := 1; i <= queueConfig.MaxJobType; i++ {
+	for i := 1; i <= queueConfig.MaxJobType && !queueConfig.DontRunPoller; i++ {
 		q.topRowFinderCron[i] = &topRowFinder{
 			db:                   db,
 			jobType:              i,
@@ -91,7 +91,7 @@ func NewQueue(cf gox.CrossFunction, storeBackend queue.StoreBackend, queueConfig
 			logger:               q.logger,
 			queryRewriter:        queryRewriter,
 			usePreparedStatement: q.usePreparedStatement,
-			refreshChannel:       make(chan refreshEvent, 10),
+			refreshChannel:       make(chan refreshEvent, 2),
 		}
 		q.topRowFinderCron[i].refreshChannel <- refreshEvent{}
 		q.topRowFinderCron[i].Start()
