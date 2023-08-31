@@ -8,6 +8,7 @@ import (
 	mysqlerrnum "github.com/bombsimon/mysql-error-numbers"
 	"github.com/devlibx/gox-base/errors"
 	"github.com/devlibx/gox-base/queue"
+	"github.com/devlibx/gox-base/serialization"
 	"github.com/go-sql-driver/mysql"
 	"github.com/sethvargo/go-retry"
 	"go.uber.org/zap"
@@ -122,15 +123,20 @@ func (q *queueImpl) internalScheduleV1(ctx context.Context, req queue.ScheduleRe
 	archiveAfter := partitionBasedOnProcessAtTime(processAt)
 
 	// Metadata
-	var properties interface{}
-	properties = `{"": ""}`
+	properties := `{"": ""}`
 	if req.Properties != nil {
-		properties = req.Properties
-		if jsonData, err := json.Marshal(req.Properties); err == nil {
-			properties = jsonData
-		} else {
+		// properties = req.Properties
+		if properties, err = serialization.Stringify(req.Properties); err != nil {
 			return nil, fmt.Errorf("failed to persist (metadata is bad): %w", err)
 		}
+		/*
+			if jsonData, err := json.Marshal(req.Properties); err == nil {
+				properties = jsonData
+			} else {
+				return nil, fmt.Errorf("failed to persist (metadata is bad): %w", err)
+			}
+			*
+		*/
 	}
 
 	// Generate insert job data statement

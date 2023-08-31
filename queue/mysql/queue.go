@@ -37,6 +37,11 @@ type queueImpl struct {
 
 	jobTypeRowInfo map[int]*jobTypeRowInfo
 
+	readJobDetailsOnce          *sync.Once
+	readJobDetailsStatement     *sql.Stmt
+	readJobDataDetailsStatement *sql.Stmt
+	updateJobStatusStatement    *sql.Stmt
+
 	usePreparedStatement       bool
 	useMinQueryToPickLatestRow bool
 }
@@ -85,6 +90,8 @@ func NewQueue(cf gox.CrossFunction, storeBackend queue.StoreBackend, queueConfig
 		useMinQueryToPickLatestRow: queueConfig.UseMinQueryToPickLatestRow,
 
 		jobTypeRowInfo: map[int]*jobTypeRowInfo{},
+
+		readJobDetailsOnce: &sync.Once{},
 	}
 
 	// Run job top finder - we can configure max job type id

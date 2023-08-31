@@ -229,5 +229,16 @@ tryRefreshingSmallestScheduledJobProcessTime:
 	} else if noOfUpdatedRecords, err = res.RowsAffected(); err == nil && noOfUpdatedRecords == 0 {
 		err = fmt.Errorf("failed to update the job table (concurrent update): %w id=%s", err, result.Id)
 	}
+
 	return
+}
+
+func (q *queueImpl) idToTime(id string) (result time.Time, err error) {
+	var i ulid.ULID
+	if i, err = ulid.Parse(id); err == nil {
+		result = time.UnixMilli(int64(i.Time()))
+	} else {
+		err = errors.Wrap(err, "failed to get time from id: id=%s", i)
+	}
+	return result, err
 }

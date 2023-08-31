@@ -21,6 +21,7 @@ var (
 	SubStatusDone                   = StatusDone*10 + 0
 	SubStatusDoneDueToCorrelatedJob = StatusDone*10 + 1
 	SubStatusInternalError          = StatusFailed*10 + 1
+	SubStatusApplicationError       = StatusFailed*10 + 2
 	SubStatusNoRetryPendingError    = StatusFailed*10 + 2
 )
 
@@ -47,6 +48,9 @@ type Queue interface {
 
 	// Poll method will put this request on the queue to be executed on the time
 	Poll(ctx context.Context, req PollRequest) (*PollResponse, error)
+
+	FetchJobDetails(ctx context.Context, req JobDetailsRequest) (result *JobDetailsResponse, err error)
+	UpdateJobStatus(ctx context.Context, id string, state int, reason string) (err error)
 }
 
 // ScheduleRequest is a request to schedule a run of this job
@@ -99,6 +103,41 @@ type PollResponse struct {
 	Id                  string
 	RecordPartitionTime time.Time
 	ProcessAtTimeUsed   time.Time
+}
+
+// JobDetailsRequest response of schedule
+type JobDetailsRequest struct {
+	Id string
+}
+
+// JobDetailsResponse response of schedule
+type JobDetailsResponse struct {
+	Id string
+
+	At time.Time
+
+	// Job types
+	JobType  int
+	State    int
+	SubState int
+
+	// Tenant - default is 0
+	Tenant int
+
+	// CorrelationId will help jobs to be linked together - when a job succeeds it will mark all jobs to be completed
+	CorrelationId string
+
+	// How many times this job can run (1 time for each + max no of retries)
+	// e.g. If it is set 4 then it will run once and in case of error it will be retried 3 times
+	RemainingExecution int
+
+	// UDF for application usage - these will be indexed
+	StringUdf1 string
+	StringUdf2 string
+	IntUdf1    int
+	IntUdf2    int
+
+	Properties map[string]interface{}
 }
 
 func (s PollResponse) String() string {
