@@ -115,15 +115,15 @@ func (q *queueImpl) internalPollV1(ctx context.Context, req queue.PollRequest) (
 		if p := recover(); p != nil {
 			q.logger.Error("found error in polling", zap.Any("error", p))
 			if e := tx.Rollback(); e != nil {
-				q.logger.Error("something is wrong - tx failed to rollback after panic")
+				q.logger.Error("something is wrong - tx failed to rollback after panic", zap.Error(e))
 			}
 		} else if err != nil {
 			if e := tx.Rollback(); e != nil {
-				q.logger.Error("something is wrong - tx failed to rollback")
+				q.logger.Error("something is wrong - tx failed to rollback", zap.Error(e))
 			}
 		} else {
 			if e := tx.Commit(); e != nil {
-				q.logger.Error("something is wrong - tx failed to commit")
+				q.logger.Error("something is wrong - tx failed to commit", zap.Error(e))
 			}
 		}
 	}()
