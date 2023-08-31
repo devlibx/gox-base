@@ -60,7 +60,6 @@ func (q *queueImpl) internalSchedule(ctx context.Context, req queue.ScheduleRequ
 			return nil, fmt.Errorf("failed to persist (metadata is bad): %w", err)
 		}
 	}
-
 	// Begin a transaction
 	tx, err := q.db.Begin()
 	if err != nil {

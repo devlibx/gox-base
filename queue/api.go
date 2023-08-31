@@ -22,7 +22,9 @@ var (
 	SubStatusDoneDueToCorrelatedJob = StatusDone*10 + 1
 	SubStatusInternalError          = StatusFailed*10 + 1
 	SubStatusApplicationError       = StatusFailed*10 + 2
-	SubStatusNoRetryPendingError    = StatusFailed*10 + 2
+
+	SubStatusNoRetryPendingError = StatusFailed*10 + 2
+	SubStatusRetryPendingError   = StatusFailed*10 + 2
 )
 
 // ErrNoMoreRetry indicate that no more retries are needed
@@ -50,7 +52,9 @@ type Queue interface {
 	Poll(ctx context.Context, req PollRequest) (*PollResponse, error)
 
 	FetchJobDetails(ctx context.Context, req JobDetailsRequest) (result *JobDetailsResponse, err error)
-	UpdateJobStatus(ctx context.Context, id string, state int, reason string) (err error)
+
+	MarkJobCompletedWithRetry(ctx context.Context, req MarkJobFailedWithRetryRequest) (result *MarkJobFailedWithRetryResponse, err error)
+	MarkJobCompleted(ctx context.Context, req MarkJobCompletedRequest) (result *MarkJobCompletedResponse, err error)
 }
 
 // ScheduleRequest is a request to schedule a run of this job
@@ -108,6 +112,26 @@ type PollResponse struct {
 // JobDetailsRequest response of schedule
 type JobDetailsRequest struct {
 	Id string
+}
+
+// MarkJobFailedWithRetryRequest mark it failed and set for retry
+type MarkJobFailedWithRetryRequest struct {
+	Id              string
+	Reason          string
+	ScheduleRetryAt time.Time
+}
+
+// MarkJobFailedWithRetryResponse mark it failed and set for retry
+type MarkJobFailedWithRetryResponse struct {
+	RetryJobId string
+	Done       bool
+}
+
+type MarkJobCompletedRequest struct {
+	Id string
+}
+
+type MarkJobCompletedResponse struct {
 }
 
 // JobDetailsResponse response of schedule
