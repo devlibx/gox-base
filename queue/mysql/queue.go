@@ -22,6 +22,10 @@ type queueImpl struct {
 	updatePollRecordStatement  *sql.Stmt
 	pollQueryStatementInitOnce *sync.Once
 
+	insertJobStatement     *sql.Stmt
+	insertJobDataStatement *sql.Stmt
+	insertJobStatementOnce *sync.Once
+
 	initOnce  *sync.Once
 	closeOnce *sync.Once
 
@@ -31,9 +35,6 @@ type queueImpl struct {
 	queryRewriter queue.QueryRewriter
 
 	logger *zap.Logger
-
-	topRowFinderCronMutex *sync.RWMutex
-	topRowFinderCron      map[int]*topRowFinder
 
 	jobTypeRowInfo map[int]*jobTypeRowInfo
 
@@ -48,21 +49,6 @@ type queueImpl struct {
 
 type refreshEvent struct {
 	time time.Time
-}
-
-type topRowFinder struct {
-	jobType               int
-	tenant                int
-	smallestProcessAtTime time.Time
-	db                    *sql.DB
-	logger                *zap.Logger
-	stop                  bool
-	queryRewriter         queue.QueryRewriter
-	refreshChannel        chan refreshEvent
-
-	usePreparedStatement          bool
-	findTopProcessAtQueryStmt     *sql.Stmt
-	findTopProcessAtQueryStmtOnce *sync.Once
 }
 
 func NewQueue(cf gox.CrossFunction, storeBackend queue.StoreBackend, queueConfig queue.MySqlBackedQueueConfig, idGenerator queue.IdGenerator, queryRewriter queue.QueryRewriter) (*queueImpl, error) {
@@ -81,9 +67,6 @@ func NewQueue(cf gox.CrossFunction, storeBackend queue.StoreBackend, queueConfig
 		queryRewriter: queryRewriter,
 		logger:        cf.Logger().Named("scheduler"),
 
-		topRowFinderCron:      map[int]*topRowFinder{},
-		topRowFinderCronMutex: &sync.RWMutex{},
-
 		pollQueryStatementInitOnce: &sync.Once{},
 
 		usePreparedStatement:       queueConfig.UsePreparedStatement,
@@ -91,28 +74,11 @@ func NewQueue(cf gox.CrossFunction, storeBackend queue.StoreBackend, queueConfig
 
 		jobTypeRowInfo: map[int]*jobTypeRowInfo{},
 
-		readJobDetailsOnce: &sync.Once{},
+		readJobDetailsOnce:     &sync.Once{},
+		insertJobStatementOnce: &sync.Once{},
 	}
 
 	// Run job top finder - we can configure max job type id
-	if queueConfig.MaxJobType <= 0 {
-		queueConfig.MaxJobType = 1
-	}
-	for i := 1; i <= queueConfig.MaxJobType && !queueConfig.DontRunPoller; i++ {
-		q.topRowFinderCron[i] = &topRowFinder{
-			db:                            db,
-			jobType:                       i,
-			tenant:                        queueConfig.Tenant,
-			logger:                        q.logger,
-			queryRewriter:                 queryRewriter,
-			usePreparedStatement:          q.usePreparedStatement,
-			refreshChannel:                make(chan refreshEvent, 2),
-			findTopProcessAtQueryStmtOnce: &sync.Once{},
-		}
-		q.topRowFinderCron[i].refreshChannel <- refreshEvent{}
-		q.topRowFinderCron[i].Start()
-	}
-
 	for i := 1; i <= queueConfig.MaxJobType && !queueConfig.DontRunPoller; i++ {
 		q.jobTypeRowInfo[i] = &jobTypeRowInfo{
 			jobType:                         i,

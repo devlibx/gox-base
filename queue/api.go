@@ -82,6 +82,8 @@ type ScheduleRequest struct {
 	IntUdf2    int
 
 	Properties map[string]interface{}
+
+	InternalTx *sql.Tx
 }
 
 func (s ScheduleRequest) String() string {
@@ -117,7 +119,6 @@ type JobDetailsRequest struct {
 // MarkJobFailedWithRetryRequest mark it failed and set for retry
 type MarkJobFailedWithRetryRequest struct {
 	Id              string
-	Reason          string
 	ScheduleRetryAt time.Time
 }
 

@@ -58,6 +58,10 @@ func (j *jobTypeRowInfo) ensureSmallestScheduledJobProcessTime(ctx context.Conte
 	return
 }
 
+func (q *queueImpl) Poll(ctx context.Context, req queue.PollRequest) (*queue.PollResponse, error) {
+	return q.internalPollV1(ctx, req)
+}
+
 func (q *queueImpl) initPollQueriesV1(ctx context.Context) (pollQuery string, updatePollResultQuery string, err error) {
 
 	// Build poll query with table rewrite
