@@ -30,10 +30,13 @@ var ErrNoMoreRetry = errors.New("do not retry anymore")
 var NoJobsToRunAtCurrently = errors.New("queue does not have a job to run now")
 
 type MySqlBackedQueueConfig struct {
-	Tenant               int  `json:"tenant,omitempty"`
-	MaxJobType           int  `json:"max_job_type,omitempty"`
-	UsePreparedStatement bool `json:"use_prepared_statement"`
-	DontRunPoller        bool
+	Tenant     int `json:"tenant,omitempty"`
+	MaxJobType int `json:"max_job_type,omitempty"`
+
+	UsePreparedStatement       bool `json:"use_prepared_statement"`
+	UseMinQueryToPickLatestRow bool `json:"use_min_query_to_pick_latest_row"`
+
+	DontRunPoller bool
 }
 
 // Queue is an interface to provide all queue related methods. It allows you to schedule, poll etc

@@ -61,7 +61,11 @@ func (j *jobTypeRowInfo) ensureSmallestScheduledJobProcessTime(ctx context.Conte
 func (q *queueImpl) initPollQueriesV1(ctx context.Context) (pollQuery string, updatePollResultQuery string, err error) {
 
 	// Build poll query with table rewrite
-	pollQuery = "SELECT id, pending_execution FROM jobs WHERE process_at=? AND tenant=? AND job_type=? AND state=? AND part=? LIMIT 1 FOR UPDATE SKIP LOCKED"
+	if q.useMinQueryToPickLatestRow {
+		pollQuery = "select MIN(id) from jobs where tenant=? AND state=? AND job_type=?  for update SKIP LOCKED"
+	} else {
+		pollQuery = "SELECT id, pending_execution FROM jobs WHERE process_at=? AND tenant=? AND job_type=? AND state=? AND part=? LIMIT 1 FOR UPDATE SKIP LOCKED"
+	}
 	pollQuery = q.queryRewriter.RewriteQuery("jobs", pollQuery)
 
 	// Build update query with table rewrite
@@ -169,7 +173,18 @@ tryRefreshingSmallestScheduledJobProcessTime:
 	partitionTime := partitionBasedOnProcessAtTime(processAt)
 	result = &queue.PollResponse{RecordPartitionTime: partitionTime, ProcessAtTimeUsed: processAt}
 
-	if q.usePreparedStatement {
+	if q.usePreparedStatement && q.useMinQueryToPickLatestRow {
+		var resultId sql.NullString
+		remainingRetries = 1
+		err = tx.StmtContext(ctx, q.pollQueryStatement).
+			QueryRowContext(ctx, req.Tenant, req.JobType, queue.StatusScheduled).
+			Scan(&resultId)
+		if err == nil && resultId.Valid {
+			result.Id = resultId.String
+		} else {
+			err = errors.Wrap(sql.ErrNoRows, "no rows found with min(id)")
+		}
+	} else if q.usePreparedStatement {
 		err = tx.StmtContext(ctx, q.pollQueryStatement).
 			QueryRowContext(ctx, processAt, req.Tenant, req.JobType, queue.StatusScheduled, partitionTime).
 			Scan(&result.Id, &remainingRetries)

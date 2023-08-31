@@ -37,7 +37,8 @@ type queueImpl struct {
 
 	jobTypeRowInfo map[int]*jobTypeRowInfo
 
-	usePreparedStatement bool
+	usePreparedStatement       bool
+	useMinQueryToPickLatestRow bool
 }
 
 type refreshEvent struct {
@@ -80,7 +81,8 @@ func NewQueue(cf gox.CrossFunction, storeBackend queue.StoreBackend, queueConfig
 
 		pollQueryStatementInitOnce: &sync.Once{},
 
-		usePreparedStatement: queueConfig.UsePreparedStatement,
+		usePreparedStatement:       queueConfig.UsePreparedStatement,
+		useMinQueryToPickLatestRow: queueConfig.UseMinQueryToPickLatestRow,
 
 		jobTypeRowInfo: map[int]*jobTypeRowInfo{},
 	}
