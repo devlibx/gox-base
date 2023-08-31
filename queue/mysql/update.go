@@ -14,10 +14,9 @@ func (q *queueImpl) MarkJobCompletedWithRetry(ctx context.Context, req queue.Mar
 
 	// Get the partition time
 	part := time.Time{}
-	if part, err = q.idToTime(req.Id); err != nil {
+	if part, err = queue.GeneratePartitionTimeByRecordId(req.Id); err != nil {
 		return nil, errors.Wrap(err, "not able to get time out of id: id=%s", req.Id)
 	}
-	part = partitionBasedOnProcessAtTime(part)
 
 	var jobFetchResponse *queue.JobDetailsResponse
 	if jobFetchResponse, err = q.FetchJobDetails(ctx, queue.JobDetailsRequest{Id: req.Id}); err != nil {
@@ -87,10 +86,9 @@ func (q *queueImpl) MarkJobCompleted(ctx context.Context, req queue.MarkJobCompl
 
 	// Get the partition time
 	part := time.Time{}
-	if part, err = q.idToTime(req.Id); err != nil {
+	if part, err = queue.GeneratePartitionTimeByRecordId(req.Id); err != nil {
 		return nil, errors.Wrap(err, "not able to get time out of id: id=%s", req.Id)
 	}
-	part = partitionBasedOnProcessAtTime(part)
 
 	// Mark it done
 	if _, err = q.updateJobStatusStatement.ExecContext(ctx, queue.StatusDone, queue.SubStatusDone, req.Id, part); err != nil {

@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/devlibx/gox-base"
+	errors2 "github.com/devlibx/gox-base/errors"
+	"github.com/oklog/ulid/v2"
 	"strings"
 	"time"
 )
@@ -235,4 +237,57 @@ func (n *UdfAndTableNameQueryRewriter) RewriteQuery(table string, input string) 
 	}
 
 	return input
+}
+
+func GeneratePartitionTimeByRecordId(id string) (time.Time, error) {
+	if t, err := RecordIdToTime(id); err != nil {
+		return time.Time{}, err
+	} else {
+		return InternalImplEndOfWeek(t), nil
+	}
+}
+
+func RecordIdToTime(id string) (time.Time, error) {
+	if i, err := ulid.Parse(id); err == nil {
+		return time.UnixMilli(int64(i.Time())), nil
+	} else {
+		return time.Time{}, errors2.Wrap(err, "failed to get time from id: id=%s", i)
+	}
+}
+
+func InternalImplEndOfWeek(inputTime time.Time) time.Time {
+	inputTime = inputTime.Truncate(time.Hour).Add(time.Duration(-1 * inputTime.Hour()))
+	daysUntilSunday := 0
+	switch inputTime.Weekday() {
+	case time.Monday:
+		daysUntilSunday = 6
+		break
+	case time.Tuesday:
+		daysUntilSunday = 5
+		break
+	case time.Wednesday:
+		daysUntilSunday = 4
+		break
+	case time.Thursday:
+		daysUntilSunday = 3
+		break
+	case time.Friday:
+		daysUntilSunday = 2
+		break
+	case time.Saturday:
+		daysUntilSunday = 1
+		break
+	case time.Sunday:
+		daysUntilSunday = 0
+		break
+	}
+
+	// Use the Add method to add the remaining days to the input time.
+
+	endOfWeekTime := inputTime.Add(time.Duration(daysUntilSunday) * 24 * time.Hour)
+
+	// Set the time to the end of the day (23:59:59).
+	endOfWeekTime = time.Date(endOfWeekTime.Year(), endOfWeekTime.Month(), endOfWeekTime.Day(), 23, 59, 59, 0, time.Now().Location())
+
+	return endOfWeekTime
 }

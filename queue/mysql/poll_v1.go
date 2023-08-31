@@ -101,6 +101,82 @@ func (q *queueImpl) ensureWeMarkJobsWithNoRemainingTryProperly(ctx context.Conte
 
 func (q *queueImpl) internalPollV1(ctx context.Context, req queue.PollRequest) (result *queue.PollResponse, err error) {
 
+	// Make sure we have poll and update query statment ready
+	if _, _, err = q.initPollQueriesV1(ctx); err != nil {
+		return nil, errors.Wrap(err, "failed to build poll and update query")
+	}
+
+	// Begin a transaction
+	tx, err := q.db.Begin()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to begin txn to schedule job")
+	}
+	defer func() {
+		if p := recover(); p != nil {
+			q.logger.Error("found error in polling", zap.Any("error", p))
+			if e := tx.Rollback(); e != nil {
+				q.logger.Error("something is wrong - tx failed to rollback after panic")
+			}
+		} else if err != nil {
+			if e := tx.Rollback(); e != nil {
+				q.logger.Error("something is wrong - tx failed to rollback")
+			}
+		} else {
+			if e := tx.Commit(); e != nil {
+				q.logger.Error("something is wrong - tx failed to commit")
+			}
+		}
+	}()
+
+	// Ensure we have the smallest scheduled time - read lock to see if we have it already
+	partitionTime := time.Time{}
+	processAt := time.Time{}
+	result = &queue.PollResponse{}
+	var resultId sql.NullString
+
+	err = tx.StmtContext(ctx, q.pollQueryStatement).QueryRowContext(ctx, req.Tenant, req.JobType, queue.StatusScheduled).Scan(&resultId)
+	if err == nil && resultId.Valid {
+
+		// This is the ID we picked from index (min record)
+		result.Id = resultId.String
+
+		// Get the partition data and process at - partition data is needed to update the record status
+		if partitionTime, err = queue.GeneratePartitionTimeByRecordId(result.Id); err == nil {
+			if processAt, err = queue.RecordIdToTime(result.Id); err == nil {
+				result = &queue.PollResponse{RecordPartitionTime: partitionTime, ProcessAtTimeUsed: processAt, Id: result.Id}
+			} else {
+				err = errors.Wrap(err, "failed to build process at time from result id: %s", result.Id)
+			}
+		} else {
+			err = errors.Wrap(err, "failed to build partition time from result id: %s", result.Id)
+		}
+	} else {
+		err = errors.Wrap(sql.ErrNoRows, "no rows found with min(id)")
+	}
+
+	if pkgErrors.Is(err, sql.ErrNoRows) {
+		err = errors.Wrap(queue.NoJobsToRunAtCurrently, "jobType=%d tenant=%d topTime=%s", req.JobType, req.Tenant, processAt.String())
+		return
+	} else if err != nil {
+		err = fmt.Errorf("failed to find top row for jobType=%d tenant=%d topTime=%s err=%w", req.JobType, req.Tenant, processAt.String(), err)
+		return
+	}
+
+	// Update the row within the same transaction
+	var updateStatusResult sql.Result
+	var noOfUpdatedRecords int64
+	updateStatusResult, err = tx.StmtContext(ctx, q.updatePollRecordStatement).ExecContext(ctx, queue.StatusProcessing, result.Id, partitionTime)
+	if err != nil {
+		err = fmt.Errorf("failed to update the job table pending_execution: %w id=%s", err, result.Id)
+	} else if noOfUpdatedRecords, err = updateStatusResult.RowsAffected(); err == nil && noOfUpdatedRecords == 0 {
+		err = fmt.Errorf("failed to update the job table (concurrent update - mysql update query gave zero result): id=%s", result.Id)
+	}
+
+	return
+}
+
+func (q *queueImpl) internalPollV1_OLD_DONT_USE(ctx context.Context, req queue.PollRequest) (result *queue.PollResponse, err error) {
+
 	// Step 1 - make sure we have configured this job type - jobTypeRowInfo contains the smallest time for this job type and tenant
 	var jobTypeRowInfoObj *jobTypeRowInfo
 	var ok bool
@@ -174,7 +250,7 @@ tryRefreshingSmallestScheduledJobProcessTime:
 
 	// Params to query for top job
 	remainingRetries := 0
-	partitionTime := partitionBasedOnProcessAtTime(processAt)
+	partitionTime := queue.InternalImplEndOfWeek(processAt)
 	result = &queue.PollResponse{RecordPartitionTime: partitionTime, ProcessAtTimeUsed: processAt}
 
 	if q.usePreparedStatement && q.useMinQueryToPickLatestRow {
@@ -184,7 +260,19 @@ tryRefreshingSmallestScheduledJobProcessTime:
 			QueryRowContext(ctx, req.Tenant, req.JobType, queue.StatusScheduled).
 			Scan(&resultId)
 		if err == nil && resultId.Valid {
+			// Get the result and now also update the partition time
 			result.Id = resultId.String
+			if partitionTime, err = queue.GeneratePartitionTimeByRecordId(result.Id); err == nil {
+				// Use the correct partition time and process at time
+				var rs time.Time
+				if rs, err = queue.RecordIdToTime(result.Id); err == nil {
+					result = &queue.PollResponse{RecordPartitionTime: partitionTime, ProcessAtTimeUsed: rs, Id: result.Id}
+				} else {
+					err = errors.Wrap(err, "failed to build process at time from result id: %s", result.Id)
+				}
+			} else {
+				err = errors.Wrap(err, "failed to build partition time from result id: %s", result.Id)
+			}
 		} else {
 			err = errors.Wrap(sql.ErrNoRows, "no rows found with min(id)")
 		}
@@ -231,7 +319,7 @@ tryRefreshingSmallestScheduledJobProcessTime:
 	if err != nil {
 		err = fmt.Errorf("failed to update the job table pending_execution: %w id=%s", err, result.Id)
 	} else if noOfUpdatedRecords, err = res.RowsAffected(); err == nil && noOfUpdatedRecords == 0 {
-		err = fmt.Errorf("failed to update the job table (concurrent update): %w id=%s", err, result.Id)
+		err = fmt.Errorf("failed to update the job table (concurrent update - mysql update query gave zero result): id=%s", result.Id)
 	}
 
 	return

@@ -38,10 +38,9 @@ func (q *queueImpl) internalJobDetails(ctx context.Context, req queue.JobDetails
 	part := time.Time{}
 	if err = q.jobInfoInit(); err != nil {
 		return nil, errors.Wrap(err, "something is wrong we were not able to init read")
-	} else if part, err = q.idToTime(req.Id); err != nil {
+	} else if part, err = queue.GeneratePartitionTimeByRecordId(req.Id); err != nil {
 		return nil, errors.Wrap(err, "not able to get time out of id: id=%s", req.Id)
 	}
-	part = partitionBasedOnProcessAtTime(part)
 
 	var cid, strUdf1, strUdf2, properties sql.NullString
 	var intUdf1, intUdf2 sql.NullInt64

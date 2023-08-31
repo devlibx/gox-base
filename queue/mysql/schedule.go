@@ -47,7 +47,7 @@ func (q *queueImpl) internalScheduleV1(ctx context.Context, req queue.ScheduleRe
 	subState := queue.SubStatusScheduledOk
 
 	// We get the partition based on the process At - by default it is end of next week
-	archiveAfter := partitionBasedOnProcessAtTime(processAt)
+	archiveAfter := queue.InternalImplEndOfWeek(processAt)
 
 	// Metadata
 	properties := `{"": ""}`
