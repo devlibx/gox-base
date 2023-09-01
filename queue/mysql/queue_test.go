@@ -97,6 +97,9 @@ func TestSchedule(t *testing.T) {
 		assert.Equal(t, 3, resultFromMySQL.RemainingExecution)
 		assert.Equal(t, testTenant, resultFromMySQL.Tenant)
 		assert.Equal(t, testJobType, resultFromMySQL.JobType)
+
+		// Mark old test jobs completed - otherwise they just pile up
+		_, _ = appQueue.MarkJobCompleted(ctx, queue.MarkJobCompletedRequest{Id: rs.Id})
 	})
 
 	t.Run("schedule a simple job and pull it back", func(t *testing.T) {
@@ -132,7 +135,8 @@ func TestSchedule(t *testing.T) {
 
 			// Job from some other test - ignore it
 			if pollResult.Id != rs.Id {
-				fmt.Println("pollResult.Id=", pollResult.Id, " rs.Id=", rs.Id)
+				// Mark old test jobs completed - otherwise they just pile up
+				_, _ = appQueue.MarkJobCompleted(ctx, queue.MarkJobCompletedRequest{Id: pollResult.Id})
 				continue
 			}
 			foundJob = true
@@ -146,6 +150,8 @@ func TestSchedule(t *testing.T) {
 			assert.Equal(t, testTenant, jobDetails.Tenant)
 			assert.Equal(t, testJobType, jobDetails.JobType)
 
+			// Mark old test jobs completed - otherwise they just pile up
+			_, _ = appQueue.MarkJobCompleted(ctx, queue.MarkJobCompletedRequest{Id: rs.Id})
 			break
 		}
 
