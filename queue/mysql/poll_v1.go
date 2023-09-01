@@ -101,7 +101,7 @@ func (q *queueImpl) ensureWeMarkJobsWithNoRemainingTryProperly(ctx context.Conte
 
 func (q *queueImpl) internalPollV1(ctx context.Context, req queue.PollRequest) (result *queue.PollResponse, err error) {
 
-	// Make sure we have poll and update query statment ready
+	// Make sure we have poll and update query statement ready
 	if _, _, err = q.initPollQueriesV1(ctx); err != nil {
 		return nil, errors.Wrap(err, "failed to build poll and update query")
 	}
@@ -134,7 +134,7 @@ func (q *queueImpl) internalPollV1(ctx context.Context, req queue.PollRequest) (
 	result = &queue.PollResponse{}
 	var resultId sql.NullString
 
-	err = tx.StmtContext(ctx, q.pollQueryStatement).QueryRowContext(ctx, req.Tenant, req.JobType, queue.StatusScheduled).Scan(&resultId)
+	err = tx.StmtContext(ctx, q.pollQueryStatement).QueryRowContext(ctx, req.Tenant, queue.StatusScheduled, req.JobType).Scan(&resultId)
 	if err == nil && resultId.Valid {
 
 		// This is the ID we picked from index (min record)

@@ -11,7 +11,7 @@ import (
 
 func (q *queueImpl) jobInfoInit() (err error) {
 	q.readJobDetailsOnce.Do(func() {
-		jobQuery := "select job_type, state, sub_state, correlation_id, pending_execution FROM jobs WHERE id=? AND part=?"
+		jobQuery := "select job_type, state, sub_state, correlation_id, pending_execution, tenant FROM jobs WHERE id=? AND part=?"
 		jobQuery = q.queryRewriter.RewriteQuery("jobs", jobQuery)
 		jobDataQuery := "select properties, string_udf_1, string_udf_2, int_udf_1, int_udf_2 FROM jobs_data WHERE id=? AND part=?"
 		jobDataQuery = q.queryRewriter.RewriteQuery("jobs_data", jobDataQuery)
@@ -44,7 +44,8 @@ func (q *queueImpl) internalJobDetails(ctx context.Context, req queue.JobDetails
 
 	var cid, strUdf1, strUdf2, properties sql.NullString
 	var intUdf1, intUdf2 sql.NullInt64
-	if err = q.readJobDetailsStatement.QueryRowContext(ctx, req.Id, part).Scan(&result.JobType, &result.State, &result.SubState, &cid, &result.RemainingExecution); err != nil {
+	var tenant sql.NullInt32
+	if err = q.readJobDetailsStatement.QueryRowContext(ctx, req.Id, part).Scan(&result.JobType, &result.State, &result.SubState, &cid, &result.RemainingExecution, &tenant); err != nil {
 		return nil, errors.Wrap(err, "failed to read job details: id=%s", req.Id)
 	} else if err = q.readJobDataDetailsStatement.QueryRowContext(ctx, req.Id, part).Scan(&properties, &strUdf1, &strUdf2, &intUdf1, &intUdf2); err != nil {
 		return nil, errors.Wrap(err, "failed to read job data details: id=%s", req.Id)
@@ -66,6 +67,9 @@ func (q *queueImpl) internalJobDetails(ctx context.Context, req queue.JobDetails
 	}
 	if cid.Valid {
 		result.IntUdf2 = int(intUdf1.Int64)
+	}
+	if tenant.Valid {
+		result.Tenant = int(tenant.Int32)
 	}
 
 	if properties.Valid {

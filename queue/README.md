@@ -30,10 +30,6 @@ When can `process_at` go out of `archive_after`:
 2. Your system is down for some time and could not process the jobs as of now
 
 ```sql
-
-NOTE -
-use this if you set "use_min_query_to_pick_latest_row=false"
-
 CREATE TABLE `jobs`
 (
     `id`                varchar(40)      NOT NULL,
@@ -52,47 +48,19 @@ CREATE TABLE `jobs`
     KEY `process_at_index` (`process_at`, `job_type`, `state`, `tenant`, `pending_execution`),
     KEY `job_type_index` (`job_type`, `state`, `tenant`)
 ) PARTITION BY RANGE (UNIX_TIMESTAMP(`part`)) (
-    PARTITION p202309_week1 VALUES LESS THAN (UNIX_TIMESTAMP('2023-09-04')), -- Week 1 (Sep 2023)
-    PARTITION p202309_week2 VALUES LESS THAN (UNIX_TIMESTAMP('2023-09-11')), -- Week 2 (Sep 2023)
-    PARTITION p202309_week3 VALUES LESS THAN (UNIX_TIMESTAMP('2023-09-18')), -- Week 3 (Sep 2023)
-    PARTITION p202309_week4 VALUES LESS THAN (UNIX_TIMESTAMP('2023-09-25')), -- Week 4 (Sep 2023)
-    PARTITION p202310_week1 VALUES LESS THAN (UNIX_TIMESTAMP('2023-10-02'))
-    );
-
-
-NOTE - PREFER THIS
-use this if you set "use_min_query_to_pick_latest_row=true"
-
-CREATE TABLE `jobs`
-(
-    `id`                varchar(40)      NOT NULL,
-    `tenant`            TINYINT UNSIGNED NOT NULL DEFAULT '0',
-    `correlation_id`    varchar(128)              DEFAULT NULL,
-    `job_type`          TINYINT UNSIGNED NOT NULL DEFAULT '1',
-    `state`             TINYINT UNSIGNED NOT NULL DEFAULT '1',
-    `sub_state`         TINYINT UNSIGNED NOT NULL DEFAULT '11',
-    `pending_execution` TINYINT UNSIGNED NOT NULL DEFAULT '3',
-    `version`           TINYINT UNSIGNED NOT NULL DEFAULT '0',
-    `process_at`        timestamp        NOT NULL,
-    `part`              timestamp        NOT NULL,
-    `created_at`        timestamp        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    `updated_at`        timestamp        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (`id`, `part`),
-    KEY `job_type_index` (`job_type`, `state`, `tenant`)
-) PARTITION BY RANGE (UNIX_TIMESTAMP(`part`)) (
-    PARTITION p202309_week1 VALUES LESS THAN (UNIX_TIMESTAMP('2023-09-04')), -- Week 1 (Sep 2023)
-    PARTITION p202309_week2 VALUES LESS THAN (UNIX_TIMESTAMP('2023-09-11')), -- Week 2 (Sep 2023)
-    PARTITION p202309_week3 VALUES LESS THAN (UNIX_TIMESTAMP('2023-09-18')), -- Week 3 (Sep 2023)
-    PARTITION p202309_week4 VALUES LESS THAN (UNIX_TIMESTAMP('2023-09-25')), -- Week 4 (Sep 2023)
-    PARTITION p202310_week1 VALUES LESS THAN (UNIX_TIMESTAMP('2023-10-02'))
-    );
+        PARTITION p202309_week1 VALUES LESS THAN (UNIX_TIMESTAMP('2023-09-04')), -- Week 1 (Sep 2023)
+        PARTITION p202309_week2 VALUES LESS THAN (UNIX_TIMESTAMP('2023-09-11')), -- Week 2 (Sep 2023)
+        PARTITION p202309_week3 VALUES LESS THAN (UNIX_TIMESTAMP('2023-09-18')), -- Week 3 (Sep 2023)
+        PARTITION p202309_week4 VALUES LESS THAN (UNIX_TIMESTAMP('2023-09-25')), -- Week 4 (Sep 2023)
+        PARTITION p202310_week1 VALUES LESS THAN (UNIX_TIMESTAMP('2023-10-02'))
+        );
 
 
 CREATE TABLE `jobs_data`
 (
     `id`           varchar(40)      NOT NULL,
     `tenant`       TINYINT UNSIGNED NOT NULL DEFAULT '0',
-    `properties`   json                      DEFAULT NULL,
+    `properties`   text                      DEFAULT NULL,
     `string_udf_1` text,
     `string_udf_2` text,
     `int_udf_1`    int                       DEFAULT NULL,
@@ -108,7 +76,4 @@ CREATE TABLE `jobs_data`
     PARTITION p202309_week4 VALUES LESS THAN (UNIX_TIMESTAMP('2023-09-25')), -- Week 4 (Sep 2023)
     PARTITION p202310_week1 VALUES LESS THAN (UNIX_TIMESTAMP('2023-10-02'))
     );
-
-
-
 ```
