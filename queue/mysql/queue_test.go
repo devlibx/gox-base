@@ -90,8 +90,8 @@ func TestSchedule(t *testing.T) {
 		})
 		assert.NoError(t, err)
 
-		resultFromMySQL, err := readRow(ctx, db, rs.Id)
-		assert.NoError(t, err)
+		resultFromMySQL, readRowError := readRow(ctx, db, rs.Id)
+		assert.NoError(t, readRowError)
 		assert.Equal(t, queue.StatusScheduled, resultFromMySQL.State)
 		assert.Equal(t, queue.SubStatusScheduledOk, resultFromMySQL.SubState)
 		assert.Equal(t, 3, resultFromMySQL.RemainingExecution)
@@ -102,7 +102,7 @@ func TestSchedule(t *testing.T) {
 		_, _ = appQueue.MarkJobCompleted(ctx, queue.MarkJobCompletedRequest{Id: rs.Id})
 	})
 
-	t.Run("schedule a simple job and pull it back", func(t *testing.T) {
+	t.Run("schedule a simple job and pull it back and also test if job mark complete works", func(t *testing.T) {
 		ctx, ch := context.WithTimeout(context.Background(), 10*time.Second)
 		defer ch()
 
@@ -126,6 +126,7 @@ func TestSchedule(t *testing.T) {
 
 		// Try to get the job - we pull 100 jobs in case we already have some jobs with test id
 		foundJob := false
+		var pollJobDetails *queue.JobDetailsResponse
 		for i := 0; i < 100; i++ {
 			pollResult, err := appQueue.Poll(ctx, queue.PollRequest{
 				Tenant:  testTenant,
@@ -141,24 +142,26 @@ func TestSchedule(t *testing.T) {
 			}
 			foundJob = true
 
-			jobDetails, err := appQueue.FetchJobDetails(ctx, queue.JobDetailsRequest{Id: pollResult.Id})
+			pollJobDetails, err = appQueue.FetchJobDetails(ctx, queue.JobDetailsRequest{Id: pollResult.Id})
 			assert.NoError(t, err)
 
-			assert.Equal(t, queue.StatusProcessing, jobDetails.State)
-			assert.Equal(t, queue.SubStatusScheduledOk, jobDetails.SubState)
-			assert.Equal(t, 2, jobDetails.RemainingExecution)
-			assert.Equal(t, testTenant, jobDetails.Tenant)
-			assert.Equal(t, testJobType, jobDetails.JobType)
-
-			// Mark old test jobs completed - otherwise they just pile up
-			_, _ = appQueue.MarkJobCompleted(ctx, queue.MarkJobCompletedRequest{Id: rs.Id})
+			assert.Equal(t, queue.StatusProcessing, pollJobDetails.State)
+			assert.Equal(t, queue.SubStatusScheduledOk, pollJobDetails.SubState)
+			assert.Equal(t, 2, pollJobDetails.RemainingExecution)
+			assert.Equal(t, testTenant, pollJobDetails.Tenant)
+			assert.Equal(t, testJobType, pollJobDetails.JobType)
 			break
 		}
 
+		// Also test mark completed
 		assert.True(t, foundJob)
 
+		if pollJobDetails != nil {
+			jobCompletedResponse, err := appQueue.MarkJobCompleted(ctx, queue.MarkJobCompletedRequest{Id: rs.Id})
+			assert.NoError(t, err)
+			assert.NotNil(t, jobCompletedResponse)
+		}
 	})
-
 }
 
 func readRow(ctx context.Context, db *sql.DB, id string) (result *queue.JobDetailsResponse, err error) {

@@ -1,6 +1,7 @@
 package queue
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"github.com/devlibx/gox-base"
@@ -94,6 +95,14 @@ func NewQueue(cf gox.CrossFunction, storeBackend queue.StoreBackend, queueConfig
 		if err = q.jobTypeRowInfo[i].Init(); err != nil {
 			return nil, err
 		}
+	}
+
+	if _, _, err = q.initPollQueriesV1(context.Background()); err != nil {
+		return nil, errors.Wrap(err, "failed to init poller queries at time of queue creation")
+	}
+
+	if err = q.jobInfoInit(); err != nil {
+		return nil, errors.Wrap(err, "failed to init job info queries at time of queue creation")
 	}
 
 	return q, nil
