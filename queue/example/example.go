@@ -7,29 +7,58 @@ import (
 	queue "github.com/devlibx/gox-base/queue"
 	mysqlQueue "github.com/devlibx/gox-base/queue/mysql"
 	errors1 "github.com/pkg/errors"
+	"github.com/rcrowley/go-metrics"
 	"go.uber.org/zap"
+	"log"
 	"math/rand"
 	"os"
+	"sync"
+	"sync/atomic"
 	"time"
 )
 
+var writeCounter, writeErrorCounter, readCounter, readErrorCounter, readNoResultCounter metrics.Counter
+
+var globalTenant = 2
+var globalJobType = 1
+
+// r := NewRegistry()
+
 func main() {
+
+	//	argsWithProg := os.Args
+	argsWithoutProg := os.Args[1:]
+
+	writeCounter = metrics.NewCounter()
+	readCounter = metrics.NewCounter()
+	writeErrorCounter = metrics.NewCounter()
+	readErrorCounter = metrics.NewCounter()
+	readNoResultCounter = metrics.NewCounter()
+	metrics.Register("write", writeCounter)
+	metrics.Register("write_error", writeErrorCounter)
+	metrics.Register("read", readCounter)
+	metrics.Register("read_error", readErrorCounter)
+	metrics.Register("read_no_record", readNoResultCounter)
+
+	go metrics.Log(metrics.DefaultRegistry, 1*time.Minute, log.New(os.Stderr, "metrics: ", log.Lmicroseconds))
+
 	storeBackend, err := mysqlQueue.NewMySqlBackedStore(queue.MySqlBackedStoreBackendConfig{
 		Host:          os.Getenv("DB_URL"),
 		Port:          3306,
 		User:          os.Getenv("DB_USER"),
 		Password:      os.Getenv("DB_PASS"),
 		Database:      os.Getenv("DB_NAME"),
-		MaxConnection: 50,
-		MinConnection: 50,
+		MaxConnection: 100,
+		MinConnection: 100,
 		Properties:    gox.StringObjectMap{},
 	}, true)
 	if err != nil {
 		panic(err)
 	} else {
 		db, _ := storeBackend.GetSqlDb()
-		db.Exec("TRUNCATE table jobs")
-		db.Exec("TRUNCATE table jobs_data")
+		// db.Exec("TRUNCATE table jobs")
+		// db.Exec("TRUNCATE table jobs_data")
+		_ = db
 	}
 
 	idGenerator, err := queue.NewTimeBasedIdGenerator()
@@ -42,12 +71,17 @@ func main() {
 	zapConfig.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
 	crossFunction := gox.NewCrossFunction(zapConfig.Build())
 
+	dontRunPoller := argsWithoutProg[0] == "w"
+
 	appQueue, err := mysqlQueue.NewQueue(
 		crossFunction,
 		storeBackend,
 		queue.MySqlBackedQueueConfig{
-			Tenant:     11,
-			MaxJobType: 1,
+			Tenant:                     globalTenant,
+			MaxJobType:                 1,
+			UsePreparedStatement:       true,
+			UseMinQueryToPickLatestRow: true,
+			DontRunPoller:              dontRunPoller,
 		},
 		idGenerator,
 		queue.NewUdfAndTableNameQueryRewriter("jobs"),
@@ -57,81 +91,196 @@ func main() {
 	}
 
 	rand.Seed(time.Now().UnixMilli())
-	go func() {
-		for i := 0; i < 10; i++ {
-			go func() {
-				push(appQueue)
-			}()
-		}
 
-	}()
+	if argsWithoutProg[0] == "all" || argsWithoutProg[0] == "w" {
+		go func() {
+			for i := 0; i < 50; i++ {
+				go func() {
+					push(appQueue)
+				}()
+			}
+
+		}()
+	}
 
 	time.Sleep(2 * time.Second)
-	go func() {
-		for i := 0; i < 50; i++ {
-			go func() {
-				poll(appQueue)
-			}()
-		}
+	if argsWithoutProg[0] == "all" || argsWithoutProg[0] == "r" {
+		go func() {
+			for i := 0; i < 50; i++ {
+				go func() {
+					poll(appQueue)
+				}()
+			}
 
-	}()
+		}()
+	}
 
 	time.Sleep(time.Hour)
 }
+
+var rowInsertedCount int64 = 0
 
 func push(appQueue queue.Queue) {
 	if true {
 		// return
 	}
-	count := 0
 
 	for {
 		start := time.Now()
-		h := rand.Intn(200)
-		m := rand.Intn(50)
-		_, _, _ = start, h, m
-		now := time.Now().Add(time.Duration(h) * time.Hour).Add(time.Duration(m) * time.Second)
+		d := rand.Intn(30)
+		h := rand.Intn(2)
+		m := rand.Intn(58)
+		s := rand.Intn(58)
+		_, _, _, _, _ = start, h, m, s, d
+		var now time.Time
+		if rand.Int()%5 == 0 {
+			now = time.Now()
+		} else {
+			now = time.Now().Add(time.Duration(h) * time.Hour).Add(time.Duration(m) * time.Minute).Add(time.Duration(s) * time.Second)
+		}
 		now = time.Now()
-		rs, err := appQueue.Schedule(context.Background(), queue.ScheduleRequest{
-			JobType:    1,
-			Tenant:     11,
-			At:         now,
-			Properties: map[string]interface{}{"info": fmt.Sprintf("%d", count)},
+
+		ran := rand.Intn(5)
+		if ran == 0 {
+			now = time.Now()
+		} else if ran == 1 {
+			now = time.Now().Add(time.Duration(d*24) * time.Hour).Add(time.Duration(h) * time.Hour).Add(time.Duration(m) * time.Minute).Add(time.Duration(s) * time.Second)
+		} else if ran == 2 {
+			now = time.Now().Add(time.Duration(-d*24) * time.Hour).Add(time.Duration(h) * time.Hour).Add(time.Duration(m) * time.Minute).Add(time.Duration(s) * time.Second)
+		} else {
+			now = time.Now()
+		}
+
+		jobType := rand.Intn(3)
+		tenant := rand.Intn(3)
+		/*
+
+			if rand.Intn(2)%2 == 0 {
+				now = time.Now()
+				jobType = globalJobType
+				tenant = globalTenant
+			}
+			if true {
+				now = time.Now()
+				jobType = globalJobType
+				tenant = globalTenant
+			}
+		*/
+
+		ctx, ch := context.WithTimeout(context.Background(), 1*time.Second)
+		rs, err := appQueue.Schedule(ctx, queue.ScheduleRequest{
+			JobType:            jobType,
+			Tenant:             tenant,
+			At:                 now,
+			RemainingExecution: 3,
+			Properties:         map[string]interface{}{"info": fmt.Sprintf("%d", count)},
 		})
+		ch()
 		if err != nil {
 			fmt.Println("Error", err)
-			time.Sleep(1 * time.Second)
+			writeErrorCounter.Inc(1)
+			time.Sleep(1000 * time.Millisecond)
 		} else {
 			// fmt.Printf("Result = Ok: Id=%-30s  Hour=%-3d Min=%-3d  TimeTakne=%-4d \n", rs.Id, h, m, time.Now().UnixMilli()-start.UnixMilli())
-			time.Sleep(10 * time.Microsecond)
+			writeCounter.Inc(1)
+			time.Sleep(100 * time.Microsecond)
 		}
 		_ = rs
-		count++
 
-		if count > 3000 {
+		if atomic.AddInt64(&rowInsertedCount, 1) > 30000000000 {
 			break
 		}
+
+		time.Sleep(1 * time.Millisecond)
 	}
 }
 
+var count int32 = 0
+var m = sync.Mutex{}
+var start = time.Now()
+var fullStart = time.Now()
+var ma = map[string]string{}
+var cM = sync.Mutex{}
+
 func poll(appQueue queue.Queue) {
 	for {
-		rs, err := appQueue.Poll(context.Background(), queue.PollRequest{
-			Tenant:  11,
-			JobType: 1,
+		ctx, ch := context.WithTimeout(context.Background(), 1*time.Second)
+		rs, err := appQueue.Poll(ctx, queue.PollRequest{
+			Tenant:  globalTenant,
+			JobType: globalJobType,
 		})
+		ch()
 		_ = rs
 		if err != nil {
 			if errors1.Is(err, queue.NoJobsToRunAtCurrently) {
-				time.Sleep(1 * time.Second)
+				// fmt.Println("No rows Error")
+				readNoResultCounter.Inc(1)
+				time.Sleep(1 * time.Millisecond)
 			} else {
 				fmt.Println("Error", err)
-				time.Sleep(1 * time.Second)
+				readErrorCounter.Inc(1)
+				time.Sleep(100 * time.Millisecond)
 			}
 		} else {
 			// fmt.Printf("Result = Ok: Id=%-30s  Hour=%-3d Min=%-3d  TimeTakne=%-4d \n", rs.Id, h, m, time.Now().UnixMilli()-start.UnixMilli())
-			// fmt.Println("Result Ok", rs)
-			time.Sleep(10 * time.Millisecond)
+			readCounter.Inc(1)
+			c := atomic.AddInt32(&count, 1)
+			/*
+				if c%100 == 0 {
+					m.Lock()
+					// fmt.Println("Result Ok", rs, " count=", c, " time=", time.Now().UnixMilli()-start.UnixMilli(), "      Total=", time.Now().UnixMilli()-fullStart.UnixMilli())
+					start = time.Now()
+					m.Unlock()
+				}
+			*/
+
+			// fmt.Println("Result Ok", rs, " count=", count)
+
+			cM.Lock()
+			if k, ok := ma[rs.Id]; ok {
+				fmt.Println("--> dup ", k)
+			}
+			ma[rs.Id] = "a"
+			cM.Unlock()
+
+			time.Sleep(100 * time.Microsecond)
+
+			var updateErr, getErr error
+			var jd *queue.JobDetailsResponse
+			_ = jd
+
+			if true {
+				jd, getErr = appQueue.FetchJobDetails(context.Background(), queue.JobDetailsRequest{Id: rs.Id})
+				if getErr != nil {
+					fmt.Println("failed to fetch job details")
+				} else {
+					// fmt.Println("Job details", jobD)
+				}
+
+				if rand.Intn(5) == 0 && getErr == nil {
+					var result *queue.MarkJobFailedWithRetryResponse
+					if result, updateErr = appQueue.MarkJobCompletedWithRetry(context.Background(), queue.MarkJobFailedWithRetryRequest{Id: rs.Id, ScheduleRetryAt: jd.At.Add(time.Hour)}); updateErr != nil {
+						fmt.Println("failed to marked job failed", err)
+					} else {
+						// fmt.Println("OK failed to marked job failed", result.RetryJobId)
+					}
+					_ = result
+				} else {
+					if _, updateErr = appQueue.MarkJobCompleted(context.Background(), queue.MarkJobCompletedRequest{Id: rs.Id}); updateErr != nil {
+						// fmt.Println("failed to mark job done", rs.Id)
+					}
+				}
+
+			}
+
+			if c%100 == 0 {
+				m.Lock()
+				// fmt.Println("Result Ok", rs, " count=", c, " time=", time.Now().UnixMilli()-start.UnixMilli(), "      Total=", time.Now().UnixMilli()-fullStart.UnixMilli())
+				fmt.Println("Result Ok", rs, " count=", count, "GetErr=", getErr, " UpdateError=", updateErr, " time=", time.Now().UnixMilli()-start.UnixMilli(), "      Total=", time.Now().UnixMilli()-fullStart.UnixMilli())
+				start = time.Now()
+				m.Unlock()
+			}
+
 		}
 	}
 }
