@@ -28,14 +28,15 @@ func setup() (storeBackend *mySqlStore, queueImpl queue.Queue, cf gox.CrossFunct
 	dbName = os.Getenv("DB_NAME")
 
 	if storeBackend, err = NewMySqlBackedStore(queue.MySqlBackedStoreBackendConfig{
-		Host:          os.Getenv("DB_URL"),
-		Port:          3306,
-		User:          os.Getenv("DB_USER"),
-		Password:      os.Getenv("DB_PASS"),
-		Database:      os.Getenv("DB_NAME"),
-		MaxConnection: 100,
-		MinConnection: 100,
-		Properties:    gox.StringObjectMap{},
+		Host:              os.Getenv("DB_URL"),
+		Port:              3306,
+		User:              os.Getenv("DB_USER"),
+		Password:          os.Getenv("DB_PASS"),
+		Database:          os.Getenv("DB_NAME"),
+		MaxOpenConnection: 100,
+		MaxIdleConnection: 100,
+		ConnMaxLifetime:   60,
+		Properties:        gox.StringObjectMap{},
 	}, true); err != nil {
 		return
 	}
