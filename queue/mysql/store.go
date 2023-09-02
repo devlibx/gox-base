@@ -7,6 +7,7 @@ import (
 	"github.com/devlibx/gox-base/queue"
 	_ "github.com/go-sql-driver/mysql"
 	"sync"
+	"time"
 )
 
 type mySqlStore struct {
@@ -26,6 +27,9 @@ func (m *mySqlStore) RewriteQuery(input string) string {
 func (m *mySqlStore) Init() error {
 	m.initOnce.Do(func() {
 
+		// Set default settings
+		m.config.SetupDefault()
+
 		// Open connection to DB
 		dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", m.config.User, m.config.Password, m.config.Host, m.config.Port, m.config.Database)
 		db, err := sql.Open("mysql", dsn)
@@ -36,7 +40,9 @@ func (m *mySqlStore) Init() error {
 		}
 
 		m.db = db
-		m.db.SetMaxOpenConns(m.config.MaxConnection)
+		m.db.SetMaxOpenConns(m.config.MaxOpenConnection)
+		m.db.SetMaxIdleConns(m.config.MaxIdleConnection)
+		m.db.SetConnMaxLifetime(time.Duration(m.config.ConnMaxLifetime) * time.Second)
 	})
 
 	return m.initErr

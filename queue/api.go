@@ -173,15 +173,37 @@ func (s PollResponse) String() string {
 
 // MySqlBackedStoreBackendConfig is the config to be used for MySQL backed queue
 type MySqlBackedStoreBackendConfig struct {
-	Host          string              `json:"host,omitempty"`
-	Port          int                 `json:"port,omitempty"`
-	User          string              `json:"user,omitempty"`
-	Password      string              `json:"password,omitempty"`
-	Database      string              `json:"database,omitempty"`
-	MaxConnection int                 `json:"max_connection,omitempty"`
-	MinConnection int                 `json:"min_connection,omitempty"`
-	Properties    gox.StringObjectMap `json:"properties,omitempty"`
-	ColumnMapping map[string]string   `json:"column_mapping,omitempty"`
+	Host              string              `json:"host,omitempty"`
+	Port              int                 `json:"port,omitempty"`
+	User              string              `json:"user,omitempty"`
+	Password          string              `json:"password,omitempty"`
+	Database          string              `json:"database,omitempty"`
+	MaxIdleConnection int                 `json:"max_idle_connection"`
+	MaxOpenConnection int                 `json:"max_open_connection"`
+	ConnMaxLifetime   int                 `json:"conn_max_lifetime_in_sec"`
+	Properties        gox.StringObjectMap `json:"properties,omitempty"`
+	ColumnMapping     map[string]string   `json:"column_mapping,omitempty"`
+}
+
+func (m *MySqlBackedStoreBackendConfig) SetupDefault() {
+	if m.Host == "" {
+		m.Host = "localhost"
+	}
+	if m.Port <= 0 {
+		m.Port = 3306
+	}
+	if m.ColumnMapping == nil {
+		m.ColumnMapping = map[string]string{}
+	}
+	if m.MaxIdleConnection <= 0 {
+		m.MaxIdleConnection = 10
+	}
+	if m.MaxOpenConnection <= 0 {
+		m.MaxOpenConnection = 10
+	}
+	if m.ConnMaxLifetime <= 0 {
+		m.ConnMaxLifetime = 60
+	}
 }
 
 // StoreBackend is the backend to be used to give connections to store
