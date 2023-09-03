@@ -231,7 +231,7 @@ func TestRescheduleJobOnError(t *testing.T) {
 	db := sc.db
 
 	t.Run("add retry on error", func(t *testing.T) {
-		ctx, ch := context.WithTimeout(context.Background(), 100000*time.Second)
+		ctx, ch := context.WithTimeout(context.Background(), 10*time.Second)
 		defer ch()
 
 		var rs *queue.ScheduleResponse
