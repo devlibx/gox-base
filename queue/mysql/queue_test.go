@@ -219,6 +219,139 @@ func TestPollWithNoRecord(t *testing.T) {
 
 }
 
+func TestRescheduleJobOnError(t *testing.T) {
+	if os.Getenv("DB_URL") == "" {
+		t.Skip("to run tests you must set DB_URL which points to DB used in the test")
+		return
+	}
+
+	now := time.Now()
+	sc, appQueue, _, err := setup()
+	assert.NoError(t, err)
+	db := sc.db
+
+	t.Run("add retry on error", func(t *testing.T) {
+		ctx, ch := context.WithTimeout(context.Background(), 100000*time.Second)
+		defer ch()
+
+		var rs *queue.ScheduleResponse
+		var pollResult *queue.PollResponse
+		var resultFromMySQL, pollJobDetails *queue.JobDetailsResponse
+		var jobFailedResponse *queue.MarkJobFailedWithRetryResponse
+		var err error
+
+		// Clear all test data if remaining
+		markAllTestRowsToDone(t, ctx, db)
+
+		// Part 1 - Schedule a job and verify its entry in DB
+		rs, err = appQueue.Schedule(ctx, queue.ScheduleRequest{
+			JobType:            testJobType,
+			Tenant:             testTenant,
+			At:                 now,
+			RemainingExecution: 3,
+			Properties:         map[string]interface{}{"info": fmt.Sprintf("%d", 1023)},
+		})
+		assert.NoError(t, err)
+		resultFromMySQL, err = readRow(ctx, db, rs.Id)
+		assert.NoError(t, err)
+		assert.Equal(t, queue.StatusScheduled, resultFromMySQL.State)
+		assert.Equal(t, queue.SubStatusScheduledOk, resultFromMySQL.SubState)
+		assert.Equal(t, 3, resultFromMySQL.RemainingExecution)
+		assert.Equal(t, testTenant, resultFromMySQL.Tenant)
+		assert.Equal(t, testJobType, resultFromMySQL.JobType)
+		fmt.Println(rs)
+
+		// Part 2 - get the job and also fetch its complete details
+		pollResult, err = appQueue.Poll(ctx, queue.PollRequest{
+			Tenant:  testTenant,
+			JobType: testJobType,
+		})
+		assert.NoError(t, err, "since we just scheduled a job, we expect a job from the queue")
+
+		// Part 2.1 - fetch its complete details
+		pollJobDetails, err = appQueue.FetchJobDetails(ctx, queue.JobDetailsRequest{Id: pollResult.Id})
+		assert.NoError(t, err)
+		assert.Equal(t, queue.StatusProcessing, pollJobDetails.State)
+		assert.Equal(t, queue.SubStatusScheduledOk, pollJobDetails.SubState)
+		assert.Equal(t, 2, pollJobDetails.RemainingExecution)
+		assert.Equal(t, testTenant, pollJobDetails.Tenant)
+		assert.Equal(t, testJobType, pollJobDetails.JobType)
+
+		// Part 3 - Mark it failed
+		jobFailedResponse, err = appQueue.MarkJobCompletedWithRetry(ctx, queue.MarkJobFailedWithRetryRequest{
+			Id:              pollResult.Id,
+			ScheduleRetryAt: now.Add(10 * time.Millisecond),
+		})
+		time.Sleep(10 * time.Millisecond)
+		assert.NoError(t, err)
+		newJobId := jobFailedResponse.RetryJobId
+
+		// Part 3.1 - make sure we marked the original job as failed
+		jd, err := readRow(ctx, db, pollResult.Id)
+		assert.NoError(t, err)
+		assert.Equal(t, queue.StatusFailed, jd.State)
+		assert.Equal(t, queue.SubStatusRetryPendingError, jd.SubState)
+		assert.Equal(t, 2, jd.RemainingExecution)
+		assert.Equal(t, testTenant, jd.Tenant)
+		assert.Equal(t, testJobType, jd.JobType)
+
+		// Part 4- Get the job again and this time it should be the retry job
+		// Also the poll result should have the id of the new job id
+		pollResult, err = appQueue.Poll(ctx, queue.PollRequest{
+			Tenant:  testTenant,
+			JobType: testJobType,
+		})
+		assert.NoError(t, err, "since we just scheduled a job, we expect a job from the queue")
+		assert.Equal(t, newJobId, pollResult.Id)
+
+		// Part 2.1 - fetch its complete details
+		pollJobDetails, err = appQueue.FetchJobDetails(ctx, queue.JobDetailsRequest{Id: pollResult.Id})
+		assert.NoError(t, err)
+		assert.Equal(t, queue.StatusProcessing, pollJobDetails.State)
+		assert.Equal(t, queue.SubStatusScheduledOk, pollJobDetails.SubState)
+		assert.Equal(t, 1, pollJobDetails.RemainingExecution)
+		assert.Equal(t, testTenant, pollJobDetails.Tenant)
+		assert.Equal(t, testJobType, pollJobDetails.JobType)
+
+		// Again fail it
+		jobFailedResponse, err = appQueue.MarkJobCompletedWithRetry(ctx, queue.MarkJobFailedWithRetryRequest{
+			Id:              pollResult.Id,
+			ScheduleRetryAt: now.Add(10 * time.Millisecond),
+		})
+		time.Sleep(10 * time.Millisecond)
+		assert.NoError(t, err)
+		newJobId = jobFailedResponse.RetryJobId
+		pollResult, err = appQueue.Poll(ctx, queue.PollRequest{
+			Tenant:  testTenant,
+			JobType: testJobType,
+		})
+		assert.NoError(t, err, "since we just scheduled a job, we expect a job from the queue")
+		assert.Equal(t, newJobId, pollResult.Id)
+		pollJobDetails, err = appQueue.FetchJobDetails(ctx, queue.JobDetailsRequest{Id: pollResult.Id})
+		assert.NoError(t, err)
+		assert.Equal(t, 0, pollJobDetails.RemainingExecution)
+		jobFailedResponse, err = appQueue.MarkJobCompletedWithRetry(ctx, queue.MarkJobFailedWithRetryRequest{
+			Id:              pollResult.Id,
+			ScheduleRetryAt: now.Add(10 * time.Millisecond),
+		})
+		time.Sleep(10 * time.Millisecond)
+		assert.NoError(t, err)
+		pollJobDetails, err = appQueue.FetchJobDetails(ctx, queue.JobDetailsRequest{Id: pollResult.Id})
+		assert.NoError(t, err)
+		assert.Equal(t, queue.StatusFailed, pollJobDetails.State)
+		assert.Equal(t, queue.SubStatusNoRetryPendingError, pollJobDetails.SubState)
+
+		var count int
+		err = db.QueryRowContext(ctx, "SELECT count(*) FROM jobs_data WHERE retry_group=?", pollJobDetails.RetryGroup).Scan(&count)
+		assert.NoError(t, err)
+		assert.Equal(t, 3, count)
+		fmt.Println(pollJobDetails.RetryGroup)
+
+		fmt.Println(newJobId)
+	})
+
+}
+
 func readRow(ctx context.Context, db *sql.DB, id string) (result *queue.JobDetailsResponse, err error) {
 	result = &queue.JobDetailsResponse{}
 
@@ -231,4 +364,9 @@ func readRow(ctx context.Context, db *sql.DB, id string) (result *queue.JobDetai
 			&result.SubState,
 		)
 	return
+}
+
+func markAllTestRowsToDone(t *testing.T, ctx context.Context, db *sql.DB) {
+	_, err := db.ExecContext(ctx, "UPDATE jobs SET state=? WHERE tenant=? AND job_type=?", queue.StatusDone, testTenant, testJobType)
+	assert.NoError(t, err)
 }

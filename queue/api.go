@@ -85,7 +85,8 @@ type ScheduleRequest struct {
 
 	Properties map[string]interface{}
 
-	InternalTx *sql.Tx
+	InternalTx           *sql.Tx
+	InternalRetryGroupId string
 }
 
 func (s ScheduleRequest) String() string {
@@ -162,6 +163,7 @@ type JobDetailsResponse struct {
 
 	// CorrelationId will help jobs to be linked together - when a job succeeds it will mark all jobs to be completed
 	CorrelationId string
+	RetryGroup    string
 
 	// How many times this job can run (1 time for each + max no of retries)
 	// e.g. If it is set 4 then it will run once and in case of error it will be retried 3 times

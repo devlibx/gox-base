@@ -10,6 +10,7 @@ import (
 	"github.com/devlibx/gox-base/queue"
 	"github.com/devlibx/gox-base/serialization"
 	"github.com/go-sql-driver/mysql"
+	"github.com/google/uuid"
 	"github.com/sethvargo/go-retry"
 	"go.uber.org/zap"
 	"time"
@@ -61,9 +62,9 @@ func (q *queueImpl) internalScheduleV1(ctx context.Context, req queue.ScheduleRe
 	// Generate insert job data statement
 	insertJobDataQuery := `
 			INSERT INTO jobs_data
-				(id, tenant, string_udf_1, string_udf_2, int_udf_1, int_udf_2, properties, part)
+				(id, tenant, string_udf_1, string_udf_2, int_udf_1, int_udf_2, properties, retry_group, part)
 			VALUES 
-			    (?, ?, ?, ?, ?, ?, ?, ?)
+			    (?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`
 	insertJobDataQuery = q.queryRewriter.RewriteQuery("jobs_data", insertJobDataQuery)
 
@@ -87,11 +88,17 @@ func (q *queueImpl) internalScheduleV1(ctx context.Context, req queue.ScheduleRe
 	}
 
 	if tx != nil {
-		if _, err = tx.StmtContext(ctx, q.insertJobDataStatement).ExecContext(ctx, id, req.Tenant, req.StringUdf1, req.StringUdf2, req.IntUdf1, req.IntUdf2, properties, archiveAfter); err != nil {
+		if req.InternalRetryGroupId == "" {
+			req.InternalRetryGroupId = uuid.NewString()
+		}
+		if _, err = tx.StmtContext(ctx, q.insertJobDataStatement).ExecContext(ctx, id, req.Tenant, req.StringUdf1, req.StringUdf2, req.IntUdf1, req.IntUdf2, properties, req.InternalRetryGroupId, archiveAfter); err != nil {
 			return nil, errors.Wrap(err, "failed to schedule (insert job data failed): %v", req)
 		}
 	} else {
-		if _, err = q.insertJobDataStatement.ExecContext(ctx, id, req.Tenant, req.StringUdf1, req.StringUdf2, req.IntUdf1, req.IntUdf2, properties, archiveAfter); err != nil {
+		if req.InternalRetryGroupId == "" {
+			req.InternalRetryGroupId = uuid.NewString()
+		}
+		if _, err = q.insertJobDataStatement.ExecContext(ctx, id, req.Tenant, req.StringUdf1, req.StringUdf2, req.IntUdf1, req.IntUdf2, properties, req.InternalRetryGroupId, archiveAfter); err != nil {
 			// if _, err = q.db.ExecContext(ctx, insertJobDataQuery, id, req.Tenant, req.StringUdf1, req.StringUdf2, req.IntUdf1, req.IntUdf2, properties, archiveAfter); err != nil {
 			return nil, errors.Wrap(err, "failed to schedule (insert job data failed): %v", req)
 		}

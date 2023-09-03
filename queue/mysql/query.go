@@ -13,7 +13,7 @@ func (q *queueImpl) jobInfoInit() (err error) {
 	q.readJobDetailsOnce.Do(func() {
 		jobQuery := "select job_type, state, sub_state, correlation_id, pending_execution, tenant FROM jobs WHERE id=? AND part=?"
 		jobQuery = q.queryRewriter.RewriteQuery("jobs", jobQuery)
-		jobDataQuery := "select properties, string_udf_1, string_udf_2, int_udf_1, int_udf_2 FROM jobs_data WHERE id=? AND part=?"
+		jobDataQuery := "select properties, string_udf_1, string_udf_2, int_udf_1, int_udf_2, retry_group FROM jobs_data WHERE id=? AND part=?"
 		jobDataQuery = q.queryRewriter.RewriteQuery("jobs_data", jobDataQuery)
 		jobUpdateQuery := "UPDATE jobs set state=?, sub_state=? WHERE id=? AND part=?"
 		jobUpdateQuery = q.queryRewriter.RewriteQuery("jobs", jobUpdateQuery)
@@ -42,12 +42,12 @@ func (q *queueImpl) internalJobDetails(ctx context.Context, req queue.JobDetails
 		return nil, errors.Wrap(err, "not able to get time out of id: id=%s", req.Id)
 	}
 
-	var cid, strUdf1, strUdf2, properties sql.NullString
+	var cid, strUdf1, strUdf2, properties, retryGroup sql.NullString
 	var intUdf1, intUdf2 sql.NullInt64
 	var tenant sql.NullInt32
 	if err = q.readJobDetailsStatement.QueryRowContext(ctx, req.Id, part).Scan(&result.JobType, &result.State, &result.SubState, &cid, &result.RemainingExecution, &tenant); err != nil {
 		return nil, errors.Wrap(err, "failed to read job details: id=%s", req.Id)
-	} else if err = q.readJobDataDetailsStatement.QueryRowContext(ctx, req.Id, part).Scan(&properties, &strUdf1, &strUdf2, &intUdf1, &intUdf2); err != nil {
+	} else if err = q.readJobDataDetailsStatement.QueryRowContext(ctx, req.Id, part).Scan(&properties, &strUdf1, &strUdf2, &intUdf1, &intUdf2, &retryGroup); err != nil {
 		return nil, errors.Wrap(err, "failed to read job data details: id=%s", req.Id)
 	}
 
@@ -70,6 +70,9 @@ func (q *queueImpl) internalJobDetails(ctx context.Context, req queue.JobDetails
 	}
 	if tenant.Valid {
 		result.Tenant = int(tenant.Int32)
+	}
+	if retryGroup.Valid {
+		result.RetryGroup = retryGroup.String
 	}
 
 	if properties.Valid {

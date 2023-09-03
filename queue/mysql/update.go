@@ -55,17 +55,18 @@ func (q *queueImpl) MarkJobCompletedWithRetry(ctx context.Context, req queue.Mar
 
 		var scheduleResponse *queue.ScheduleResponse
 		if scheduleResponse, err = q.Schedule(ctx, queue.ScheduleRequest{
-			At:                 req.ScheduleRetryAt,
-			JobType:            jobFetchResponse.JobType,
-			Tenant:             jobFetchResponse.Tenant,
-			CorrelationId:      jobFetchResponse.CorrelationId,
-			RemainingExecution: jobFetchResponse.RemainingExecution - 1,
-			StringUdf1:         jobFetchResponse.StringUdf1,
-			StringUdf2:         jobFetchResponse.StringUdf2,
-			IntUdf1:            jobFetchResponse.IntUdf1,
-			IntUdf2:            jobFetchResponse.IntUdf1,
-			Properties:         jobFetchResponse.Properties,
-			InternalTx:         tx,
+			At:                   req.ScheduleRetryAt,
+			JobType:              jobFetchResponse.JobType,
+			Tenant:               jobFetchResponse.Tenant,
+			CorrelationId:        jobFetchResponse.CorrelationId,
+			RemainingExecution:   jobFetchResponse.RemainingExecution,
+			StringUdf1:           jobFetchResponse.StringUdf1,
+			StringUdf2:           jobFetchResponse.StringUdf2,
+			IntUdf1:              jobFetchResponse.IntUdf1,
+			IntUdf2:              jobFetchResponse.IntUdf1,
+			Properties:           jobFetchResponse.Properties,
+			InternalRetryGroupId: jobFetchResponse.RetryGroup,
+			InternalTx:           tx,
 		}); err != nil {
 			return nil, errors.Wrap(err, "failed to add new retry jobs (some retries are remaining for this job): id=%s", req.Id)
 		}
