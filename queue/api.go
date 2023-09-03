@@ -113,6 +113,15 @@ type PollResponse struct {
 	ProcessAtTimeUsed   time.Time
 }
 
+type PollResponseError struct {
+	WaitForDurationBeforeTrying       time.Duration
+	NextJobTimeAvailableForProcessing time.Time
+}
+
+func (p PollResponseError) Error() string {
+	return fmt.Sprintf("(PollResponseError) no job avaliable to process now. Wait for %vms", p.WaitForDurationBeforeTrying.Milliseconds())
+}
+
 // JobDetailsRequest response of schedule
 type JobDetailsRequest struct {
 	Id string

@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/devlibx/gox-base"
+	"github.com/devlibx/gox-base/errors"
 	"github.com/devlibx/gox-base/queue"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -163,6 +164,59 @@ func TestSchedule(t *testing.T) {
 			assert.NotNil(t, jobCompletedResponse)
 		}
 	})
+}
+
+func TestPollWithNoRecord(t *testing.T) {
+	if os.Getenv("DB_URL") == "" {
+		t.Skip("to run tests you must set DB_URL which points to DB used in the test")
+		return
+	}
+
+	sc, appQueue, _, err := setup()
+	assert.NoError(t, err)
+
+	t.Run("we expect no records", func(t *testing.T) {
+		ctx, ch := context.WithTimeout(context.Background(), 10*time.Second)
+		defer ch()
+
+		now := time.Now()
+		jobTime := now.Add(10 * time.Second)
+
+		// Make all jobs completed for our test to tun
+		db := sc.db
+		_, err = db.ExecContext(context.Background(), "UPDATE jobs SET state=? WHERE tenant=? AND job_type=?", queue.StatusDone, testTenant, testJobType)
+		assert.NoError(t, err)
+
+		var scheduledResult *queue.ScheduleResponse
+		scheduledResult, err = appQueue.Schedule(ctx, queue.ScheduleRequest{
+			JobType:            testJobType,
+			Tenant:             testTenant,
+			At:                 jobTime,
+			RemainingExecution: 3,
+			Properties:         map[string]interface{}{"info": fmt.Sprintf("%d", 1023)},
+		})
+		assert.NoError(t, err)
+		_ = scheduledResult
+
+		for i := 0; i < 10; i++ {
+			_, err = appQueue.Poll(context.Background(), queue.PollRequest{
+				Tenant:  testTenant,
+				JobType: testJobType,
+			})
+			assert.Error(t, err, "since we just scheduled a job, we expect a job from the queue")
+
+			var e *queue.PollResponseError
+			tmp := errors.As(err, &e)
+			assert.True(t, tmp)
+			fmt.Println(e.WaitForDurationBeforeTrying.Milliseconds())
+			assert.True(t, e.WaitForDurationBeforeTrying.Milliseconds() > 6000)
+
+			if tmp == true {
+				break
+			}
+		}
+	})
+
 }
 
 func readRow(ctx context.Context, db *sql.DB, id string) (result *queue.JobDetailsResponse, err error) {

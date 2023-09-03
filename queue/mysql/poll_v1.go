@@ -144,6 +144,17 @@ func (q *queueImpl) internalPollV1(ctx context.Context, req queue.PollRequest) (
 		if partitionTime, err = queue.GeneratePartitionTimeByRecordId(result.Id); err == nil {
 			if processAt, err = queue.RecordIdToTime(result.Id); err == nil {
 				result = &queue.PollResponse{RecordPartitionTime: partitionTime, ProcessAtTimeUsed: processAt, Id: result.Id}
+
+				// If next job to process is not current then send a error to wait and try
+				n := time.Now()
+				if result.ProcessAtTimeUsed.After(n) {
+					err = &queue.PollResponseError{
+						WaitForDurationBeforeTrying:       time.Duration(result.ProcessAtTimeUsed.UnixMilli()-n.UnixMilli()) * time.Millisecond,
+						NextJobTimeAvailableForProcessing: result.ProcessAtTimeUsed,
+					}
+					return
+				}
+
 			} else {
 				err = errors.Wrap(err, "failed to build process at time from result id: %s", result.Id)
 			}
