@@ -60,6 +60,14 @@ func NewQueue(cf gox.CrossFunction, storeBackend queue.StoreBackend, queueConfig
 		return nil, errors.Wrap(err, "failed to build new mysql backed queue. Could not get sql.Db from store backend")
 	}
 
+	// Setup ID generator (if not provided) - this will generate ULID based IDs
+	if idGenerator == nil {
+		if idGenerator, err = queue.NewTimeBasedIdGenerator(); err != nil {
+			err = errors.Wrap(err, "id generator is not provided and not able to create default id generator")
+			return nil, err
+		}
+	}
+
 	q := &queueImpl{
 		db:            db,
 		storeBackend:  storeBackend,
