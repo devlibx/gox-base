@@ -100,8 +100,8 @@ type ScheduleRequest struct {
 
 func (s ScheduleRequest) String() string {
 	return fmt.Sprintf(
-		"ScheduleRequest{At:%s, JobType:%s, Tenant:%s, CorrelationId:%s, RemainingExecution:%d, RetryBackoffAlgo:%v, StringUdf1:%s, StringUdf2:%s, IntUdf1:%d, IntUdf2:%d, Properties:%v}",
-		s.At, s.JobType, s.Tenant, s.CorrelationId, s.RemainingExecution, s.RetryBackoffAlgo, s.StringUdf1, s.StringUdf2, s.IntUdf1, s.IntUdf2, s.Properties,
+		"ScheduleRequest{At:%s, JobType:%d, Tenant:%d, CorrelationId:%s, RemainingExecution:%d, StringUdf1:%s, StringUdf2:%s, IntUdf1:%d, IntUdf2:%d, Properties:%v}",
+		s.At, s.JobType, s.Tenant, s.CorrelationId, s.RemainingExecution, s.StringUdf1, s.StringUdf2, s.IntUdf1, s.IntUdf2, s.Properties,
 	)
 }
 

@@ -148,7 +148,7 @@ func (q *queueImpl) internalPollV1(ctx context.Context, req queue.PollRequest) (
 				// If next job to process is not current then send a error to wait and try
 				n := time.Now()
 				if result.ProcessAtTimeUsed.After(n) {
-					waitTime := processAt.UnixMilli() - processAt.Truncate(time.Second).UnixMilli()
+					waitTime := processAt.Add(time.Second).UnixMilli() - time.Now().UnixMilli()
 					if waitTime <= 0 {
 						waitTime = 1
 					}
