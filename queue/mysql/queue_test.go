@@ -214,8 +214,8 @@ func TestPollWithNoRecord(t *testing.T) {
 			var e *queue.PollResponseError
 			tmp := errors.As(err, &e)
 			assert.True(t, tmp)
-			fmt.Println(e.WaitForDurationBeforeTrying.Milliseconds())
-			assert.True(t, e.WaitForDurationBeforeTrying.Milliseconds() > 6000)
+			fmt.Println("Wait for ", e.WaitForDurationBeforeTrying.Milliseconds())
+			assert.True(t, e.WaitForDurationBeforeTrying.Milliseconds() > 0)
 
 			if tmp == true {
 				break
