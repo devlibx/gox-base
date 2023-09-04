@@ -68,8 +68,9 @@ func PerfMain() {
 		panic(err)
 	} else {
 		db, _ := storeBackend.GetSqlDb()
-		db.Exec("TRUNCATE table jobs")
-		db.Exec("TRUNCATE table jobs_data")
+		// db.Exec("TRUNCATE table jobs")
+		// db.Exec("TRUNCATE table jobs_data")
+		_ = db
 	}
 
 	// Setup ID generator - this will generate ULID based IDs
@@ -203,7 +204,7 @@ func perfPoll(appQueue queue.Queue) {
 				} else {
 					if rand.Intn(5) == 0 && fetchJobErr == nil {
 						// var result *queue.MarkJobFailedWithRetryResponse
-						if _, updateErr := appQueue.MarkJobCompletedWithRetry(
+						if _, updateErr := appQueue.MarkJobFailedAndScheduleRetry(
 							context.Background(), queue.MarkJobFailedWithRetryRequest{Id: rs.Id, ScheduleRetryAt: fetchJobResponse.At.Add(time.Hour)},
 						); updateErr != nil {
 							markJobCompleteErrorCounter.Inc(1)

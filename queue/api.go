@@ -47,15 +47,24 @@ type MySqlBackedQueueConfig struct {
 // Queue is an interface to provide all queue related methods. It allows you to schedule, poll etc
 type Queue interface {
 
-	// Schedule method will put this request on the queue to be executed on the time
+	// Schedule method puts a request on the queue to be executed at a scheduled time.
+	// It takes a context and a ScheduleRequest as input and returns a ScheduleResponse or an error.
 	Schedule(ctx context.Context, req ScheduleRequest) (*ScheduleResponse, error)
 
-	// Poll method will put this request on the queue to be executed on the time
+	// Poll method retrieves a request from the queue to be executed immediately.
+	// It takes a context and a PollRequest as input and returns a PollResponse or an error.
 	Poll(ctx context.Context, req PollRequest) (*PollResponse, error)
 
+	// FetchJobDetails retrieves details of a specific job from the queue.
+	// It takes a context and a JobDetailsRequest as input and returns a JobDetailsResponse or an error.
 	FetchJobDetails(ctx context.Context, req JobDetailsRequest) (result *JobDetailsResponse, err error)
 
-	MarkJobCompletedWithRetry(ctx context.Context, req MarkJobFailedWithRetryRequest) (result *MarkJobFailedWithRetryResponse, err error)
+	// MarkJobFailedAndScheduleRetry marks a job as failed and schedules it for retry.
+	// It takes a context and a MarkJobFailedWithRetryRequest as input and returns a MarkJobFailedWithRetryResponse or an error.
+	MarkJobFailedAndScheduleRetry(ctx context.Context, req MarkJobFailedWithRetryRequest) (result *MarkJobFailedWithRetryResponse, err error)
+
+	// MarkJobCompleted marks a job as completed.
+	// It takes a context and a MarkJobCompletedRequest as input and returns a MarkJobCompletedResponse or an error.
 	MarkJobCompleted(ctx context.Context, req MarkJobCompletedRequest) (result *MarkJobCompletedResponse, err error)
 }
 

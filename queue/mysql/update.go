@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func (q *queueImpl) MarkJobCompletedWithRetry(ctx context.Context, req queue.MarkJobFailedWithRetryRequest) (result *queue.MarkJobFailedWithRetryResponse, err error) {
+func (q *queueImpl) MarkJobFailedAndScheduleRetry(ctx context.Context, req queue.MarkJobFailedWithRetryRequest) (result *queue.MarkJobFailedWithRetryResponse, err error) {
 	result = &queue.MarkJobFailedWithRetryResponse{Done: false}
 
 	// Get the partition time
@@ -27,7 +27,7 @@ func (q *queueImpl) MarkJobCompletedWithRetry(ctx context.Context, req queue.Mar
 		if _, err = q.updateJobStatusStatement.ExecContext(ctx, queue.StatusFailed, queue.SubStatusNoRetryPendingError, req.Id, part); err != nil {
 			return nil, errors.Wrap(err, "failed to update the job to mark failed: id=%s", req.Id)
 		}
-		result.Done = true
+		result.Done = false
 	} else {
 
 		// Begin a transaction

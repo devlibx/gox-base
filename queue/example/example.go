@@ -278,7 +278,7 @@ func poll(appQueue queue.Queue) {
 
 				if rand.Intn(5) == 0 && getErr == nil {
 					var result *queue.MarkJobFailedWithRetryResponse
-					if result, updateErr = appQueue.MarkJobCompletedWithRetry(context.Background(), queue.MarkJobFailedWithRetryRequest{Id: rs.Id, ScheduleRetryAt: jd.At.Add(time.Hour)}); updateErr != nil {
+					if result, updateErr = appQueue.MarkJobFailedAndScheduleRetry(context.Background(), queue.MarkJobFailedWithRetryRequest{Id: rs.Id, ScheduleRetryAt: jd.At.Add(time.Hour)}); updateErr != nil {
 						fmt.Println("failed to marked job failed", err)
 					} else {
 						// fmt.Println("OK failed to marked job failed", result.RetryJobId)

@@ -284,7 +284,7 @@ func TestRescheduleJobOnError(t *testing.T) {
 		assert.Equal(t, testJobType, pollJobDetails.JobType)
 
 		// Part 3 - Mark it failed
-		jobFailedResponse, err = appQueue.MarkJobCompletedWithRetry(ctx, queue.MarkJobFailedWithRetryRequest{
+		jobFailedResponse, err = appQueue.MarkJobFailedAndScheduleRetry(ctx, queue.MarkJobFailedWithRetryRequest{
 			Id:              pollResult.Id,
 			ScheduleRetryAt: now.Add(10 * time.Millisecond),
 		})
@@ -320,7 +320,7 @@ func TestRescheduleJobOnError(t *testing.T) {
 		assert.Equal(t, testJobType, pollJobDetails.JobType)
 
 		// Again fail it
-		jobFailedResponse, err = appQueue.MarkJobCompletedWithRetry(ctx, queue.MarkJobFailedWithRetryRequest{
+		jobFailedResponse, err = appQueue.MarkJobFailedAndScheduleRetry(ctx, queue.MarkJobFailedWithRetryRequest{
 			Id:              pollResult.Id,
 			ScheduleRetryAt: now.Add(10 * time.Millisecond),
 		})
@@ -336,7 +336,7 @@ func TestRescheduleJobOnError(t *testing.T) {
 		pollJobDetails, err = appQueue.FetchJobDetails(ctx, queue.JobDetailsRequest{Id: pollResult.Id})
 		assert.NoError(t, err)
 		assert.Equal(t, 0, pollJobDetails.RemainingExecution)
-		jobFailedResponse, err = appQueue.MarkJobCompletedWithRetry(ctx, queue.MarkJobFailedWithRetryRequest{
+		jobFailedResponse, err = appQueue.MarkJobFailedAndScheduleRetry(ctx, queue.MarkJobFailedWithRetryRequest{
 			Id:              pollResult.Id,
 			ScheduleRetryAt: now.Add(10 * time.Millisecond),
 		})
