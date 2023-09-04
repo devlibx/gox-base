@@ -151,6 +151,8 @@ func (q *queueImpl) internalPollV1(ctx context.Context, req queue.PollRequest) (
 					waitTime := processAt.UnixMilli() - n.UnixMilli()
 					if waitTime <= 0 {
 						waitTime = 1
+					} else if waitTime > 1000 {
+						waitTime = 1000
 					}
 					err = &queue.PollResponseError{
 						// WaitForDurationBeforeTrying:       time.Duration(result.ProcessAtTimeUsed.UnixMilli()-n.UnixMilli()) * time.Millisecond,
