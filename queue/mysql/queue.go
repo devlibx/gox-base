@@ -43,6 +43,7 @@ type queueImpl struct {
 	readJobDetailsStatement     *sql.Stmt
 	readJobDataDetailsStatement *sql.Stmt
 	updateJobStatusStatement    *sql.Stmt
+	updateJobDataStatement      *sql.Stmt
 
 	usePreparedStatement       bool
 	useMinQueryToPickLatestRow bool
