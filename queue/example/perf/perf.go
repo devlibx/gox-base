@@ -54,15 +54,15 @@ func PerfMain() {
 
 	// Setup DB
 	storeBackend, err := mysqlQueue.NewMySqlBackedStore(queue.MySqlBackedStoreBackendConfig{
-		Host:              os.Getenv("DB_URL"),
-		User:              os.Getenv("DB_USER"),
-		Password:          os.Getenv("DB_PASS"),
-		Database:          os.Getenv("DB_NAME"),
-		Port:              3306,
-		MaxOpenConnection: 100,
-		MaxIdleConnection: 100,
-		ConnMaxLifetime:   60,
-		Properties:        gox.StringObjectMap{},
+		Host:                 os.Getenv("DB_URL"),
+		User:                 os.Getenv("DB_USER"),
+		Password:             os.Getenv("DB_PASS"),
+		Database:             os.Getenv("DB_NAME"),
+		Port:                 3306,
+		MaxOpenConnection:    100,
+		MaxIdleConnection:    100,
+		ConnMaxLifetimeInSec: 60,
+		Properties:           gox.StringObjectMap{},
 	}, true)
 	if err != nil {
 		panic(err)
