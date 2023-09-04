@@ -2,11 +2,12 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/devlibx/gox-base"
 	queue "github.com/devlibx/gox-base/queue"
+	"github.com/devlibx/gox-base/queue/example/perf"
 	mysqlQueue "github.com/devlibx/gox-base/queue/mysql"
-	errors1 "github.com/pkg/errors"
 	"github.com/rcrowley/go-metrics"
 	"go.uber.org/zap"
 	"log"
@@ -17,7 +18,7 @@ import (
 	"time"
 )
 
-var writeCounter, writeErrorCounter, readCounter, readErrorCounter, readNoResultCounter metrics.Counter
+var writeCounter, writeErrorCounter, readCounter, readErrorCounter, readWaitCounter, readNoResultCounter, fetchJobErrorCounter, markJobCompleteErrorCounter, markJobFailedErrorCounter metrics.Counter
 
 var globalTenant = 2
 var globalJobType = 1
@@ -25,6 +26,10 @@ var globalJobType = 1
 // r := NewRegistry()
 
 func main() {
+	if true {
+		perf.PerfMain()
+		return
+	}
 
 	//	argsWithProg := os.Args
 	argsWithoutProg := os.Args[1:]
@@ -34,30 +39,39 @@ func main() {
 	writeErrorCounter = metrics.NewCounter()
 	readErrorCounter = metrics.NewCounter()
 	readNoResultCounter = metrics.NewCounter()
+	readWaitCounter = metrics.NewCounter()
+	fetchJobErrorCounter = metrics.NewCounter()
+	markJobCompleteErrorCounter = metrics.NewCounter()
+	markJobFailedErrorCounter = metrics.NewCounter()
 	metrics.Register("write", writeCounter)
 	metrics.Register("write_error", writeErrorCounter)
 	metrics.Register("read", readCounter)
 	metrics.Register("read_error", readErrorCounter)
 	metrics.Register("read_no_record", readNoResultCounter)
+	metrics.Register("read_wait", readWaitCounter)
+	metrics.Register("fetch_job_error", fetchJobErrorCounter)
+	metrics.Register("mark_job_completed_error", markJobCompleteErrorCounter)
+	metrics.Register("mark_job_failed_error", markJobFailedErrorCounter)
 
 	go metrics.Log(metrics.DefaultRegistry, 1*time.Minute, log.New(os.Stderr, "metrics: ", log.Lmicroseconds))
 
 	storeBackend, err := mysqlQueue.NewMySqlBackedStore(queue.MySqlBackedStoreBackendConfig{
-		Host:          os.Getenv("DB_URL"),
-		Port:          3306,
-		User:          os.Getenv("DB_USER"),
-		Password:      os.Getenv("DB_PASS"),
-		Database:      os.Getenv("DB_NAME"),
-		MaxConnection: 100,
-		MinConnection: 100,
-		Properties:    gox.StringObjectMap{},
+		Host:              os.Getenv("DB_URL"),
+		Port:              3306,
+		User:              os.Getenv("DB_USER"),
+		Password:          os.Getenv("DB_PASS"),
+		Database:          os.Getenv("DB_NAME"),
+		MaxOpenConnection: 100,
+		MaxIdleConnection: 100,
+		ConnMaxLifetime:   60,
+		Properties:        gox.StringObjectMap{},
 	}, true)
 	if err != nil {
 		panic(err)
 	} else {
 		db, _ := storeBackend.GetSqlDb()
-		// db.Exec("TRUNCATE table jobs")
-		// db.Exec("TRUNCATE table jobs_data")
+		db.Exec("TRUNCATE table jobs")
+		db.Exec("TRUNCATE table jobs_data")
 		_ = db
 	}
 
@@ -138,33 +152,38 @@ func push(appQueue queue.Queue) {
 		} else {
 			now = time.Now().Add(time.Duration(h) * time.Hour).Add(time.Duration(m) * time.Minute).Add(time.Duration(s) * time.Second)
 		}
-		now = time.Now()
 
-		ran := rand.Intn(5)
-		if ran == 0 {
-			now = time.Now()
-		} else if ran == 1 {
-			now = time.Now().Add(time.Duration(d*24) * time.Hour).Add(time.Duration(h) * time.Hour).Add(time.Duration(m) * time.Minute).Add(time.Duration(s) * time.Second)
-		} else if ran == 2 {
-			now = time.Now().Add(time.Duration(-d*24) * time.Hour).Add(time.Duration(h) * time.Hour).Add(time.Duration(m) * time.Minute).Add(time.Duration(s) * time.Second)
-		} else {
-			now = time.Now()
-		}
-
-		jobType := rand.Intn(3)
-		tenant := rand.Intn(3)
+		var jobType = globalJobType
+		var tenant = globalTenant
 		/*
+			now = time.Now()
 
-			if rand.Intn(2)%2 == 0 {
+			ran := rand.Intn(5)
+			if ran == 0 {
 				now = time.Now()
-				jobType = globalJobType
-				tenant = globalTenant
-			}
-			if true {
+			} else if ran == 1 {
+				now = time.Now().Add(time.Duration(d*24) * time.Hour).Add(time.Duration(h) * time.Hour).Add(time.Duration(m) * time.Minute).Add(time.Duration(s) * time.Second)
+			} else if ran == 2 {
+				now = time.Now().Add(time.Duration(-d*24) * time.Hour).Add(time.Duration(h) * time.Hour).Add(time.Duration(m) * time.Minute).Add(time.Duration(s) * time.Second)
+			} else {
 				now = time.Now()
-				jobType = globalJobType
-				tenant = globalTenant
 			}
+
+			jobType := rand.Intn(3)
+			tenant := rand.Intn(3)
+
+
+					if rand.Intn(2)%2 == 0 {
+						now = time.Now()
+						jobType = globalJobType
+						tenant = globalTenant
+					}
+				if true {
+					now = time.Now()
+					jobType = globalJobType
+					tenant = globalTenant
+				}
+
 		*/
 
 		ctx, ch := context.WithTimeout(context.Background(), 1*time.Second)
@@ -212,14 +231,14 @@ func poll(appQueue queue.Queue) {
 		ch()
 		_ = rs
 		if err != nil {
-			if errors1.Is(err, queue.NoJobsToRunAtCurrently) {
-				// fmt.Println("No rows Error")
-				readNoResultCounter.Inc(1)
-				time.Sleep(1 * time.Millisecond)
+			var e *queue.PollResponseError
+			if errors.As(err, &e) {
+				fmt.Println("Wait for sometime", e)
+				writeErrorCounter.Inc(1)
+				time.Sleep(e.WaitForDurationBeforeTrying)
+				continue
 			} else {
-				fmt.Println("Error", err)
-				readErrorCounter.Inc(1)
-				time.Sleep(100 * time.Millisecond)
+				fmt.Println("Some error in polling", err)
 			}
 		} else {
 			// fmt.Printf("Result = Ok: Id=%-30s  Hour=%-3d Min=%-3d  TimeTakne=%-4d \n", rs.Id, h, m, time.Now().UnixMilli()-start.UnixMilli())

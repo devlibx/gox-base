@@ -289,6 +289,9 @@ func RecordIdToTime(id string) (time.Time, error) {
 }
 
 func InternalImplEndOfWeek(inputTime time.Time) time.Time {
+	if true {
+		return inputTime
+	}
 	inputTime = inputTime.Truncate(time.Hour).Add(time.Duration(-1 * inputTime.Hour()))
 	daysUntilSunday := 0
 	switch inputTime.Weekday() {

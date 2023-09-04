@@ -79,6 +79,9 @@ func TestSchedule(t *testing.T) {
 	assert.NoError(t, err)
 	db := sc.db
 
+	// Clear all test data if remaining
+	markAllTestRowsToDone(t, context.Background(), db)
+
 	t.Run("schedule a simple job", func(t *testing.T) {
 		ctx, ch := context.WithTimeout(context.Background(), 10*time.Second)
 		defer ch()
@@ -105,7 +108,7 @@ func TestSchedule(t *testing.T) {
 	})
 
 	t.Run("schedule a simple job and pull it back and also test if job mark complete works", func(t *testing.T) {
-		ctx, ch := context.WithTimeout(context.Background(), 10*time.Second)
+		ctx, ch := context.WithTimeout(context.Background(), 1*time.Second)
 		defer ch()
 
 		rs, err := appQueue.Schedule(ctx, queue.ScheduleRequest{
@@ -174,6 +177,9 @@ func TestPollWithNoRecord(t *testing.T) {
 
 	sc, appQueue, _, err := setup()
 	assert.NoError(t, err)
+
+	// Clear all test data if remaining
+	markAllTestRowsToDone(t, context.Background(), sc.db)
 
 	t.Run("we expect no records", func(t *testing.T) {
 		ctx, ch := context.WithTimeout(context.Background(), 10*time.Second)
