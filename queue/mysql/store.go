@@ -42,7 +42,7 @@ func (m *mySqlStore) Init() error {
 		m.db = db
 		m.db.SetMaxOpenConns(m.config.MaxOpenConnection)
 		m.db.SetMaxIdleConns(m.config.MaxIdleConnection)
-		m.db.SetConnMaxLifetime(time.Duration(m.config.ConnMaxLifetime) * time.Second)
+		m.db.SetConnMaxLifetime(time.Duration(m.config.ConnMaxLifetimeInSec) * time.Second)
 	})
 
 	return m.initErr

@@ -56,15 +56,15 @@ func main() {
 	go metrics.Log(metrics.DefaultRegistry, 1*time.Minute, log.New(os.Stderr, "metrics: ", log.Lmicroseconds))
 
 	storeBackend, err := mysqlQueue.NewMySqlBackedStore(queue.MySqlBackedStoreBackendConfig{
-		Host:              os.Getenv("DB_URL"),
-		Port:              3306,
-		User:              os.Getenv("DB_USER"),
-		Password:          os.Getenv("DB_PASS"),
-		Database:          os.Getenv("DB_NAME"),
-		MaxOpenConnection: 100,
-		MaxIdleConnection: 100,
-		ConnMaxLifetime:   60,
-		Properties:        gox.StringObjectMap{},
+		Host:                 os.Getenv("DB_URL"),
+		Port:                 3306,
+		User:                 os.Getenv("DB_USER"),
+		Password:             os.Getenv("DB_PASS"),
+		Database:             os.Getenv("DB_NAME"),
+		MaxOpenConnection:    100,
+		MaxIdleConnection:    100,
+		ConnMaxLifetimeInSec: 60,
+		Properties:           gox.StringObjectMap{},
 	}, true)
 	if err != nil {
 		panic(err)

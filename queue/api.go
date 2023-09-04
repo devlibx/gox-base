@@ -193,16 +193,16 @@ func (s PollResponse) String() string {
 
 // MySqlBackedStoreBackendConfig is the config to be used for MySQL backed queue
 type MySqlBackedStoreBackendConfig struct {
-	Host              string              `json:"host,omitempty"`
-	Port              int                 `json:"port,omitempty"`
-	User              string              `json:"user,omitempty"`
-	Password          string              `json:"password,omitempty"`
-	Database          string              `json:"database,omitempty"`
-	MaxIdleConnection int                 `json:"max_idle_connection"`
-	MaxOpenConnection int                 `json:"max_open_connection"`
-	ConnMaxLifetime   int                 `json:"conn_max_lifetime_in_sec"`
-	Properties        gox.StringObjectMap `json:"properties,omitempty"`
-	ColumnMapping     map[string]string   `json:"column_mapping,omitempty"`
+	Host                 string              `json:"host,omitempty"`
+	Port                 int                 `json:"port,omitempty"`
+	User                 string              `json:"user,omitempty"`
+	Password             string              `json:"password,omitempty"`
+	Database             string              `json:"database,omitempty"`
+	MaxIdleConnection    int                 `json:"max_idle_connection"`
+	MaxOpenConnection    int                 `json:"max_open_connection"`
+	ConnMaxLifetimeInSec int                 `json:"conn_max_lifetime_in_sec"`
+	Properties           gox.StringObjectMap `json:"properties,omitempty"`
+	ColumnMapping        map[string]string   `json:"column_mapping,omitempty"`
 }
 
 func (m *MySqlBackedStoreBackendConfig) SetupDefault() {
@@ -221,8 +221,8 @@ func (m *MySqlBackedStoreBackendConfig) SetupDefault() {
 	if m.MaxOpenConnection <= 0 {
 		m.MaxOpenConnection = 10
 	}
-	if m.ConnMaxLifetime <= 0 {
-		m.ConnMaxLifetime = 60
+	if m.ConnMaxLifetimeInSec <= 0 {
+		m.ConnMaxLifetimeInSec = 60
 	}
 }
 
