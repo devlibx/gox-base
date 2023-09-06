@@ -358,6 +358,77 @@ func TestRescheduleJobOnError(t *testing.T) {
 
 }
 
+func TestUpdateJobData(t *testing.T) {
+	if os.Getenv("DB_URL") == "" {
+		t.Skip("to run tests you must set DB_URL which points to DB used in the test")
+		return
+	}
+
+	sc, appQueue, _, err := setup()
+	assert.NoError(t, err)
+	// db := sc.db
+	now := time.Now()
+
+	// Clear all test data if remaining
+	markAllTestRowsToDone(t, context.Background(), sc.db)
+
+	t.Run("update job data", func(t *testing.T) {
+		ctx, ch := context.WithTimeout(context.Background(), 10*time.Second)
+		defer ch()
+
+		// Part 1 - Schedule a job and verify its entry in DB
+		rs, err := appQueue.Schedule(ctx, queue.ScheduleRequest{
+			JobType:            testJobType,
+			Tenant:             testTenant,
+			At:                 now,
+			RemainingExecution: 3,
+			Properties:         map[string]interface{}{"info": fmt.Sprintf("%d", 5510)},
+			StringUdf1:         "str_udf_1",
+			StringUdf2:         "str_udf_2",
+			IntUdf1:            10,
+			IntUdf2:            11,
+		})
+		assert.NoError(t, err)
+		resultFromMySQL, err := appQueue.FetchJobDetails(ctx, queue.JobDetailsRequest{Id: rs.Id})
+		assert.NoError(t, err)
+		assert.Equal(t, queue.StatusScheduled, resultFromMySQL.State)
+		assert.Equal(t, queue.SubStatusScheduledOk, resultFromMySQL.SubState)
+		assert.Equal(t, 3, resultFromMySQL.RemainingExecution)
+		assert.Equal(t, testTenant, resultFromMySQL.Tenant)
+		assert.Equal(t, testJobType, resultFromMySQL.JobType)
+		assert.Equal(t, "str_udf_1", resultFromMySQL.StringUdf1)
+		assert.Equal(t, "str_udf_2", resultFromMySQL.StringUdf2)
+		assert.Equal(t, 10, resultFromMySQL.IntUdf1)
+		assert.Equal(t, 11, resultFromMySQL.IntUdf2)
+		assert.Equal(t, "5510", resultFromMySQL.Properties["info"])
+		fmt.Println(rs)
+
+		updateResponse, err := appQueue.UpdateJobData(ctx, queue.UpdateJobDataRequest{
+			Id:         rs.Id,
+			StringUdf1: "str_udf_1_updated",
+			StringUdf2: "str_udf_2_updated",
+			IntUdf1:    110,
+			IntUdf2:    111,
+			Properties: map[string]interface{}{"info": fmt.Sprintf("%d", 15510)},
+		})
+		assert.NoError(t, err)
+		assert.NotNil(t, updateResponse)
+
+		jd, err := appQueue.FetchJobDetails(ctx, queue.JobDetailsRequest{Id: rs.Id})
+		assert.NoError(t, err)
+		assert.NotNil(t, jd)
+		assert.Equal(t, queue.SubStatusScheduledOk, jd.SubState)
+		assert.Equal(t, 3, jd.RemainingExecution)
+		assert.Equal(t, testTenant, jd.Tenant)
+		assert.Equal(t, testJobType, jd.JobType)
+		assert.Equal(t, "str_udf_1_updated", jd.StringUdf1)
+		assert.Equal(t, "str_udf_2_updated", jd.StringUdf2)
+		assert.Equal(t, 110, jd.IntUdf1)
+		assert.Equal(t, 111, jd.IntUdf2)
+		assert.Equal(t, "15510", jd.Properties["info"])
+	})
+}
+
 func readRow(ctx context.Context, db *sql.DB, id string) (result *queue.JobDetailsResponse, err error) {
 	result = &queue.JobDetailsResponse{}
 
