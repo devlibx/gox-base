@@ -17,12 +17,16 @@ func (q *queueImpl) jobInfoInit() (err error) {
 		jobDataQuery = q.queryRewriter.RewriteQuery("jobs_data", jobDataQuery)
 		jobUpdateQuery := "UPDATE jobs set state=?, sub_state=? WHERE id=? AND part=?"
 		jobUpdateQuery = q.queryRewriter.RewriteQuery("jobs", jobUpdateQuery)
+		jobDataUpdateQuery := "UPDATE jobs_data SET string_udf_1=?, string_udf_2=?, int_udf_1=?, int_udf_2=?, properties=? WHERE id=? AND part=?"
+		jobDataUpdateQuery = q.queryRewriter.RewriteQuery("jobs_data", jobDataUpdateQuery)
 
 		if q.readJobDetailsStatement, err = q.db.PrepareContext(context.Background(), jobQuery); err != nil {
 			err = errors.Wrap(err, "failed to build query for fetch job data")
 		} else if q.readJobDataDetailsStatement, err = q.db.PrepareContext(context.Background(), jobDataQuery); err != nil {
 			err = errors.Wrap(err, "failed to build query for fetch job data")
 		} else if q.updateJobStatusStatement, err = q.db.PrepareContext(context.Background(), jobUpdateQuery); err != nil {
+			err = errors.Wrap(err, "failed to build query for update job status")
+		} else if q.updateJobDataStatement, err = q.db.PrepareContext(context.Background(), jobDataUpdateQuery); err != nil {
 			err = errors.Wrap(err, "failed to build query for update job data")
 		}
 	})
@@ -66,7 +70,7 @@ func (q *queueImpl) internalJobDetails(ctx context.Context, req queue.JobDetails
 		result.IntUdf1 = int(intUdf1.Int64)
 	}
 	if cid.Valid {
-		result.IntUdf2 = int(intUdf1.Int64)
+		result.IntUdf2 = int(intUdf2.Int64)
 	}
 	if tenant.Valid {
 		result.Tenant = int(tenant.Int32)

@@ -3,8 +3,10 @@ package queue
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"github.com/devlibx/gox-base/errors"
 	"github.com/devlibx/gox-base/queue"
+	"github.com/devlibx/gox-base/serialization"
 	"go.uber.org/zap"
 	"time"
 )
@@ -25,6 +27,11 @@ func (q *queueImpl) MarkJobFailedAndScheduleRetry(ctx context.Context, req queue
 
 	if jobFetchResponse.RemainingExecution <= 0 {
 		if _, err = q.updateJobStatusStatement.ExecContext(ctx, queue.StatusFailed, queue.SubStatusNoRetryPendingError, req.Id, part); err != nil {
+			return nil, errors.Wrap(err, "failed to update the job to mark failed: id=%s", req.Id)
+		}
+		result.Done = false
+	} else if req.ScheduleRetryAt.IsZero() {
+		if _, err = q.updateJobStatusStatement.ExecContext(ctx, queue.StatusFailed, queue.SubStatusRetryIgnoredByUserError, req.Id, part); err != nil {
 			return nil, errors.Wrap(err, "failed to update the job to mark failed: id=%s", req.Id)
 		}
 		result.Done = false
@@ -95,5 +102,38 @@ func (q *queueImpl) MarkJobCompleted(ctx context.Context, req queue.MarkJobCompl
 	if _, err = q.updateJobStatusStatement.ExecContext(ctx, queue.StatusDone, queue.SubStatusDone, req.Id, part); err != nil {
 		return nil, errors.Wrap(err, "failed to update the job: id=%s", req.Id)
 	}
+	return
+}
+
+func (q *queueImpl) UpdateJobData(ctx context.Context, req queue.UpdateJobDataRequest) (result *queue.UpdateJobDataResponse, err error) {
+	return q.internalUpdateJobData(ctx, req)
+}
+
+func (q *queueImpl) internalUpdateJobData(ctx context.Context, req queue.UpdateJobDataRequest) (result *queue.UpdateJobDataResponse, err error) {
+	result = &queue.UpdateJobDataResponse{}
+
+	// Get the partition time
+	part := time.Time{}
+	if part, err = queue.GeneratePartitionTimeByRecordId(req.Id); err != nil {
+		return nil, errors.Wrap(err, "not able to get time out of id: id=%s", req.Id)
+	}
+
+	properties := ""
+	if req.Properties != nil {
+		// properties = req.Properties
+		if properties, err = serialization.Stringify(req.Properties); err != nil {
+			return nil, fmt.Errorf("failed to persist (metadata is bad): %w", err)
+		}
+	}
+
+	// Update job data
+	var r sql.Result
+	var noOfUpdatedRecords int64
+	if r, err = q.updateJobDataStatement.ExecContext(ctx, req.StringUdf1, req.StringUdf2, req.IntUdf1, req.IntUdf2, properties, req.Id, part); err != nil {
+		return nil, errors.Wrap(err, "failed to update the job data: id=%s", req.Id)
+	} else if noOfUpdatedRecords, err = r.RowsAffected(); err == nil && noOfUpdatedRecords == 0 {
+		err = errors.Wrap(err, "failed to update the job data : id=%s", req.Id)
+	}
+
 	return
 }

@@ -22,11 +22,12 @@ var (
 	SubStatusScheduledOk            = StatusScheduled*10 + 0
 	SubStatusDone                   = StatusDone*10 + 0
 	SubStatusDoneDueToCorrelatedJob = StatusDone*10 + 1
-	SubStatusInternalError          = StatusFailed*10 + 1
-	SubStatusApplicationError       = StatusFailed*10 + 2
 
-	SubStatusNoRetryPendingError = StatusFailed*10 + 2
-	SubStatusRetryPendingError   = StatusFailed*10 + 2
+	SubStatusInternalError           = StatusFailed*10 + 1
+	SubStatusApplicationError        = StatusFailed*10 + 2
+	SubStatusNoRetryPendingError     = StatusFailed*10 + 3
+	SubStatusRetryPendingError       = StatusFailed*10 + 4
+	SubStatusRetryIgnoredByUserError = StatusFailed*10 + 5
 )
 
 // ErrNoMoreRetry indicate that no more retries are needed
@@ -66,6 +67,10 @@ type Queue interface {
 	// MarkJobCompleted marks a job as completed.
 	// It takes a context and a MarkJobCompletedRequest as input and returns a MarkJobCompletedResponse or an error.
 	MarkJobCompleted(ctx context.Context, req MarkJobCompletedRequest) (result *MarkJobCompletedResponse, err error)
+
+	// UpdateJobData updates the data for the given job
+	// It takes a context and a UpdateJobDataRequest as input and returns a UpdateJobDataResponse or an error.
+	UpdateJobData(ctx context.Context, req UpdateJobDataRequest) (result *UpdateJobDataResponse, err error)
 }
 
 // ScheduleRequest is a request to schedule a run of this job
@@ -189,6 +194,18 @@ type JobDetailsResponse struct {
 
 func (s PollResponse) String() string {
 	return fmt.Sprintf("PollResponse{Id:%s, ProcessAtTimeUsed:%s, RecordPartitionTime:%s}", s.Id, s.ProcessAtTimeUsed.Local().Format(time.RFC3339), s.RecordPartitionTime.Local().Format(time.RFC3339))
+}
+
+type UpdateJobDataRequest struct {
+	Id         string
+	StringUdf1 string
+	StringUdf2 string
+	IntUdf1    int
+	IntUdf2    int
+	Properties map[string]interface{}
+}
+
+type UpdateJobDataResponse struct {
 }
 
 // MySqlBackedStoreBackendConfig is the config to be used for MySQL backed queue
