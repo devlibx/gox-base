@@ -128,6 +128,9 @@ func PerfMain() {
 	time.Sleep(10000 * time.Hour)
 }
 
+var idSycn = sync.Mutex{}
+var ids = map[string]string{}
+
 func perfSchedule(appQueue queue.Queue) {
 	var jobType = globalJobType
 	var tenant = globalTenant
@@ -170,6 +173,16 @@ func perfSchedule(appQueue queue.Queue) {
 			_ = rs
 			writeCounter.Inc(1)
 			time.Sleep(100 * time.Microsecond)
+
+			idSycn.Lock()
+			if r, ok := ids[rs.Id]; ok {
+				fmt.Println("Clash", r)
+				time.Sleep(10 * time.Second)
+			} else {
+				ids[rs.Id] = ""
+			}
+			idSycn.Unlock()
+
 		}
 		cancelContext()
 	}
