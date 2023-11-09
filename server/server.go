@@ -12,6 +12,10 @@ type Server interface {
 	Stop() chan bool
 }
 
+type ServerShutdownHook interface {
+	StopFunction() func()
+}
+
 func NewServer(cf gox.CrossFunction) (Server, error) {
 	s := &serverImpl{CrossFunction: cf, stopOnce: &sync.Once{}}
 	return s, nil
@@ -19,5 +23,10 @@ func NewServer(cf gox.CrossFunction) (Server, error) {
 
 func NewServerWithShutdownHookFunc(cf gox.CrossFunction, shutdownHookFunc func()) (Server, error) {
 	s := &serverImpl{CrossFunction: cf, shutdownHookFunc: shutdownHookFunc, stopOnce: &sync.Once{}}
+	return s, nil
+}
+
+func NewServerWithShutdownHook(cf gox.CrossFunction, serverShutdownHook ServerShutdownHook) (Server, error) {
+	s := &serverImpl{CrossFunction: cf, shutdownHookFunc: serverShutdownHook.StopFunction(), stopOnce: &sync.Once{}}
 	return s, nil
 }
