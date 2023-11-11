@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 	. "github.com/devlibx/gox-base/errors"
+	"io"
 	"io/ioutil"
+	"net/http"
 )
 
 // Read a json file and populate the given object with its content
@@ -60,4 +62,20 @@ func JsonBytesToObject(input []byte, out interface{}) (err error) {
 // Helper to convert byte data to a object
 func JsonBytesToObjectSuppressError(input []byte, out interface{}) {
 	_ = json.Unmarshal(input, out)
+}
+
+// JsonHttpRequestToObject will read http request and will populate the object with the body
+func JsonHttpRequestToObject(r *http.Request, out interface{}) error {
+	if body, err := io.ReadAll(r.Body); err != nil {
+		return err
+	} else {
+		return JsonBytesToObject(body, out)
+	}
+}
+
+// JsonHttpRequestToObjectSuppressError will read http request and will populate the object with the body - but ignore the error
+func JsonHttpRequestToObjectSuppressError(r *http.Request, out interface{}) {
+	if body, err := io.ReadAll(r.Body); err == nil {
+		_ = JsonBytesToObject(body, out)
+	}
 }
