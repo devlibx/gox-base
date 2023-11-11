@@ -344,4 +344,3 @@ func TestReadParameterizedConfigYamlWithListAndListMap(t *testing.T) {
 	assert.Equal(t, "push_prod", yaml2Go.Client.OptionMap[2]["push"].Name)
 }
 ```
-
