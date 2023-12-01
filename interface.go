@@ -22,4 +22,5 @@ type CrossFunction interface {
 	TimeService
 	Config() StringObjectMap
 	TimeTracker() util.TimeTracker
+	Publisher() metrics.Publisher
 }

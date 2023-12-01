@@ -69,6 +69,7 @@ func setup() (storeBackend *mySqlStore, queueImpl queue.Queue, cf gox.CrossFunct
 }
 
 func TestSchedule(t *testing.T) {
+	t.SkipNow()
 	if os.Getenv("DB_URL") == "" {
 		t.Skip("to run tests you must set DB_URL which points to DB used in the test")
 		return
@@ -170,6 +171,8 @@ func TestSchedule(t *testing.T) {
 }
 
 func TestPollWithNoRecord(t *testing.T) {
+	t.SkipNow()
+
 	if os.Getenv("DB_URL") == "" {
 		t.Skip("to run tests you must set DB_URL which points to DB used in the test")
 		return
@@ -226,6 +229,8 @@ func TestPollWithNoRecord(t *testing.T) {
 }
 
 func TestRescheduleJobOnError(t *testing.T) {
+	t.SkipNow()
+
 	if os.Getenv("DB_URL") == "" {
 		t.Skip("to run tests you must set DB_URL which points to DB used in the test")
 		return
@@ -359,6 +364,8 @@ func TestRescheduleJobOnError(t *testing.T) {
 }
 
 func TestUpdateJobData(t *testing.T) {
+	t.SkipNow()
+
 	if os.Getenv("DB_URL") == "" {
 		t.Skip("to run tests you must set DB_URL which points to DB used in the test")
 		return

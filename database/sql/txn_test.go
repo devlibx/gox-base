@@ -3,7 +3,6 @@ package goxSql
 import (
 	"context"
 	"fmt"
-	mockGoxSql "github.com/devlibx/gox-base/database/sql/mocks"
 	"github.com/devlibx/gox-base/errors"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
@@ -14,14 +13,14 @@ func TestCommit(t *testing.T) {
 	ctrl := gomock.NewController(t)
 
 	t.Run("Run when commit is called with no error", func(t *testing.T) {
-		txMock := mockGoxSql.NewMockTx(ctrl)
+		txMock := NewMockTx(ctrl)
 		txMock.EXPECT().Commit().Return(nil).Times(1)
 		tx := NewTxExt(txMock)
 		assert.NoError(t, tx.Commit())
 	})
 
 	t.Run("Run when commit is called with error", func(t *testing.T) {
-		txMock := mockGoxSql.NewMockTx(ctrl)
+		txMock := NewMockTx(ctrl)
 		txMock.EXPECT().Commit().Return(errors.New("bad error")).Times(1)
 		tx := NewTxExt(txMock)
 		assert.Error(t, tx.Commit())
@@ -30,7 +29,7 @@ func TestCommit(t *testing.T) {
 
 func TestCommitForRecursiveTx(t *testing.T) {
 	ctrl := gomock.NewController(t)
-	txMock := mockGoxSql.NewMockTx(ctrl)
+	txMock := NewMockTx(ctrl)
 	rollbackCallCount, commitCallCount := 0, 0
 	txMock.EXPECT().Commit().DoAndReturn(func() error {
 		commitCallCount++
@@ -76,7 +75,7 @@ func TestCommitForRecursiveTx(t *testing.T) {
 
 func TestCommitForRecursiveTxWithErrorInChild(t *testing.T) {
 	ctrl := gomock.NewController(t)
-	txMock := mockGoxSql.NewMockTx(ctrl)
+	txMock := NewMockTx(ctrl)
 
 	// We should not get a commit call, only one rollback call
 	rollbackCallCount := 0
@@ -124,7 +123,7 @@ func TestCommitForRecursiveTxWithErrorInChild(t *testing.T) {
 
 func TestCommitForRecursiveTxWithErrorInChildButChildOptedForNewTxn(t *testing.T) {
 	ctrl := gomock.NewController(t)
-	txMock := mockGoxSql.NewMockTx(ctrl)
+	txMock := NewMockTx(ctrl)
 
 	// We should not get a commit call, only one rollback call
 	txMock.EXPECT().Commit().Return(nil).Times(1)

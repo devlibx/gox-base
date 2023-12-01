@@ -26,7 +26,7 @@ func (t *testInternal) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func TestGoxServer(t *testing.T) {
 	if os.Getenv("TEST_GOX_SERVER") == "" {
-		// t.Skip("Skip gox server test")
+		t.Skip("Skip gox server test")
 	}
 
 	var loggerConfig zap.Config

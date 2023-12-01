@@ -143,6 +143,20 @@ func (mr *MockCrossFunctionMockRecorder) Now() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Now", reflect.TypeOf((*MockCrossFunction)(nil).Now))
 }
 
+// Publisher mocks base method.
+func (m *MockCrossFunction) Publisher() metrics.Publisher {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Publisher")
+	ret0, _ := ret[0].(metrics.Publisher)
+	return ret0
+}
+
+// Publisher indicates an expected call of Publisher.
+func (mr *MockCrossFunctionMockRecorder) Publisher() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Publisher", reflect.TypeOf((*MockCrossFunction)(nil).Publisher))
+}
+
 // Sleep mocks base method.
 func (m *MockCrossFunction) Sleep(d time.Duration) {
 	m.ctrl.T.Helper()

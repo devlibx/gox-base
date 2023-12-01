@@ -13,6 +13,11 @@ type crossFunction struct {
 	TimeService
 	config      StringObjectMap
 	timeTracker util.TimeTracker
+	publisher   metrics.Publisher
+}
+
+func (c *crossFunction) Publisher() metrics.Publisher {
+	return c.publisher
 }
 
 func (c *crossFunction) TimeTracker() util.TimeTracker {
@@ -31,7 +36,7 @@ func (c *crossFunction) Config() StringObjectMap {
 	return c.config
 }
 
-// Create a new cross function object
+// NewCrossFunction a no-op cross function object which does not have a side effect
 func NewCrossFunction(args ...interface{}) CrossFunction {
 	obj := crossFunction{}
 	for _, arg := range args {
@@ -44,6 +49,8 @@ func NewCrossFunction(args ...interface{}) CrossFunction {
 			obj.config = o
 		case util.TimeTracker:
 			obj.timeTracker = o
+		case metrics.Publisher:
+			obj.publisher = o
 		}
 	}
 
@@ -72,6 +79,11 @@ func NewCrossFunction(args ...interface{}) CrossFunction {
 		obj.timeTracker = util.NewNoOpTimeTracker()
 	}
 
+	// Setup no-op publisher
+	if obj.publisher == nil {
+		obj.publisher = metrics.NewNoOpPublisher()
+	}
+
 	return &obj
 }
 
@@ -83,5 +95,6 @@ func NewNoOpCrossFunction(args ...interface{}) CrossFunction {
 	obj.Scope = metrics.NoOpMetric()
 	obj.config = StringObjectMap{}
 	obj.timeTracker = util.NewNoOpTimeTracker()
+	obj.publisher = metrics.NewNoOpPublisher()
 	return &obj
 }

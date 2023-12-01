@@ -16,7 +16,7 @@ type TxnBeginner interface {
 	Begin() (Tx, error)
 }
 
-//go:generate mockgen -source=txn.go -destination=./mocks/txn.go -package=mockGoxSql
+//go:generate mockgen -source=txn.go -destination=./mock_txn.go -package=goxSql
 type Tx interface {
 	// Commit commits the transaction.
 	// It returns an error if the commit fails.
