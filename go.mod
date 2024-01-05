@@ -3,9 +3,12 @@ module github.com/devlibx/gox-base
 go 1.15
 
 require (
+	github.com/Shopify/toxiproxy v2.1.4+incompatible
 	github.com/bombsimon/mysql-error-numbers v1.1.0
 	github.com/fatih/structs v1.1.0
 	github.com/gin-gonic/gin v1.9.1
+	github.com/go-redis/redis/v8 v8.11.5
+	github.com/go-redis/redis_rate/v9 v9.1.2
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/go-sql-driver/mysql v1.7.1
 	github.com/golang/mock v1.6.0
