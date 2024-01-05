@@ -13,6 +13,7 @@ import (
 
 //go:generate mockgen -destination=rate_limiter_mock.go -package=redis -source=ratelimiter.go
 
+var _ ratelimit.RateLimiter = &limitGroup{}
 var _ actionAllower = &goRedisRate.Limiter{}
 
 // ActionAllower is the interface to allow an action to be performed - this is used to
