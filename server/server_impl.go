@@ -47,6 +47,9 @@ func (s *serverImpl) Start(handler http.Handler, applicationConfig *config.App) 
 	if applicationConfig.IsServerTimeLoggingEnabled() {
 		rootHandler.Use(s.setupTimeLogging())
 	}
+	if applicationConfig.IsDefaultResponseOnPanicEnabled() {
+		rootHandler.Use(s.setupPanicResponseHandler())
+	}
 	rootHandler.UseHandler(handler)
 
 	// Setup http server
@@ -89,6 +92,21 @@ func (s *serverImpl) setupTimeLogging() negroni.HandlerFunc {
 			zap.String("source", r.Header.Get("X-FORWARDED-FOR")),
 			zap.Int64("duration", end.Sub(start).Milliseconds()),
 		)
+	}
+}
+
+func (s *serverImpl) setupPanicResponseHandler() negroni.HandlerFunc {
+	logger := s.Logger().Named("negroni-panic")
+	return func(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+		defer func() {
+			if err := recover(); err != nil {
+				rw.Header().Set("Content-Type", "application/json")
+				rw.WriteHeader(http.StatusInternalServerError)
+				_, _ = rw.Write([]byte(`{"error":"internal server error""}`))
+				logger.Error("panic is service http request", zap.String("url", r.RequestURI), zap.Any("error", err))
+			}
+		}()
+		next(rw, r)
 	}
 }
 

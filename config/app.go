@@ -39,3 +39,13 @@ func (app *App) IsServerTimeLoggingEnabled() bool {
 		return false
 	}
 }
+
+func (app *App) IsDefaultResponseOnPanicEnabled() bool {
+	if app.Properties == nil {
+		return true
+	} else if app.Properties.BoolOrTrue("server-default-response-on-panic-enabled") {
+		return true
+	} else {
+		return false
+	}
+}
