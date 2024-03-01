@@ -74,6 +74,7 @@ type Config struct {
 	EnablePrometheus    bool         `json:"enable_prometheus" yaml:"enable_prometheus"`
 	EnableStatsd        bool         `json:"enable_statsd" yaml:"enable_statsd"`
 	Tracing             Tracing      `json:"tracing" yaml:"tracing"`
+	Tags                string       `json:"tags" yaml:"tags"`
 }
 
 // dd:
