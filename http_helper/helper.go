@@ -1,8 +1,10 @@
 package httpHelper
 
 import (
+	"fmt"
 	"github.com/devlibx/gox-base/serialization"
 	"io/ioutil"
+	"net"
 	"net/http"
 )
 
@@ -58,4 +60,25 @@ func ReadYamlPayload(request *http.Request, object interface{}) error {
 	}
 
 	return nil
+}
+
+// PortHelper is a helper to get random port
+type PortHelper struct {
+	Listener net.Listener
+	Port     int
+}
+
+func (p *PortHelper) Dump() string {
+	return fmt.Sprintf("PortHelper{Port=%d}", p.Port)
+}
+
+func NewPortHelper() (*PortHelper, func(), error) {
+	p := &PortHelper{}
+	if listener, err := net.Listen("tcp", ":0"); err != nil {
+		return nil, func() {}, err
+	} else {
+		p.Listener = listener
+	}
+	p.Port = p.Listener.Addr().(*net.TCPAddr).Port
+	return p, func() { _ = p.Listener.Close() }, nil
 }
