@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"os"
 )
 
 type HttpPlayloadDeserializationError struct {
@@ -81,4 +82,22 @@ func NewPortHelper() (*PortHelper, func(), error) {
 	}
 	p.Port = p.Listener.Addr().(*net.TCPAddr).Port
 	return p, func() { _ = p.Listener.Close() }, nil
+}
+
+// AllocateFreePortsAndAssignToEnvironmentVariables will allocate free ports and assign to environment variables
+//
+// For example, you need to allocate 2 random ports and assign to environment variables (1) HTTP_PORT, (2) STUB_PORT
+// This function will allocate 2 random ports and assign to environment variables
+func AllocateFreePortsAndAssignToEnvironmentVariables(envVariables ...string) (map[string]int, error) {
+	result := map[string]int{}
+	for _, env := range envVariables {
+		if portHelper, closeFunc, err := NewPortHelper(); err == nil {
+			_ = os.Setenv(env, fmt.Sprintf("%d", portHelper.Port))
+			closeFunc()
+			result[env] = portHelper.Port
+		} else {
+			return result, err
+		}
+	}
+	return result, nil
 }
