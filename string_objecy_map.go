@@ -1,6 +1,7 @@
 package gox
 
 import (
+	"bytes"
 	"encoding/json"
 	"github.com/devlibx/gox-base/errors"
 	"github.com/devlibx/gox-base/serialization"
@@ -429,9 +430,32 @@ func StringObjectMapFromJsonOrEmpty(input string) StringObjectMap {
 	return out
 }
 
-// Convert StringObjectMap to a Json string
+// JsonString converts to a Json string
 func (s StringObjectMap) JsonString() (string, error) {
 	return serialization.Stringify(s)
+}
+
+// JsonPrettyString converts to a Json string in pretty format
+func (s StringObjectMap) JsonPrettyString() (string, error) {
+	str, _ := s.JsonString()
+	var prettyJSON bytes.Buffer
+	if err := json.Indent(&prettyJSON, []byte(str), "", "\t"); err == nil {
+		return prettyJSON.String(), nil
+	} else {
+		return s.JsonString()
+	}
+}
+
+// JsonPrettyStringIgnoreError converts to a Json string in pretty format and supress any error
+func (s StringObjectMap) JsonPrettyStringIgnoreError() string {
+	str, _ := s.JsonString()
+	var prettyJSON bytes.Buffer
+	if err := json.Indent(&prettyJSON, []byte(str), "", "\t"); err == nil {
+		return prettyJSON.String()
+	} else {
+		r, _ := s.JsonString()
+		return r
+	}
 }
 
 // Convert StringObjectMap to a Json string, or give empty json "{}" on error
