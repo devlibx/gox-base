@@ -2,8 +2,8 @@ package goxSql
 
 import (
 	"context"
-	"github.com/devlibx/gox-base"
-	"github.com/devlibx/gox-base/util"
+	"github.com/devlibx/gox-base/v2"
+	"github.com/devlibx/gox-base/v2/util"
 	"github.com/rcrowley/go-metrics"
 	"go.uber.org/zap"
 	"log"

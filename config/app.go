@@ -1,6 +1,6 @@
 package config
 
-import "github.com/devlibx/gox-base"
+import "github.com/devlibx/gox-base/v2"
 
 type App struct {
 	AppName                     string              `json:"name" yaml:"name"`

@@ -1,10 +1,10 @@
 package test
 
 import (
-	"github.com/devlibx/gox-base"
-	"github.com/devlibx/gox-base/metrics"
-	mockGox "github.com/devlibx/gox-base/mocks"
-	"github.com/devlibx/gox-base/util"
+	"github.com/devlibx/gox-base/v2"
+	"github.com/devlibx/gox-base/v2/metrics"
+	mockGox "github.com/devlibx/gox-base/v2/mocks"
+	"github.com/devlibx/gox-base/v2/util"
 	"github.com/golang/mock/gomock"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"

@@ -1,7 +1,7 @@
 package gox
 
 import (
-	"github.com/devlibx/gox-base/metrics"
+	"github.com/devlibx/gox-base/v2/metrics"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 	"math/rand"

@@ -3,9 +3,9 @@ package queue
 import (
 	"context"
 	"database/sql"
-	"github.com/devlibx/gox-base/errors"
-	"github.com/devlibx/gox-base/queue"
-	"github.com/devlibx/gox-base/serialization"
+	"github.com/devlibx/gox-base/v2/errors"
+	"github.com/devlibx/gox-base/v2/queue"
+	"github.com/devlibx/gox-base/v2/serialization"
 	"time"
 )
 

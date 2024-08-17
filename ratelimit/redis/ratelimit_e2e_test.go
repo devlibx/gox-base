@@ -4,7 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"github.com/Shopify/toxiproxy/client"
-	"github.com/devlibx/gox-base/ratelimit"
+	"github.com/devlibx/gox-base/v2/ratelimit"
 	goRedis "github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"

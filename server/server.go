@@ -3,8 +3,8 @@ package goxServer
 import (
 	"context"
 	"fmt"
-	"github.com/devlibx/gox-base"
-	"github.com/devlibx/gox-base/config"
+	"github.com/devlibx/gox-base/v2"
+	"github.com/devlibx/gox-base/v2/config"
 	"go.uber.org/fx"
 	"net/http"
 	"sync"

@@ -3,7 +3,7 @@ package goxSql
 import (
 	"context"
 	"fmt"
-	"github.com/devlibx/gox-base/errors"
+	"github.com/devlibx/gox-base/v2/errors"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"testing"

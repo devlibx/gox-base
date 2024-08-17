@@ -3,8 +3,8 @@ package queue
 import (
 	"database/sql"
 	"fmt"
-	"github.com/devlibx/gox-base/errors"
-	"github.com/devlibx/gox-base/queue"
+	"github.com/devlibx/gox-base/v2/errors"
+	"github.com/devlibx/gox-base/v2/queue"
 	_ "github.com/go-sql-driver/mysql"
 	"sync"
 	"time"

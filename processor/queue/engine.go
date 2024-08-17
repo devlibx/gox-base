@@ -2,8 +2,8 @@ package queueProcessor
 
 import (
 	"context"
-	"github.com/devlibx/gox-base"
-	"github.com/devlibx/gox-base/util"
+	"github.com/devlibx/gox-base/v2"
+	"github.com/devlibx/gox-base/v2/util"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )

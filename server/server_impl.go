@@ -9,9 +9,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/devlibx/gox-base"
-	"github.com/devlibx/gox-base/config"
-	"github.com/devlibx/gox-base/errors"
+	"github.com/devlibx/gox-base/v2"
+	"github.com/devlibx/gox-base/v2/config"
+	"github.com/devlibx/gox-base/v2/errors"
 	"github.com/urfave/negroni"
 	"go.uber.org/zap"
 	"gopkg.in/tylerb/graceful.v1"

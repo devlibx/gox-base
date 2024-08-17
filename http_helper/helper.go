@@ -2,7 +2,7 @@ package httpHelper
 
 import (
 	"fmt"
-	"github.com/devlibx/gox-base/serialization"
+	"github.com/devlibx/gox-base/v2/serialization"
 	"io/ioutil"
 	"net"
 	"net/http"

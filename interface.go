@@ -1,8 +1,8 @@
 package gox
 
 import (
-	"github.com/devlibx/gox-base/metrics"
-	"github.com/devlibx/gox-base/util"
+	"github.com/devlibx/gox-base/v2/metrics"
+	"github.com/devlibx/gox-base/v2/util"
 	"go.uber.org/zap"
 	"time"
 )

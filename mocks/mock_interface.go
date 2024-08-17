@@ -8,9 +8,9 @@ import (
 	reflect "reflect"
 	time "time"
 
-	gox "github.com/devlibx/gox-base"
-	metrics "github.com/devlibx/gox-base/metrics"
-	util "github.com/devlibx/gox-base/util"
+	gox "github.com/devlibx/gox-base/v2"
+	metrics "github.com/devlibx/gox-base/v2/metrics"
+	util "github.com/devlibx/gox-base/v2/util"
 	gomock "github.com/golang/mock/gomock"
 	zap "go.uber.org/zap"
 )

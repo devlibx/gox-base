@@ -2,7 +2,7 @@ package goxSql
 
 import (
 	"context"
-	"github.com/devlibx/gox-base/util"
+	"github.com/devlibx/gox-base/v2/util"
 	"time"
 )
 

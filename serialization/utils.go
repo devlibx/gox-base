@@ -3,7 +3,7 @@ package serialization
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/devlibx/gox-base/util"
+	"github.com/devlibx/gox-base/v2/util"
 	"strconv"
 )
 

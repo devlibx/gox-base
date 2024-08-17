@@ -3,8 +3,8 @@ package goxServer
 import (
 	"context"
 	"fmt"
-	"github.com/devlibx/gox-base"
-	"github.com/devlibx/gox-base/config"
+	"github.com/devlibx/gox-base/v2"
+	"github.com/devlibx/gox-base/v2/config"
 	"github.com/go-resty/resty/v2"
 	_ "github.com/go-resty/resty/v2"
 	"github.com/stretchr/testify/assert"

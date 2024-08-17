@@ -2,7 +2,7 @@ package test
 
 import (
 	"flag"
-	"github.com/devlibx/gox-base/metrics"
+	"github.com/devlibx/gox-base/v2/metrics"
 	"github.com/golang/mock/gomock"
 	"go.uber.org/zap"
 	"math/rand"

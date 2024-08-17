@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/devlibx/gox-base/ratelimit"
+	"github.com/devlibx/gox-base/v2/ratelimit"
 	goRedis "github.com/go-redis/redis/v8"
 	goRedisRate "github.com/go-redis/redis_rate/v9"
 	"net"

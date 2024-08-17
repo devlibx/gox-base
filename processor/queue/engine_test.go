@@ -3,7 +3,7 @@ package queueProcessor
 import (
 	"context"
 	"fmt"
-	"github.com/devlibx/gox-base/test"
+	"github.com/devlibx/gox-base/v2/test"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"testing"

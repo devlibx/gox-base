@@ -26,7 +26,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/devlibx/gox-base/util"
+	"github.com/devlibx/gox-base/v2/util"
 )
 
 var DefaultBuckets Buckets

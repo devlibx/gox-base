@@ -2,7 +2,7 @@ package queueProcessor
 
 import (
 	"context"
-	"github.com/devlibx/gox-base"
+	"github.com/devlibx/gox-base/v2"
 )
 
 // Converts raw event to processed event

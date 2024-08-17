@@ -7,7 +7,7 @@ package mockUtil
 import (
 	reflect "reflect"
 
-	util "github.com/devlibx/gox-base/util"
+	util "github.com/devlibx/gox-base/v2/util"
 	gomock "github.com/golang/mock/gomock"
 )
 

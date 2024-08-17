@@ -9,7 +9,7 @@ import (
 	reflect "reflect"
 	time "time"
 
-	metrics "github.com/devlibx/gox-base/metrics"
+	metrics "github.com/devlibx/gox-base/v2/metrics"
 	gomock "github.com/golang/mock/gomock"
 )
 

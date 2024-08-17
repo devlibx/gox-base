@@ -1,10 +1,10 @@
 package common
 
 import (
-	"github.com/devlibx/gox-base"
-	"github.com/devlibx/gox-base/config"
-	"github.com/devlibx/gox-base/errors"
-	goxServer "github.com/devlibx/gox-base/server"
+	"github.com/devlibx/gox-base/v2"
+	"github.com/devlibx/gox-base/v2/config"
+	"github.com/devlibx/gox-base/v2/errors"
+	goxServer "github.com/devlibx/gox-base/v2/server"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 	"sync"
