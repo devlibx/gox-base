@@ -63,6 +63,14 @@ func As(err error, target interface{}) bool {
 	return errors.As(err, target)
 }
 
+func AsTyped[T error](err error) (T, bool) {
+	var e T
+	if errors.As(err, &e) {
+		return e, true
+	}
+	return *new(T), false
+}
+
 func Wrap(err error, message string, obj ...interface{}) error {
 	if obj == nil || len(obj) == 0 {
 		return errors1.Wrap(err, message)

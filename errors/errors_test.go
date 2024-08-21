@@ -3,6 +3,7 @@ package errors
 import (
 	"errors"
 	"fmt"
+	errors2 "github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
@@ -161,4 +162,48 @@ func TestWrap(t *testing.T) {
 
 	wrapError = Wrap(err, "got some error")
 	fmt.Println(wrapError)
+}
+
+func TestErrorAsExt(t *testing.T) {
+	err := errors.New("some error")
+	if e, ok := AsTyped[customError](err); ok {
+		assert.Fail(t, "Expected customError")
+	} else {
+		fmt.Println(e)
+	}
+
+	err = customError{}
+	if e, ok := AsTyped[customError](err); ok {
+		assert.Equal(t, "CustomError", e.Error())
+	} else {
+		assert.Fail(t, "Expected customError")
+	}
+
+	err = &customError{}
+	if e, ok := AsTyped[*customError](err); ok {
+		assert.Equal(t, "CustomError", e.Error())
+	} else {
+		assert.Fail(t, "Expected customError")
+	}
+
+	err = errors2.Wrap(errors.New("some error"), "this is wrapped")
+	if e, ok := AsTyped[customError](err); ok {
+		assert.Fail(t, "Expected customError")
+	} else {
+		fmt.Println(e)
+	}
+
+	err = errors2.Wrap(customError{}, "this is wrapped")
+	if e, ok := AsTyped[customError](err); ok {
+		assert.Equal(t, "CustomError", e.Error())
+	} else {
+		assert.Fail(t, "Expected customError")
+	}
+
+	err = errors2.Wrap(&customError{}, "this is wrapped")
+	if e, ok := AsTyped[*customError](err); ok {
+		assert.Equal(t, "CustomError", e.Error())
+	} else {
+		assert.Fail(t, "Expected customError")
+	}
 }
