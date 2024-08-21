@@ -64,11 +64,11 @@ func As(err error, target interface{}) bool {
 }
 
 func AsTyped[T error](err error) (T, bool) {
-	var e T
+	var e, nullRef T
 	if errors.As(err, &e) {
 		return e, true
 	}
-	return *new(T), false
+	return nullRef, false
 }
 
 func Wrap(err error, message string, obj ...interface{}) error {
