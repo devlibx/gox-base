@@ -1,9 +1,8 @@
-package ioSerialization
+package serialization
 
 import (
 	"bytes"
 	"fmt"
-	"github.com/devlibx/gox-base/v2/serialization"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
@@ -13,6 +12,38 @@ import (
 type TestStruct struct {
 	Field1 string `json:"field1"`
 	Field2 int    `json:"field2"`
+}
+
+func TestBytesToObject(t *testing.T) {
+	// Test with valid JSON payload
+	validJson := []byte(`{"field1": "value1", "field2": 123}`)
+	result, err := BytesToObject[TestStruct](validJson)
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, "value1", result.Field1)
+	assert.Equal(t, 123, result.Field2)
+
+	// Test with invalid JSON payload
+	invalidJson := []byte(`{"field1": "value1", "field2": }`)
+	result, err = BytesToObject[TestStruct](invalidJson)
+	assert.Error(t, err)
+	assert.Zero(t, result)
+}
+
+func TestStringToObject(t *testing.T) {
+	// Test with valid JSON payload
+	validJson := `{"field1": "value1", "field2": 123}`
+	result, err := StringToObject[TestStruct](validJson)
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, "value1", result.Field1)
+	assert.Equal(t, 123, result.Field2)
+
+	// Test with invalid JSON payload
+	invalidJson := `{"field1": "value1", "field2": }`
+	result, err = StringToObject[TestStruct](invalidJson)
+	assert.Error(t, err)
+	assert.Zero(t, result)
 }
 
 func TestReadPayload(t *testing.T) {
@@ -44,13 +75,13 @@ func TestHttpRequestResponse_Pojo(t *testing.T) {
 		// Send modified response
 		ts.Field1 = "resp_" + ts.Field1
 		w.WriteHeader(http.StatusOK)
-		_, _ = fmt.Fprintln(w, serialization.StringifyOrEmptyJsonOnError(ts))
+		_, _ = fmt.Fprintln(w, StringifyOrEmptyJsonOnError(ts))
 	}))
 	defer server.Close()
 
 	// Make a Post request to the test server
 	reqBody := TestStruct{Field1: "value1", Field2: 123}
-	resp, err := http.Post(server.URL, "application/x-www-form-urlencoded", bytes.NewReader([]byte(serialization.StringifyOrEmptyJsonOnError(reqBody))))
+	resp, err := http.Post(server.URL, "application/x-www-form-urlencoded", bytes.NewReader([]byte(StringifyOrEmptyJsonOnError(reqBody))))
 	assert.NoError(t, err)
 	defer resp.Body.Close()
 
@@ -76,7 +107,7 @@ func TestHttpRequestResponse_WritePayload(t *testing.T) {
 
 	// Make a Post request to the test server
 	reqBody := TestStruct{Field1: "value1", Field2: 123}
-	resp, err := http.Post(server.URL, "application/x-www-form-urlencoded", bytes.NewReader([]byte(serialization.StringifyOrEmptyJsonOnError(reqBody))))
+	resp, err := http.Post(server.URL, "application/x-www-form-urlencoded", bytes.NewReader([]byte(StringifyOrEmptyJsonOnError(reqBody))))
 	assert.NoError(t, err)
 	defer resp.Body.Close()
 
