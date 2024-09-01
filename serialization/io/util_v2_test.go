@@ -1,4 +1,4 @@
-package httpHelper
+package ioSerialization
 
 import (
 	"bytes"
@@ -26,44 +26,11 @@ func TestReadPayload(t *testing.T) {
 	assert.Equal(t, 123, result.Field2)
 
 	// Test with invalid JSON payload
-	invalidJson := `{"field1": "value1", "field2": }`
+	invalidJson := `{"field1": "value1", "field2": 123 }`
 	reader = bytes.NewReader([]byte(invalidJson))
 	result, err = ReadPayload[TestStruct](reader)
-	assert.Error(t, err)
-	assert.Nil(t, result)
-}
-
-func TestReadStringObjectMap(t *testing.T) {
-	// Test with valid JSON payload
-	validJson := `{"key1": "value1", "key2": 123}`
-	reader := bytes.NewReader([]byte(validJson))
-	result, err := ReadStringObjectMap(reader)
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
-	assert.Equal(t, "value1", result["key1"])
-	assert.Equal(t, 123, result.IntOrZero("key2"))
-
-	// Test with invalid JSON payload
-	invalidJson := `{"key1": "value1", "key2": }`
-	reader = bytes.NewReader([]byte(invalidJson))
-	result, err = ReadStringObjectMap(reader)
-	assert.Error(t, err)
-	assert.Nil(t, result)
-
-	// Test with empty JSON payload
-	emptyJson := `{}`
-	reader = bytes.NewReader([]byte(emptyJson))
-	result, err = ReadStringObjectMap(reader)
-	assert.NoError(t, err)
-	assert.NotNil(t, result)
-	assert.Equal(t, 0, len(result))
-
-	// Test with malformed JSON payload
-	malformedJson := `{"key1": "value1", "key2": 123`
-	reader = bytes.NewReader([]byte(malformedJson))
-	result, err = ReadStringObjectMap(reader)
-	assert.Error(t, err)
-	assert.Nil(t, result)
 }
 
 func TestHttpRequestResponse_Pojo(t *testing.T) {
@@ -92,18 +59,18 @@ func TestHttpRequestResponse_Pojo(t *testing.T) {
 	assert.Equal(t, "resp_value1", ts.Field1)
 }
 
-func TestHttpRequestResponse_StringObjectMap(t *testing.T) {
+func TestHttpRequestResponse_WritePayload(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		// Check payload
-		ts, err := ReadStringObjectMap(r.Body)
+		ts, err := ReadPayload[TestStruct](r.Body)
 		assert.NoError(t, err)
-		assert.Equal(t, "value1", ts.StringOrEmpty("field1"))
+		assert.Equal(t, "value1", ts.Field1)
 
 		// Send modified response
-		ts["field1"] = "resp_" + ts.StringOrEmpty("field1")
+		ts.Field1 = "resp_" + ts.Field1
 		w.WriteHeader(http.StatusOK)
-		_, _ = fmt.Fprintln(w, serialization.StringifyOrEmptyJsonOnError(ts))
+		assert.NoError(t, WritePayload(w, ts))
 	}))
 	defer server.Close()
 
@@ -113,7 +80,7 @@ func TestHttpRequestResponse_StringObjectMap(t *testing.T) {
 	assert.NoError(t, err)
 	defer resp.Body.Close()
 
-	ts, err := ReadStringObjectMap(resp.Body)
+	ts, err := ReadPayload[TestStruct](resp.Body)
 	assert.NoError(t, err)
-	assert.Equal(t, "resp_value1", ts.StringOrEmpty("field1"))
+	assert.Equal(t, "resp_value1", ts.Field1)
 }

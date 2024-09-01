@@ -2,9 +2,7 @@ package httpHelper
 
 import (
 	"fmt"
-	"github.com/devlibx/gox-base/v2"
 	"github.com/devlibx/gox-base/v2/serialization"
-	"io"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -15,72 +13,6 @@ type HttpPayloadDeserializationError struct {
 	error
 	ErrorMessage string
 	ErrorStatus  int
-}
-
-// ReadPayload is a helper to read payload from http request
-//
-// Parameter:
-// - request: io.Reader
-//
-// Returns:
-// - *T: type of object from data from reader
-// - error: error
-func ReadPayload[T any](request io.Reader) (*T, error) {
-
-	// Read body from request
-	body, err := io.ReadAll(request)
-	if err != nil {
-		return nil, &HttpPayloadDeserializationError{
-			error:        err,
-			ErrorMessage: "error in reading request body form http request",
-			ErrorStatus:  http.StatusBadRequest,
-		}
-	}
-
-	// read object from request body
-	var retValue T
-	if err := serialization.JsonBytesToObject(body, &retValue); err != nil {
-		return nil, &HttpPayloadDeserializationError{
-			error:        err,
-			ErrorMessage: "error in parse request body form http request to object",
-			ErrorStatus:  http.StatusBadRequest,
-		}
-	}
-
-	return &retValue, nil
-}
-
-// ReadStringObjectMap is a helper to read payload from http request
-//
-// Parameter:
-// - request: io.Reader
-//
-// Returns:
-// - StringObjectMap: type of object from data from reader
-// - error: error
-func ReadStringObjectMap(request io.Reader) (gox.StringObjectMap, error) {
-
-	// Read body from request
-	body, err := io.ReadAll(request)
-	if err != nil {
-		return nil, &HttpPayloadDeserializationError{
-			error:        err,
-			ErrorMessage: "error in reading request body form http request",
-			ErrorStatus:  http.StatusBadRequest,
-		}
-	}
-
-	// read object from request body
-	var retValue gox.StringObjectMap
-	if err := serialization.JsonBytesToObject(body, &retValue); err != nil {
-		return nil, &HttpPayloadDeserializationError{
-			error:        err,
-			ErrorMessage: "error in parse request body form http request to object",
-			ErrorStatus:  http.StatusBadRequest,
-		}
-	}
-
-	return retValue, nil
 }
 
 // ReadJsonPayload is a helper to read json payload from http request
