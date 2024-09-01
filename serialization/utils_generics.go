@@ -1,6 +1,8 @@
 package serialization
 
 import (
+	"bytes"
+	"encoding/json"
 	"github.com/devlibx/gox-base/v2/errors"
 	"io"
 	"net/http"
@@ -125,5 +127,21 @@ func WritePayload(writer io.Writer, data any) error {
 func WritePayloadSuppressError(writer io.Writer, data any) {
 	if out, err := Stringify(data); err == nil {
 		_, _ = writer.Write([]byte(out))
+	}
+}
+
+// WritePayloadJsonPrettySuppressError is a helper to write payload to writer - send formated Json for easy debuging
+//
+// Parameter:
+// - writer: io.Writer
+// - data: any
+func WritePayloadJsonPrettySuppressError(writer io.Writer, data any) {
+	if out, err := Stringify(data); err == nil {
+		var prettyJSON bytes.Buffer
+		if err := json.Indent(&prettyJSON, []byte(out), "", "\t"); err == nil {
+			_, _ = writer.Write([]byte(prettyJSON.String()))
+		} else {
+			_, _ = writer.Write([]byte(out))
+		}
 	}
 }
