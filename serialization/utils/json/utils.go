@@ -64,7 +64,7 @@ func StringObjectMapToBytes(input gox.StringObjectMap) ([]byte, error) {
 func StringObjectMapToObject[T any](input gox.StringObjectMap) (T, error) {
 	var retValue T
 	if b, err := StringObjectMapToBytes(input); err != nil {
-		return retValue, nil
+		return retValue, err
 	} else {
 		return BytesToObject[T](b)
 	}
