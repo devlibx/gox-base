@@ -9,9 +9,9 @@ authSimpleS2S:
         - "*"
     1:
       client_name: adhoc
-      client_secret: adhoc_123,adhoc_abc
+      client_secret: na,na
       allowed_actions:
-        - "*"
+        - "na"
     101:
       client_name: user_1
       client_secret: user_1_123,user_1abc

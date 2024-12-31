@@ -15,9 +15,9 @@ type ClientConfig struct {
 }
 
 type AuthError struct {
-	Err      error
-	Reason   string
-	ClientId string
+	Err      error  `json:"-"`
+	Reason   string `json:"reason"`
+	ClientId string `json:"client_id"`
 }
 
 func (e *AuthError) Error() string {
