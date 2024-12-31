@@ -1,0 +1,232 @@
+package goxAuthSimpleS2S
+
+import (
+	_ "embed"
+	"fmt"
+	"github.com/devlibx/gox-base/v2/auth"
+	"github.com/devlibx/gox-base/v2/serialization"
+	"github.com/gin-gonic/gin"
+	"github.com/go-resty/resty/v2"
+	"github.com/stretchr/testify/assert"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+)
+
+//go:embed test_s2s_simple_auth.yaml
+var testS2SSimpleAuthYaml string
+
+type tStruct struct {
+	AuthSimpleS2S AuthConfig `yaml:"authSimpleS2S"`
+}
+
+func TestClientIdMissing(t *testing.T) {
+	tS := tStruct{}
+	err := serialization.ReadYamlFromString(testS2SSimpleAuthYaml, &tS)
+	assert.NoError(t, err)
+	authConfig := tS.AuthSimpleS2S
+	assert.False(t, authConfig.Disabled)
+
+	endpointCalled := false
+	router := gin.New()
+	router.GET("/test", authConfig.GinHandlerFuncWithAccessCheck([]string{"read"}, func(c *gin.Context) {
+		endpointCalled = true
+	}))
+	server := httptest.NewServer(router)
+	defer server.Close()
+
+	r := resty.New()
+	resp, err := r.R().SetHeader("Content-Type", "application/json").Get(fmt.Sprintf("%s/test", server.URL))
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusUnauthorized, resp.StatusCode())
+	assert.False(t, endpointCalled)
+	fmt.Println(resp.String())
+}
+
+func TestWrongSecret(t *testing.T) {
+	tS := tStruct{}
+	err := serialization.ReadYamlFromString(testS2SSimpleAuthYaml, &tS)
+	assert.NoError(t, err)
+	authConfig := tS.AuthSimpleS2S
+	assert.False(t, authConfig.Disabled)
+
+	endpointCalled := false
+	router := gin.New()
+	router.GET("/test", authConfig.GinHandlerFuncWithAccessCheck([]string{"read"}, func(c *gin.Context) {
+		endpointCalled = true
+	}))
+	server := httptest.NewServer(router)
+	defer server.Close()
+
+	r := resty.New()
+	resp, err := r.R().SetHeader("Content-Type", "application/json").
+		SetHeader(auth.HeaderClientId, "102").
+		SetHeader(auth.HeaderClientSecret, "bad_secret").
+		Get(fmt.Sprintf("%s/test", server.URL))
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusUnauthorized, resp.StatusCode())
+	assert.False(t, endpointCalled)
+	fmt.Println(resp.String())
+}
+
+func TestGoodSecret(t *testing.T) {
+	tS := tStruct{}
+	err := serialization.ReadYamlFromString(testS2SSimpleAuthYaml, &tS)
+	assert.NoError(t, err)
+	authConfig := tS.AuthSimpleS2S
+	assert.False(t, authConfig.Disabled)
+
+	endpointCalled := false
+	router := gin.New()
+	router.GET("/test", authConfig.GinHandlerFuncWithAccessCheck([]string{"read"}, func(c *gin.Context) {
+		endpointCalled = true
+		c.JSON(http.StatusOK, gin.H{"status": "ok"})
+	}))
+	server := httptest.NewServer(router)
+	defer server.Close()
+
+	r := resty.New()
+	resp, err := r.R().SetHeader("Content-Type", "application/json").
+		SetHeader(auth.HeaderClientId, "102").
+		SetHeader(auth.HeaderClientSecret, "user_2_123").
+		Get(fmt.Sprintf("%s/test", server.URL))
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusOK, resp.StatusCode())
+	assert.True(t, endpointCalled)
+	fmt.Println(resp.String())
+}
+
+func TestGoodSecretSecond(t *testing.T) {
+	tS := tStruct{}
+	err := serialization.ReadYamlFromString(testS2SSimpleAuthYaml, &tS)
+	assert.NoError(t, err)
+	authConfig := tS.AuthSimpleS2S
+	assert.False(t, authConfig.Disabled)
+
+	endpointCalled := false
+	router := gin.New()
+	router.GET("/test", authConfig.GinHandlerFuncWithAccessCheck([]string{"read"}, func(c *gin.Context) {
+		endpointCalled = true
+		c.JSON(http.StatusOK, gin.H{"status": "ok"})
+	}))
+	server := httptest.NewServer(router)
+	defer server.Close()
+
+	r := resty.New()
+	resp, err := r.R().SetHeader("Content-Type", "application/json").
+		SetHeader(auth.HeaderClientId, "102").
+		SetHeader(auth.HeaderClientSecret, "user_2_abc").
+		Get(fmt.Sprintf("%s/test", server.URL))
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusOK, resp.StatusCode())
+	assert.True(t, endpointCalled)
+	fmt.Println(resp.String())
+}
+
+func TestGoodSecretButBadPermission(t *testing.T) {
+	tS := tStruct{}
+	err := serialization.ReadYamlFromString(testS2SSimpleAuthYaml, &tS)
+	assert.NoError(t, err)
+	authConfig := tS.AuthSimpleS2S
+	assert.False(t, authConfig.Disabled)
+
+	endpointCalled := false
+	router := gin.New()
+	router.GET("/test", authConfig.GinHandlerFuncWithAccessCheck([]string{"write"}, func(c *gin.Context) {
+		endpointCalled = true
+		c.JSON(http.StatusOK, gin.H{"status": "ok"})
+	}))
+	server := httptest.NewServer(router)
+	defer server.Close()
+
+	r := resty.New()
+	resp, err := r.R().SetHeader("Content-Type", "application/json").
+		SetHeader(auth.HeaderClientId, "102").
+		SetHeader(auth.HeaderClientSecret, "user_2_123").
+		Get(fmt.Sprintf("%s/test", server.URL))
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusUnauthorized, resp.StatusCode())
+	assert.False(t, endpointCalled)
+	fmt.Println(resp.String())
+}
+
+func TestGoodSecretGoodPermission(t *testing.T) {
+	tS := tStruct{}
+	err := serialization.ReadYamlFromString(testS2SSimpleAuthYaml, &tS)
+	assert.NoError(t, err)
+	authConfig := tS.AuthSimpleS2S
+	assert.False(t, authConfig.Disabled)
+
+	endpointCalled := false
+	router := gin.New()
+	router.GET("/test", authConfig.GinHandlerFuncWithAccessCheck([]string{"write"}, func(c *gin.Context) {
+		endpointCalled = true
+		c.JSON(http.StatusOK, gin.H{"status": "ok"})
+	}))
+	server := httptest.NewServer(router)
+	defer server.Close()
+
+	r := resty.New()
+	resp, err := r.R().SetHeader("Content-Type", "application/json").
+		SetHeader(auth.HeaderClientId, "101").
+		SetHeader(auth.HeaderClientSecret, "user_1_123").
+		Get(fmt.Sprintf("%s/test", server.URL))
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusOK, resp.StatusCode())
+	assert.True(t, endpointCalled)
+	fmt.Println(resp.String())
+}
+
+func TestGoodSecretWithStarPermission(t *testing.T) {
+	tS := tStruct{}
+	err := serialization.ReadYamlFromString(testS2SSimpleAuthYaml, &tS)
+	assert.NoError(t, err)
+	authConfig := tS.AuthSimpleS2S
+	assert.False(t, authConfig.Disabled)
+
+	endpointCalled := false
+	router := gin.New()
+	router.GET("/test", authConfig.GinHandlerFuncWithAccessCheck([]string{"write"}, func(c *gin.Context) {
+		endpointCalled = true
+		c.JSON(http.StatusOK, gin.H{"status": "ok"})
+	}))
+	server := httptest.NewServer(router)
+	defer server.Close()
+
+	r := resty.New()
+	resp, err := r.R().SetHeader("Content-Type", "application/json").
+		SetHeader(auth.HeaderClientId, "103").
+		SetHeader(auth.HeaderClientSecret, "user_3_123").
+		Get(fmt.Sprintf("%s/test", server.URL))
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusOK, resp.StatusCode())
+	assert.True(t, endpointCalled)
+	fmt.Println(resp.String())
+}
+
+func TestGoodSecretAdmin(t *testing.T) {
+	tS := tStruct{}
+	err := serialization.ReadYamlFromString(testS2SSimpleAuthYaml, &tS)
+	assert.NoError(t, err)
+	authConfig := tS.AuthSimpleS2S
+	assert.False(t, authConfig.Disabled)
+
+	endpointCalled := false
+	router := gin.New()
+	router.GET("/test", authConfig.GinHandlerFuncWithAccessCheck([]string{"and_random"}, func(c *gin.Context) {
+		endpointCalled = true
+		c.JSON(http.StatusOK, gin.H{"status": "ok"})
+	}))
+	server := httptest.NewServer(router)
+	defer server.Close()
+
+	r := resty.New()
+	resp, err := r.R().SetHeader("Content-Type", "application/json").
+		SetHeader(auth.HeaderClientId, "0").
+		SetHeader(auth.HeaderClientSecret, "admin_123").
+		Get(fmt.Sprintf("%s/test", server.URL))
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusOK, resp.StatusCode())
+	assert.True(t, endpointCalled)
+	fmt.Println(resp.String())
+}

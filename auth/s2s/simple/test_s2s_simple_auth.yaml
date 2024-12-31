@@ -1,0 +1,31 @@
+authSimpleS2S:
+  disabled: false
+  secret_salt: salt_123
+  clients:
+    0:
+      client_name: admin
+      client_secret: admin_123,admin_abc
+      allowed_actions:
+        - "*"
+    1:
+      client_name: adhoc
+      client_secret: adhoc_123,adhoc_abc
+      allowed_actions:
+        - "*"
+    101:
+      client_name: user_1
+      client_secret: user_1_123,user_1abc
+      allowed_actions:
+        - read
+        - write
+        - list
+    102:
+      client_name: user_2
+      client_secret: user_2_123,user_2_abc
+      allowed_actions:
+        - read
+    103:
+      client_name: user_3
+      client_secret: user_3_123,user_3_abc
+      allowed_actions:
+        - "*"
