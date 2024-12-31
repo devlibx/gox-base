@@ -63,7 +63,7 @@ func TestWrongSecret(t *testing.T) {
 	r := resty.New()
 	resp, err := r.R().SetHeader("Content-Type", "application/json").
 		SetHeader(auth.HeaderClientId, "102").
-		SetHeader(auth.HeaderClientSecret, "bad_secret").
+		SetHeader(auth.HeaderClientAccessToken, "bad_secret").
 		Get(fmt.Sprintf("%s/test", server.URL))
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusUnauthorized, resp.StatusCode())
@@ -90,7 +90,7 @@ func TestGoodSecret(t *testing.T) {
 	r := resty.New()
 	resp, err := r.R().SetHeader("Content-Type", "application/json").
 		SetHeader(auth.HeaderClientId, "102").
-		SetHeader(auth.HeaderClientSecret, "user_2_123").
+		SetHeader(auth.HeaderClientAccessToken, "user_2_123").
 		Get(fmt.Sprintf("%s/test", server.URL))
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, resp.StatusCode())
@@ -117,7 +117,7 @@ func TestGoodSecretSecond(t *testing.T) {
 	r := resty.New()
 	resp, err := r.R().SetHeader("Content-Type", "application/json").
 		SetHeader(auth.HeaderClientId, "102").
-		SetHeader(auth.HeaderClientSecret, "user_2_abc").
+		SetHeader(auth.HeaderClientAccessToken, "user_2_abc").
 		Get(fmt.Sprintf("%s/test", server.URL))
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, resp.StatusCode())
@@ -144,7 +144,7 @@ func TestGoodSecretButBadPermission(t *testing.T) {
 	r := resty.New()
 	resp, err := r.R().SetHeader("Content-Type", "application/json").
 		SetHeader(auth.HeaderClientId, "102").
-		SetHeader(auth.HeaderClientSecret, "user_2_123").
+		SetHeader(auth.HeaderClientAccessToken, "user_2_123").
 		Get(fmt.Sprintf("%s/test", server.URL))
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusUnauthorized, resp.StatusCode())
@@ -171,7 +171,7 @@ func TestGoodSecretGoodPermission(t *testing.T) {
 	r := resty.New()
 	resp, err := r.R().SetHeader("Content-Type", "application/json").
 		SetHeader(auth.HeaderClientId, "101").
-		SetHeader(auth.HeaderClientSecret, "user_1_123").
+		SetHeader(auth.HeaderClientAccessToken, "user_1_123").
 		Get(fmt.Sprintf("%s/test", server.URL))
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, resp.StatusCode())
@@ -198,7 +198,7 @@ func TestGoodSecretWithStarPermission(t *testing.T) {
 	r := resty.New()
 	resp, err := r.R().SetHeader("Content-Type", "application/json").
 		SetHeader(auth.HeaderClientId, "103").
-		SetHeader(auth.HeaderClientSecret, "user_3_123").
+		SetHeader(auth.HeaderClientAccessToken, "user_3_123").
 		Get(fmt.Sprintf("%s/test", server.URL))
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, resp.StatusCode())
@@ -225,7 +225,7 @@ func TestGoodSecretAdmin(t *testing.T) {
 	r := resty.New()
 	resp, err := r.R().SetHeader("Content-Type", "application/json").
 		SetHeader(auth.HeaderClientId, "0").
-		SetHeader(auth.HeaderClientSecret, "admin_123").
+		SetHeader(auth.HeaderClientAccessToken, "admin_123").
 		Get(fmt.Sprintf("%s/test", server.URL))
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, resp.StatusCode())
@@ -255,7 +255,7 @@ func TestAdhocUser(t *testing.T) {
 		r := resty.New()
 		resp, err := r.R().SetHeader("Content-Type", "application/json").
 			SetHeader(auth.HeaderClientId, "1").
-			SetHeader(auth.HeaderClientSecret, token).
+			SetHeader(auth.HeaderClientAccessToken, token).
 			Get(fmt.Sprintf("%s/test", server.URL))
 		assert.NoError(t, err)
 		assert.Equal(t, http.StatusOK, resp.StatusCode())
@@ -278,7 +278,7 @@ func TestAdhocUser(t *testing.T) {
 		r := resty.New()
 		resp, err := r.R().SetHeader("Content-Type", "application/json").
 			SetHeader(auth.HeaderClientId, "1").
-			SetHeader(auth.HeaderClientSecret, token).
+			SetHeader(auth.HeaderClientAccessToken, token).
 			Get(fmt.Sprintf("%s/test", server.URL))
 		assert.NoError(t, err)
 		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode())

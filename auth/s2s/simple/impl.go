@@ -15,7 +15,7 @@ import (
 
 type authHeaders struct {
 	ClientId     string `header:"X-Client-Id" binding:"required"`
-	ClientSecret string `header:"X-Client-Secret" binding:"required"`
+	ClientSecret string `header:"X-Access-Token" binding:"required"`
 	ClientName   string `header:"X-Client-Name" binding:"-"`
 }
 

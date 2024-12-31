@@ -1,5 +1,5 @@
 package auth
 
 const HeaderClientId = "X-Client-Id"
-const HeaderClientSecret = "X-Client-Secret"
+const HeaderClientAccessToken = "X-Access-Token"
 const HeaderClientName = "X-Client-Name"
