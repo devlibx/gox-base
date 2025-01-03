@@ -236,3 +236,19 @@ func TestStringObjectMapToObjectIncludingElseCase(t *testing.T) {
 	assert.Error(t, err)
 	assert.Zero(t, result)
 }
+
+func TestStringToObject(t *testing.T) {
+	// Test with valid JSON string
+	validJson := `{"field1": "value1", "field2": 123}`
+	result, err := StringToObject[TestStruct](validJson)
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, "value1", result.Field1)
+	assert.Equal(t, 123, result.Field2)
+
+	// Test with invalid JSON string
+	invalidJson := `{"field1": "value1", "field2": }`
+	result, err = StringToObject[TestStruct](invalidJson)
+	assert.Error(t, err)
+	assert.Zero(t, result)
+}

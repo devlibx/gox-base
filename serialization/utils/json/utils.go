@@ -25,6 +25,18 @@ func BytesToObject[T any](data []byte) (T, error) {
 	return retValue, nil
 }
 
+// StringToObject converts a string to a object
+//
+// Parameters:
+// - input: the string to be converted.
+//
+// Returns:
+// - T: the T object from inout string
+// - error: an error if the conversion fails.
+func StringToObject[T any](input string) (T, error) {
+	return BytesToObject[T]([]byte(input))
+}
+
 // StringObjectMapToString converts a StringObjectMap to a JSON string.
 //
 // Parameters:
@@ -213,4 +225,9 @@ func ObjectToStringObjectMapSuppressError(data any) gox.StringObjectMap {
 	} else {
 		return BytesToObjectSuppressError[gox.StringObjectMap](d)
 	}
+}
+
+func StringToObjectSuppressError[T any](input string) T {
+	ret, _ := StringToObject[T](input)
+	return ret
 }
