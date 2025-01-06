@@ -2,8 +2,10 @@ package goxJsonUtils
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/devlibx/gox-base/v2"
 	"github.com/devlibx/gox-base/v2/serialization"
+	"strconv"
 )
 
 // BytesToObject converts a byte slice to an object of type T.
@@ -125,6 +127,62 @@ func ObjectToStringObjectMap(data any) (gox.StringObjectMap, error) {
 	}
 }
 
+// ObjectToString converts an object to a String.
+//
+// Parameters:
+// - input: the object to be converted.
+//
+// Returns:
+// - string: the converted string.
+// - error: an error if the conversion fails.
+func ObjectToString(input any) (out string, err error) {
+	switch v := input.(type) {
+
+	case int:
+		out = strconv.Itoa(v)
+
+	case int8, int16, int32, int64:
+		out = fmt.Sprintf("%d", v)
+
+	case bool:
+		if v {
+			out = "true"
+		} else {
+			out = "false"
+		}
+
+	case string:
+		out = v
+
+	case []byte:
+		out = string(v)
+
+	default:
+		if _out, err := json.Marshal(v); err != nil {
+			return "", err
+		} else {
+			out = string(_out)
+		}
+	}
+	return
+}
+
+// ObjectToBytes converts an object to a bytes.
+//
+// Parameters:
+// - input: the object to be converted.
+//
+// Returns:
+// - bytes: the converted bytes.
+// - error: an error if the conversion fails.
+func ObjectToBytes(input any) (out []byte, err error) {
+	if s, err := ObjectToString(input); err != nil {
+		return nil, err
+	} else {
+		return []byte(s), nil
+	}
+}
+
 // BytesToObjectSuppressError converts a byte slice to an object of type T.
 // Suppresses any error and returns a zero value of T in case of failure.
 //
@@ -230,4 +288,28 @@ func ObjectToStringObjectMapSuppressError(data any) gox.StringObjectMap {
 func StringToObjectSuppressError[T any](input string) T {
 	ret, _ := StringToObject[T](input)
 	return ret
+}
+
+// ObjectToStringSuppressError converts an object to a string, and suppress any error
+//
+// Parameters:
+// - input: the object to be converted.
+//
+// Returns:
+// - string: the converted string.
+func ObjectToStringSuppressError(input any) (out string) {
+	out, _ = ObjectToString(input)
+	return
+}
+
+// ObjectToBytesSuppressError converts an object to a bytes, and suppress any error
+//
+// Parameters:
+// - input: the object to be converted.
+//
+// Returns:
+// - bytes: the converted bytes.
+func ObjectToBytesSuppressError(input any) (out []byte) {
+	s, _ := ObjectToBytes(input)
+	return s
 }

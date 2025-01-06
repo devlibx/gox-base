@@ -252,3 +252,59 @@ func TestStringToObject(t *testing.T) {
 	assert.Error(t, err)
 	assert.Zero(t, result)
 }
+
+func TestObjectToBytes(t *testing.T) {
+	// Test with valid object
+	input := TestStruct{Field1: "value1", Field2: 123}
+	result, err := ObjectToBytes(input)
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.JSONEq(t, `{"field1":"value1","field2":123}`, string(result))
+
+	// Test with invalid object
+	inputInvalid := make(chan int)
+	result, err = ObjectToBytes(inputInvalid)
+	assert.Error(t, err)
+	assert.Nil(t, result)
+}
+
+func TestObjectToString(t *testing.T) {
+	// Test with valid object
+	input := TestStruct{Field1: "value1", Field2: 123}
+	result, err := ObjectToString(input)
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.JSONEq(t, `{"field1":"value1","field2":123}`, result)
+
+	// Test with invalid object
+	inputInvalid := make(chan int)
+	result, err = ObjectToString(inputInvalid)
+	assert.Error(t, err)
+	assert.Empty(t, result)
+}
+
+func TestObjectToStringSuppressError(t *testing.T) {
+	// Test with valid object
+	input := TestStruct{Field1: "value1", Field2: 123}
+	result := ObjectToStringSuppressError(input)
+	assert.NotEmpty(t, result)
+	assert.JSONEq(t, `{"field1":"value1","field2":123}`, result)
+
+	// Test with invalid object
+	inputInvalid := make(chan int)
+	result = ObjectToStringSuppressError(inputInvalid)
+	assert.Empty(t, result)
+}
+
+func TestObjectToBytesSuppressError(t *testing.T) {
+	// Test with valid object
+	input := TestStruct{Field1: "value1", Field2: 123}
+	result := ObjectToBytesSuppressError(input)
+	assert.NotNil(t, result)
+	assert.JSONEq(t, `{"field1":"value1","field2":123}`, string(result))
+
+	// Test with invalid object
+	inputInvalid := make(chan int)
+	result = ObjectToBytesSuppressError(inputInvalid)
+	assert.Nil(t, result)
+}
