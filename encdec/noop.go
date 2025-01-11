@@ -11,11 +11,9 @@ type noOpEncryptorDecryptService struct {
 }
 
 func (n noOpEncryptorDecryptService) EncryptAndOutputBase64Ciphertext(data string) (string, error) {
-	//TODO implement me
-	panic("implement me")
+	return data, nil
 }
 
 func (n noOpEncryptorDecryptService) DecryptFromBase64Ciphertext(data string) (string, error) {
-	//TODO implement me
-	panic("implement me")
+	return data, nil
 }

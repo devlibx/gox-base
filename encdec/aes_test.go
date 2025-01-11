@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"github.com/devlibx/gox-base/v2"
+	goxJsonUtils "github.com/devlibx/gox-base/v2/serialization/utils/json"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -13,7 +14,7 @@ func TestAes(t *testing.T) {
 	assert.NoError(t, err)
 	fmt.Println(base64.StdEncoding.EncodeToString(key))
 
-	f, err := NewServiceFactory(gox.NewNoOpCrossFunction(), &EncryptDecryptConfigs{
+	encConfig := &EncryptDecryptConfigs{
 		Group: map[string]*EncryptDecryptConfig{
 			"test": {
 				Algo: "aes_32",
@@ -22,7 +23,10 @@ func TestAes(t *testing.T) {
 				},
 			},
 		},
-	})
+	}
+	fmt.Println(goxJsonUtils.ObjectToStringSuppressError(encConfig))
+
+	f, err := NewServiceFactory(gox.NewNoOpCrossFunction(), encConfig)
 	assert.NoError(t, err)
 
 	s, err := f.GetEncryptorDecryptService("test")
