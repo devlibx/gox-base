@@ -1,10 +1,5 @@
 package encryption
 
-import (
-	"crypto/rand"
-	"fmt"
-)
-
 // EncryptDecryptConfigs is the top-level configuration for encryption/decryption.
 //
 // We can provide one ore more group of encryption/decryption configurations.

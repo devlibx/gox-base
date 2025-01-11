@@ -11,6 +11,7 @@ import (
 func TestAes(t *testing.T) {
 	key, err := GenerateAESKey(32)
 	assert.NoError(t, err)
+	fmt.Println(base64.StdEncoding.EncodeToString(key))
 
 	f, err := NewServiceFactory(gox.NewNoOpCrossFunction(), &EncryptDecryptConfigs{
 		Group: map[string]*EncryptDecryptConfig{
