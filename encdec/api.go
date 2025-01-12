@@ -4,20 +4,20 @@ package encryption
 //
 // We can provide one ore more group of encryption/decryption configurations.
 type EncryptDecryptConfigs struct {
-	Disabled bool                             `json:"disabled"`
-	Group    map[string]*EncryptDecryptConfig `json:"group"`
+	Disabled bool                             `json:"disabled" yaml:"disabled"`
+	Group    map[string]*EncryptDecryptConfig `json:"group" yaml:"group"`
 }
 
 // EncryptDecryptConfig is the configuration for a single group of encryption/decryption.
 type EncryptDecryptConfig struct {
-	Disabled  bool       `json:"disabled"`
-	Algo      string     `json:"algorithm"`
-	AesConfig *AesConfig `json:"aes_config"`
+	Disabled  bool       `json:"disabled" yaml:"disabled"`
+	Algo      string     `json:"algorithm" yaml:"algorithm"`
+	AesConfig *AesConfig `json:"aes_config" yaml:"aes_config"`
 }
 
 // AesConfig is the configuration for AES encryption/decryption.
 type AesConfig struct {
-	Base64CodedKey string `json:"base_64_coded_key"`
+	Base64CodedKey string `json:"base_64_coded_key" yaml:"base_64_coded_key"`
 }
 
 // ServiceFactory is the interface for creating a new encryption/decryption service.
