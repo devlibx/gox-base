@@ -1,6 +1,7 @@
 package goxJsonUtils
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/devlibx/gox-base/v2"
@@ -312,4 +313,41 @@ func ObjectToStringSuppressError(input any) (out string) {
 func ObjectToBytesSuppressError(input any) (out []byte) {
 	s, _ := ObjectToBytes(input)
 	return s
+}
+
+// PrettyString converts an input object to a pretty-printed JSON string.
+//
+// Parameters:
+// - in: the input object to be converted.
+//
+// Returns:
+// - string: the pretty-printed JSON string representation of the input object.
+// - error: an error if the conversion fails.
+func PrettyString(in any) (string, error) {
+	var prettyJSON bytes.Buffer
+	if str, err := ObjectToString(in); err != nil {
+		return "", err
+	} else if err := json.Indent(&prettyJSON, []byte(str), "", "\t"); err == nil {
+		return prettyJSON.String(), nil
+	} else {
+		return "", err
+	}
+}
+
+// PrettyStringSuppressError converts an input object to a pretty-printed JSON string.
+//
+// Parameters:
+// - in: the input object to be converted.
+//
+// Returns:
+// - string: the pretty-printed JSON string representation of the input object.
+func PrettyStringSuppressError(in any) string {
+	var prettyJSON bytes.Buffer
+	if str, err := ObjectToString(in); err != nil {
+		return ""
+	} else if err := json.Indent(&prettyJSON, []byte(str), "", "\t"); err == nil {
+		return prettyJSON.String()
+	} else {
+		return str
+	}
 }

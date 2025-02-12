@@ -1,6 +1,7 @@
 package goxJsonUtils
 
 import (
+	"fmt"
 	"github.com/devlibx/gox-base/v2"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -307,4 +308,21 @@ func TestObjectToBytesSuppressError(t *testing.T) {
 	inputInvalid := make(chan int)
 	result = ObjectToBytesSuppressError(inputInvalid)
 	assert.Nil(t, result)
+}
+
+func TestPrettyStringIgnore(t *testing.T) {
+	// Test with valid object
+	input := TestStruct{Field1: "value1", Field2: 123}
+	result, err := PrettyString(input)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, result)
+	assert.Contains(t, result, "\t\"field1\": \"value1\"")
+	assert.Contains(t, result, "\t\"field2\": 123")
+	fmt.Println(result)
+
+	// Test with invalid object
+	inputInvalid := make(chan int)
+	result, err = PrettyString(inputInvalid)
+	assert.Error(t, err)
+	assert.Empty(t, result)
 }
