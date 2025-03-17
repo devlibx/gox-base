@@ -7,8 +7,7 @@ require (
 	github.com/bombsimon/mysql-error-numbers v1.1.0
 	github.com/fatih/structs v1.1.0
 	github.com/gin-gonic/gin v1.9.1
-	github.com/go-redis/redis/v8 v8.11.5
-	github.com/go-redis/redis_rate/v9 v9.1.2
+	github.com/go-redis/redis_rate/v10 v10.0.1
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/go-sql-driver/mysql v1.7.1
 	github.com/golang/mock v1.6.0
@@ -19,6 +18,7 @@ require (
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/pkg/errors v0.9.1
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475
+	github.com/redis/go-redis/v9 v9.0.2
 	github.com/sethvargo/go-retry v0.2.4
 	github.com/stretchr/testify v1.8.3
 	github.com/urfave/negroni v1.0.0

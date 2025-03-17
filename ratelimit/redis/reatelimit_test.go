@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/devlibx/gox-base/ratelimit"
-	"github.com/go-redis/redis_rate/v9"
+	"github.com/go-redis/redis_rate/v10"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"testing"
