@@ -23,3 +23,7 @@ func (n noOpEncryptorDecryptService) EncryptAndOutputBase64Ciphertext(data strin
 func (n noOpEncryptorDecryptService) DecryptFromBase64Ciphertext(data string) (string, error) {
 	return data, nil
 }
+
+func NewNoOpEncryptorDecryptService() EncryptorDecryptService {
+	return &noOpEncryptorDecryptService{}
+}
