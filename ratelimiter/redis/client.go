@@ -16,7 +16,7 @@ const (
 	// Default values for Redis configuration
 	DefaultPoolSize     = 10
 	DefaultMinIdleConns = 10
-	DefaultTimeoutMs    = 100
+	DefaultTimeoutMs    = 10000
 )
 
 // redisClientKey creates a unique key for caching Redis clients

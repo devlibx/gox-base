@@ -23,20 +23,37 @@ type rateLimitE2ETestSuite struct {
 	tProxy          *toxiproxy.Proxy
 	id              string
 	factory         RateLimitFactory
+	useCluster      bool
 }
 
 func (s *rateLimitE2ETestSuite) SetupTest() {
 	var err error
 	s.id = uuid.NewString()
 
+	// Get Redis URL from environment
 	s.redisUrl = getEnvOrDefault(EnvRedisHost, DefaultRedisURL)
-	s.toxiProxyClient = toxiproxy.NewClient("localhost:8474")
 
-	s.tProxy, err = s.toxiProxyClient.CreateProxy("tests-resdis-"+s.id, "localhost:26379", s.redisUrl)
-	assert.NoError(s.T(), err)
+	// Skip if Redis is not available
+	if !isRedisAvailable(s.T(), s.useCluster) {
+		s.T().Skipf("Redis is not available (cluster=%v) - skipping test", s.useCluster)
+	}
+
+	// Check if toxiproxy is available
+	s.toxiProxyClient = toxiproxy.NewClient("localhost:8474")
+	_, err = s.toxiProxyClient.Proxies()
+	if err != nil {
+		s.T().Skip("Toxiproxy not available - skipping E2E tests that require toxiproxy")
+	}
+
+	// Create a proxy for Redis
+	proxyName := "tests-redis-" + s.id
+	s.tProxy, err = s.toxiProxyClient.CreateProxy(proxyName, "localhost:26379", s.redisUrl)
+	if err != nil {
+		s.T().Skipf("Failed to create toxiproxy: %v - skipping test", err)
+	}
 	s.url = "localhost:26379"
 
-	// Create factory with default Redis config
+	// Create factory with Redis config
 	s.factory = NewRateLimitFactory(&ratelimiter.Configs{
 		Enabled: true,
 		Configs: map[string]*ratelimiter.Config{
@@ -46,8 +63,9 @@ func (s *rateLimitE2ETestSuite) SetupTest() {
 				LimitPerSec: 100,
 				RetryCount:  2,
 				Redis: &ratelimiter.RedisConfig{
-					URLs:     []string{s.redisUrl},
-					Password: os.Getenv(EnvRedisPassword),
+					URLs:       []string{s.redisUrl},
+					Password:   os.Getenv(EnvRedisPassword),
+					UseCluster: s.useCluster,
 				},
 			},
 		},
@@ -80,8 +98,9 @@ func (rt *rateLimitE2ETestSuite) TestRateLimitE2E() {
 				LimitPerSec: 100,
 				RetryCount:  2,
 				Redis: &ratelimiter.RedisConfig{
-					URLs:     []string{rt.redisUrl},
-					Password: os.Getenv(EnvRedisPassword),
+					URLs:       []string{rt.redisUrl},
+					Password:   os.Getenv(EnvRedisPassword),
+					UseCluster: rt.useCluster,
 				},
 			},
 		},
@@ -126,8 +145,9 @@ func (rt *rateLimitE2ETestSuite) TestRateLimitE2E_WithLatency_1sec_latency() {
 				LimitPerSec: 100,
 				RetryCount:  2,
 				Redis: &ratelimiter.RedisConfig{
-					URLs:     []string{rt.url}, // Use toxiproxy URL
-					Password: os.Getenv(EnvRedisPassword),
+					URLs:       []string{rt.url}, // Use toxiproxy URL
+					Password:   os.Getenv(EnvRedisPassword),
+					UseCluster: rt.useCluster,
 				},
 			},
 		},
@@ -169,8 +189,9 @@ func (rt *rateLimitE2ETestSuite) TestRateLimitE2E_RedisIsDown() {
 				LimitPerSec: 100,
 				RetryCount:  2,
 				Redis: &ratelimiter.RedisConfig{
-					URLs:     []string{rt.url}, // Use toxiproxy URL (which is disabled)
-					Password: os.Getenv(EnvRedisPassword),
+					URLs:       []string{rt.url}, // Use toxiproxy URL (which is disabled)
+					Password:   os.Getenv(EnvRedisPassword),
+					UseCluster: rt.useCluster,
 				},
 			},
 		},
@@ -195,9 +216,25 @@ func (rt *rateLimitE2ETestSuite) TestRateLimitE2E_RedisIsDown() {
 	assert.Equal(rt.T(), "ok", out)
 }
 
+// TestRateLimitE2ETestSuite runs the test suite with both standalone and cluster Redis
 func TestRateLimitE2ETestSuite(t *testing.T) {
 	if os.Getenv("INTEGRATION_TESTS_ENABLED") == "" {
-		t.SkipNow()
+		t.Skip("INTEGRATION_TESTS_ENABLED environment variable not set - skipping integration tests")
 	}
-	suite.Run(t, new(rateLimitE2ETestSuite))
+
+	// Run with standalone Redis
+	t.Run("Standalone Redis", func(t *testing.T) {
+		if !isRedisAvailable(t, false) {
+			t.Skip("Standalone Redis is not available - skipping test")
+		}
+		suite.Run(t, &rateLimitE2ETestSuite{useCluster: false})
+	})
+
+	// Run with cluster Redis
+	t.Run("Cluster Redis", func(t *testing.T) {
+		if !isRedisAvailable(t, true) {
+			t.Skip("Cluster Redis is not available - skipping test")
+		}
+		suite.Run(t, &rateLimitE2ETestSuite{useCluster: true})
+	})
 }

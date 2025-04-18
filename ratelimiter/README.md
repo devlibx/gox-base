@@ -112,8 +112,10 @@ type Config struct {
 - `REDIS_WRITE_TIMEOUT` - Write timeout in milliseconds
 - `REDIS_PUT_TIMEOUT` - Put timeout in milliseconds
 - `REDIS_GET_TIMEOUT` - Get timeout in milliseconds
+- `USE_CLUSTER_REDIS` - Set to "true" to use Redis in cluster mode
 
 > **⚠️ Note:** Environment variables are used as fallback when Redis configuration is not provided in Config.
+> **⚠️ Note:** For cluster mode, provide multiple Redis URLs separated by commas in `REDIS_HOST`.
 
 ### Multiple Redis Configurations
 
