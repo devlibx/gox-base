@@ -5,8 +5,8 @@ import (
 	"crypto/tls"
 	"github.com/Shopify/toxiproxy/client"
 	"github.com/devlibx/gox-base/v2/ratelimit"
-	goRedis "github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"os"
@@ -44,12 +44,11 @@ func (s *rateLimitE2ETestSuite) AfterTest(suiteName, testName string) {
 	}
 }
 
-func (rt *rateLimitE2ETestSuite) getRedisClient(url string) *goRedis.ClusterClient {
-	client := goRedis.NewClusterClient(&goRedis.ClusterOptions{
+func (rt *rateLimitE2ETestSuite) getRedisClient(url string) *redis.ClusterClient {
+	client := redis.NewClusterClient(&redis.ClusterOptions{
 		Addrs:        strings.Split(url, ","),
 		PoolSize:     10,
 		MinIdleConns: 10,
-		IdleTimeout:  10,
 		Password:     os.Getenv("REDIS_PASS"),
 		TLSConfig: &tls.Config{
 			InsecureSkipVerify: true,
@@ -85,11 +84,10 @@ func (rt *rateLimitE2ETestSuite) TestRateLimitE2E_WithLatency_1sec_latency() {
 	assert.NoError(rt.T(), err)
 	defer rt.tProxy.RemoveToxic("tests_redis_latency_down_" + id)
 
-	client := goRedis.NewClusterClient(&goRedis.ClusterOptions{
+	client := redis.NewClusterClient(&redis.ClusterOptions{
 		Addrs:        strings.Split(rt.url, ","),
 		PoolSize:     10,
 		MinIdleConns: 10,
-		IdleTimeout:  10,
 		Password:     os.Getenv("REDIS_PASS"),
 		TLSConfig: &tls.Config{
 			InsecureSkipVerify: true,
@@ -122,11 +120,10 @@ func (rt *rateLimitE2ETestSuite) TestRateLimitE2E_RedisIsDown() {
 	rt.tProxy.Disable()
 	_ = id
 
-	client := goRedis.NewClusterClient(&goRedis.ClusterOptions{
+	client := redis.NewClusterClient(&redis.ClusterOptions{
 		Addrs:        strings.Split(rt.url, ","),
 		PoolSize:     10,
 		MinIdleConns: 10,
-		IdleTimeout:  10,
 		Password:     os.Getenv("REDIS_PASS"),
 		TLSConfig: &tls.Config{
 			InsecureSkipVerify: true,

@@ -18,6 +18,9 @@ type Config struct {
 	Enabled          bool   `json:"enabled" yaml:"enabled"`
 	GroupName        string `json:"group_name" yaml:"group_name"`
 	LimitPerSec      int    `json:"limit_per_sec" yaml:"limit_per_sec"`
+	LimitPerMin      int    `json:"limit_per_min" yaml:"limit_per_min"`
+	LimitPerHour     int    `json:"limit_per_hour" yaml:"limit_per_hour"`
+	LimitPerDay      int    `json:"limit_per_day" yaml:"limit_per_day"`
 	RetryCount       int    `json:"retry_count" yaml:"retry_count"`
 	NoRetryToAcquire bool   `json:"no_retry_to_acquire" yaml:"no_retry_to_acquire"`
 }

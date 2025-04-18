@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/devlibx/gox-base/v2/ratelimit"
-	goRedis "github.com/go-redis/redis/v8"
-	goRedisRate "github.com/go-redis/redis_rate/v9"
+	goRedisRate "github.com/go-redis/redis_rate/v10"
+	"github.com/redis/go-redis/v9"
 	"net"
 	"time"
 )
@@ -69,7 +69,22 @@ func (l *limitGroup) Allow(ctx context.Context, toRun ratelimit.RateLimitedFunc)
 	for i := 0; i < l.cfg.RetryCount; i++ {
 
 		var result *goRedisRate.Result
-		result, err = l.limiter.Allow(ctx, l.cfg.GroupName, goRedisRate.PerSecond(l.cfg.LimitPerSec))
+		result, err = nil, nil
+		if l.cfg.LimitPerSec > 0 {
+			result, err = l.limiter.Allow(ctx, l.cfg.GroupName, goRedisRate.PerSecond(l.cfg.LimitPerSec))
+		} else if l.cfg.LimitPerMin > 0 {
+			result, err = l.limiter.Allow(ctx, l.cfg.GroupName, goRedisRate.PerMinute(l.cfg.LimitPerMin))
+		} else if l.cfg.LimitPerHour > 0 {
+			result, err = l.limiter.Allow(ctx, l.cfg.GroupName, goRedisRate.PerHour(l.cfg.LimitPerHour))
+		} else if l.cfg.LimitPerDay > 0 {
+			result, err = l.limiter.Allow(ctx, l.cfg.GroupName, goRedisRate.Limit{
+				Rate:   l.cfg.LimitPerDay,
+				Burst:  l.cfg.LimitPerDay,
+				Period: 24 * time.Hour,
+			})
+		} else {
+			return toRun()
+		}
 
 		// Check if we should retry or now
 		delay, retryNeeded := l.checkRetryNeeded(result, err)
@@ -96,7 +111,7 @@ func (l *limitGroup) Allow(ctx context.Context, toRun ratelimit.RateLimitedFunc)
 	}
 }
 
-func NewLimitGroup(cfg *ratelimit.Config, redisClient *goRedis.ClusterClient) ratelimit.RateLimiter {
+func NewLimitGroup(cfg *ratelimit.Config, redisClient *redis.ClusterClient) ratelimit.RateLimiter {
 	if !cfg.Enabled {
 		return ratelimit.NewNoOpRateLimiter()
 	}

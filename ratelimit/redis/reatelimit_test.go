@@ -3,12 +3,12 @@ package redis
 import (
 	"context"
 	"errors"
+	"go.uber.org/mock/gomock"
 	"testing"
 	"time"
 
 	"github.com/devlibx/gox-base/v2/ratelimit"
-	"github.com/go-redis/redis_rate/v9"
-	"github.com/golang/mock/gomock"
+	"github.com/go-redis/redis_rate/v10"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -5,7 +5,7 @@ import (
 	"github.com/devlibx/gox-base/v2/metrics"
 	mockGox "github.com/devlibx/gox-base/v2/mocks"
 	"github.com/devlibx/gox-base/v2/util"
-	"github.com/golang/mock/gomock"
+	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"go.uber.org/zap/zaptest"
