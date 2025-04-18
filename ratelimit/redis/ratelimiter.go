@@ -74,7 +74,15 @@ func (l *limitGroup) Allow(ctx context.Context, toRun ratelimit.RateLimitedFunc)
 		// Check if we should retry or now
 		delay, retryNeeded := l.checkRetryNeeded(result, err)
 		if retryNeeded == RetryNeeded {
-			time.Sleep(delay)
+			if l.cfg.NoRetryToAcquire {
+				return nil, &Error{
+					Err:       err,
+					Message:   fmt.Sprintf("rate limit exceeded: group=%s", l.cfg.GroupName),
+					ErrorCode: "failed",
+				}
+			} else {
+				time.Sleep(delay)
+			}
 		} else {
 			return toRun()
 		}

@@ -15,10 +15,11 @@ type Configs struct {
 // Config is the configuration for the rate limiter - each group may have its own name
 // and max retry count
 type Config struct {
-	Enabled     bool   `json:"enabled"`
-	GroupName   string `json:"group_name"`
-	LimitPerSec int    `json:"limit_per_sec"`
-	RetryCount  int    `json:"retry_count"`
+	Enabled          bool   `json:"enabled" yaml:"enabled"`
+	GroupName        string `json:"group_name" yaml:"group_name"`
+	LimitPerSec      int    `json:"limit_per_sec" yaml:"limit_per_sec"`
+	RetryCount       int    `json:"retry_count" yaml:"retry_count"`
+	NoRetryToAcquire bool   `json:"no_retry_to_acquire" yaml:"no_retry_to_acquire"`
 }
 
 // RateLimitedFunc is the function which is rate limited - this impl will make sure
