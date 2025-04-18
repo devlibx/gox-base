@@ -108,14 +108,99 @@ type Config struct {
 
 - `REDIS_HOST` - Comma-separated list of Redis URLs (default: "localhost:6379")
 - `REDIS_PASSWORD` - Redis password
-- `REDIS_READ_TIMEOUT` - Read timeout in milliseconds
-- `REDIS_WRITE_TIMEOUT` - Write timeout in milliseconds
-- `REDIS_PUT_TIMEOUT` - Put timeout in milliseconds
-- `REDIS_GET_TIMEOUT` - Get timeout in milliseconds
-- `USE_CLUSTER_REDIS` - Set to "true" to use Redis in cluster mode
 
-> **⚠️ Note:** Environment variables are used as fallback when Redis configuration is not provided in Config.
+> **⚠️ Note:** These environment variables are primarily used for tests. In production code, you should provide Redis configuration directly in your Config objects.
 > **⚠️ Note:** For cluster mode, provide multiple Redis URLs separated by commas in `REDIS_HOST`.
+
+### YAML Configuration
+
+You can also define your rate limiter configuration in YAML:
+
+```yaml
+# Rate limiting configuration
+enabled: true  # Enable/disable rate limiting globally
+
+# Group-specific configurations
+groups:
+  api-group:
+    enabled: true
+    group_name: api-group
+    limit_per_sec: 100  # Rate limit per second
+    retry_count: 3      # Number of retries when rate limited
+    redis:
+      urls:
+        - localhost:6379  # Redis URLs (can be multiple for cluster)
+      password: ""        # Redis password (optional)
+      use_cluster: false  # Use Redis cluster mode
+      use_tls: false     # Use TLS for Redis connection
+      pool_size: 10      # Connection pool size
+      min_idle_conns: 5  # Minimum idle connections
+
+  high-throughput:
+    enabled: true
+    group_name: high-throughput
+    limit_per_min: 1000  # Rate limit per minute
+    retry_count: 5
+    no_retry_to_acquire: true  # Fail immediately without retrying
+    redis:
+      urls:
+        - redis-1:6379
+        - redis-2:6379
+      password: "your-password"
+      use_cluster: true
+      use_tls: true
+```
+
+Load the YAML configuration:
+
+```go
+import (
+    "os"
+    "gopkg.in/yaml.v3"
+    "github.com/devlibx/gox-base/v2/ratelimiter"
+    ratelimiterRedis "github.com/devlibx/gox-base/v2/ratelimiter/redis"
+)
+
+// Read and parse YAML config
+data, err := os.ReadFile("config.yaml")
+if err != nil {
+    log.Fatal(err)
+}
+
+var configs ratelimiter.Configs
+if err := yaml.Unmarshal(data, &configs); err != nil {
+    log.Fatal(err)
+}
+
+// Create factory with YAML config
+factory := ratelimiterRedis.NewRateLimitFactory(&configs)
+defer factory.Close()
+
+// Example 1: Using the api-group rate limiter
+apiLimiter := factory.GetRateLimiter("api-group")
+result, err := apiLimiter.Allow(context.Background(), func() (interface{}, error) {
+    // Your API operation here
+    return "API operation successful", nil
+})
+if err != nil {
+    log.Printf("API operation failed: %v", err)
+} else {
+    log.Printf("API result: %v", result)
+}
+
+// Example 2: Using the high-throughput rate limiter with fast-fail
+htLimiter := factory.GetRateLimiter("high-throughput")
+result, err = htLimiter.Allow(context.Background(), func() (interface{}, error) {
+    // Your high-throughput operation here
+    return "High throughput operation completed", nil
+})
+if err != nil {
+    // This might fail fast due to no_retry_to_acquire: true
+    log.Printf("High throughput operation failed: %v", err)
+} else {
+    log.Printf("High throughput result: %v", result)
+}
+```
 
 ### Multiple Redis Configurations
 

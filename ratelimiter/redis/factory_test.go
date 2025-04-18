@@ -25,15 +25,11 @@ func isRedisAvailable(t *testing.T, useCluster bool) bool {
 	}
 
 	config := &ratelimiter.RedisConfig{
-		URLs:           redisURLs,
-		Password:       os.Getenv(EnvRedisPassword),
-		UseCluster:     useCluster,
-		PoolSize:       10,
-		MinIdleConns:   10,
-		ReadTimeoutMs:  getEnvIntOrDefault(EnvRedisReadTimeout, DefaultTimeoutMs),
-		WriteTimeoutMs: getEnvIntOrDefault(EnvRedisWriteTimeout, DefaultTimeoutMs),
-		PutTimeoutMs:   getEnvIntOrDefault(EnvRedisPutTimeout, DefaultTimeoutMs),
-		GetTimeoutMs:   getEnvIntOrDefault(EnvRedisGetTimeout, DefaultTimeoutMs),
+		URLs:         redisURLs,
+		Password:     os.Getenv(EnvRedisPassword),
+		UseCluster:   useCluster,
+		PoolSize:     10,
+		MinIdleConns: 10,
 	}
 
 	if useCluster {
@@ -69,12 +65,10 @@ func createTestConfigs(useCluster bool) *ratelimiter.Configs {
 				LimitPerSec: 10,
 				RetryCount:  3,
 				Redis: &ratelimiter.RedisConfig{
-					URLs:           redisURLs,
-					Password:       os.Getenv(EnvRedisPassword),
-					UseCluster:     useCluster,
-					UseTLS:         useTls,
-					ReadTimeoutMs:  getEnvIntOrDefault(EnvRedisReadTimeout, DefaultTimeoutMs),
-					WriteTimeoutMs: getEnvIntOrDefault(EnvRedisWriteTimeout, DefaultTimeoutMs),
+					URLs:       redisURLs,
+					Password:   os.Getenv(EnvRedisPassword),
+					UseCluster: useCluster,
+					UseTLS:     useTls,
 				},
 			},
 			"disabled-group": {

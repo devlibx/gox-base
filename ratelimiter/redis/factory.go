@@ -17,12 +17,8 @@ const (
 	DefaultRedisPort = "6379"
 
 	// Environment variables for Redis configuration
-	EnvRedisHost         = "REDIS_HOST"
-	EnvRedisPassword     = "REDIS_PASSWORD"
-	EnvRedisReadTimeout  = "REDIS_READ_TIMEOUT"
-	EnvRedisWriteTimeout = "REDIS_WRITE_TIMEOUT"
-	EnvRedisPutTimeout   = "REDIS_PUT_TIMEOUT"
-	EnvRedisGetTimeout   = "REDIS_GET_TIMEOUT"
+	EnvRedisHost     = "REDIS_HOST"     // Comma-separated list of Redis URLs (default: "localhost:6379")
+	EnvRedisPassword = "REDIS_PASSWORD" // Redis password
 )
 
 // getEnvOrDefault gets an environment variable or returns the default value
