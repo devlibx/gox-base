@@ -1,19 +1,19 @@
-package redis
+package ratelimiterRedis
 
 import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/devlibx/gox-base/v2/ratelimit"
-	goRedisRate "github.com/go-redis/redis_rate/v10"
-	"github.com/redis/go-redis/v9"
 	"net"
 	"time"
+
+	"github.com/devlibx/gox-base/v2/ratelimiter"
+	goRedisRate "github.com/go-redis/redis_rate/v10"
 )
 
-//go:generate mockgen -destination=rate_limiter_mock.go -package=redis -source=ratelimiter.go
+//go:generate mockgen -destination=rate_limiter_mock.go -package=ratelimiterRedis -source=ratelimiter.go
 
-var _ ratelimit.RateLimiter = &limitGroup{}
+var _ ratelimiter.RateLimiter = &limitGroup{}
 var _ actionAllower = &goRedisRate.Limiter{}
 
 // ActionAllower is the interface to allow an action to be performed - this is used to
@@ -23,7 +23,7 @@ type actionAllower interface {
 }
 
 type limitGroup struct {
-	cfg     *ratelimit.Config
+	cfg     *ratelimiter.Config
 	limiter actionAllower
 }
 
@@ -63,7 +63,7 @@ func (l *limitGroup) checkRetryNeeded(result *goRedisRate.Result, err error) (ti
 // It take a function to run - which returns a result and error.
 // If this function is not able to run due to rate limit exceeded then it will return error
 // If it is able to run then it will return result which is returned by the function itself
-func (l *limitGroup) Allow(ctx context.Context, toRun ratelimit.RateLimitedFunc) (out interface{}, err error) {
+func (l *limitGroup) Allow(ctx context.Context, toRun ratelimiter.RateLimitedFunc) (out interface{}, err error) {
 
 	// Try for N times (n = retry count) to get to allow=ok from rate limiter
 	for i := 0; i < l.cfg.RetryCount; i++ {
@@ -111,12 +111,12 @@ func (l *limitGroup) Allow(ctx context.Context, toRun ratelimit.RateLimitedFunc)
 	}
 }
 
-func NewLimitGroup(cfg *ratelimit.Config, redisClient *redis.ClusterClient) ratelimit.RateLimiter {
+func NewLimitGroup(cfg *ratelimiter.Config, redisClient RedisRateLimiterClient) ratelimiter.RateLimiter {
 	if !cfg.Enabled {
-		return ratelimit.NewNoOpRateLimiter()
+		return ratelimiter.NewNoOpRateLimiter()
 	}
 
-	limiter := goRedisRate.NewLimiter(redisClient)
+	limiter := redisClient.CreateLimiter()
 	return &limitGroup{
 		cfg:     cfg,
 		limiter: limiter,
