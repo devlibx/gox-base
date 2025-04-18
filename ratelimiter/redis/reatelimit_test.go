@@ -1,4 +1,4 @@
-package redis
+package ratelimiterRedis
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/devlibx/gox-base/v2/ratelimit"
+	ratelimit "github.com/devlibx/gox-base/v2/ratelimiter"
 	"github.com/go-redis/redis_rate/v10"
 	"github.com/stretchr/testify/assert"
 )
