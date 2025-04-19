@@ -61,7 +61,6 @@ func createTestConfigs(useCluster bool) *ratelimiter.Configs {
 		Configs: map[string]*ratelimiter.Config{
 			"enabled-group": {
 				Enabled:     true,
-				GroupName:   "enabled-group",
 				LimitPerSec: 10,
 				RetryCount:  3,
 				Redis: &ratelimiter.RedisConfig{
@@ -73,7 +72,6 @@ func createTestConfigs(useCluster bool) *ratelimiter.Configs {
 			},
 			"disabled-group": {
 				Enabled:     false,
-				GroupName:   "disabled-group",
 				LimitPerSec: 10,
 				RetryCount:  3,
 			},
@@ -175,7 +173,6 @@ func TestNoRetryToAcquireBehavior(t *testing.T) {
 				Configs: map[string]*ratelimiter.Config{
 					"fast-fail": {
 						Enabled:          true,
-						GroupName:        "fast-fail",
 						LimitPerSec:      1, // Set very low to ensure we hit the limit
 						RetryCount:       3,
 						NoRetryToAcquire: true, // Should fail immediately without retrying
@@ -188,7 +185,6 @@ func TestNoRetryToAcquireBehavior(t *testing.T) {
 					},
 					"with-retry": {
 						Enabled:          true,
-						GroupName:        "with-retry",
 						LimitPerSec:      1, // Same low limit
 						RetryCount:       3,
 						NoRetryToAcquire: false, // Should retry before failing
@@ -274,7 +270,6 @@ func TestRedisConnectionFailure(t *testing.T) {
 		Configs: map[string]*ratelimiter.Config{
 			"test-group": {
 				Enabled:     true,
-				GroupName:   "test-group",
 				LimitPerSec: 1, // Set to 1 to ensure rate limit would be hit if Redis was working
 				RetryCount:  1,
 			},
@@ -353,7 +348,6 @@ func TestMultipleRateLimitConfigs(t *testing.T) {
 					},
 					"custom-config": {
 						Enabled:     true,
-						GroupName:   "custom-config",
 						LimitPerSec: 20,
 						RetryCount:  5,
 						Redis: &ratelimiter.RedisConfig{
@@ -414,7 +408,6 @@ func TestDifferentRedisConfigs(t *testing.T) {
 		Configs: map[string]*ratelimiter.Config{
 			"standalone-redis": {
 				Enabled:     true,
-				GroupName:   "standalone-redis",
 				LimitPerSec: 10,
 				RetryCount:  3,
 				Redis: &ratelimiter.RedisConfig{
@@ -425,7 +418,6 @@ func TestDifferentRedisConfigs(t *testing.T) {
 			},
 			"cluster-redis": {
 				Enabled:     true,
-				GroupName:   "cluster-redis",
 				LimitPerSec: 20,
 				RetryCount:  5,
 				Redis: &ratelimiter.RedisConfig{

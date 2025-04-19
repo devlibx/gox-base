@@ -91,7 +91,6 @@ type RedisConfig struct {
 ```go
 type Config struct {
     Enabled          bool         // Enable/disable rate limiting for this group
-    GroupName        string       // Unique name for the rate limit group
     LimitPerSec      int         // Rate limit per second
     LimitPerMin      int         // Rate limit per minute
     LimitPerHour     int         // Rate limit per hour
@@ -124,7 +123,6 @@ enabled: true  # Enable/disable rate limiting globally
 groups:
   api-group:
     enabled: true
-    group_name: api-group
     limit_per_sec: 100  # Rate limit per second
     retry_count: 3      # Number of retries when rate limited
     redis:
@@ -138,7 +136,6 @@ groups:
 
   high-throughput:
     enabled: true
-    group_name: high-throughput
     limit_per_min: 1000  # Rate limit per minute
     retry_count: 5
     no_retry_to_acquire: true  # Fail immediately without retrying
@@ -212,7 +209,6 @@ configs := &ratelimiter.Configs{
     Configs: map[string]*ratelimiter.Config{
         "api": {
             Enabled:     true,
-            GroupName:   "api",
             LimitPerSec: 100,
             Redis: &ratelimiter.RedisConfig{
                 URLs: []string{"redis-1:6379"},
@@ -220,7 +216,6 @@ configs := &ratelimiter.Configs{
         },
         "background": {
             Enabled:     true,
-            GroupName:   "background",
             LimitPerMin: 1000,
             Redis: &ratelimiter.RedisConfig{
                 URLs:       []string{"redis-cluster:6379"},

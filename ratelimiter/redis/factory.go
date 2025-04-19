@@ -119,6 +119,11 @@ func NewRateLimitFactory(configs *ratelimiter.Configs) RateLimitFactory {
 		return NewNoOpRateLimitFactory()
 	}
 
+	// Set group name is same as the name of the key
+	for k, v := range configs.Configs {
+		v.GroupName = k
+	}
+
 	return &rateLimitFactory{
 		configs:      configs,
 		limiters:     make(map[string]ratelimiter.RateLimiter),
