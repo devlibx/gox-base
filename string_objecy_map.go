@@ -503,6 +503,14 @@ func (s StringObjectMap) StringOrEmpty4(key1 string, key2 string, key3 string, k
 	return s.StringObjectMapOrEmpty(key1).StringObjectMapOrEmpty(key2).StringObjectMapOrEmpty(key3).StringOrEmpty(key4)
 }
 
+func (s StringObjectMap) StringOrEmpty5(key1 string, key2 string, key3 string, key4 string, key5 string) string {
+	return s.StringObjectMapOrEmpty(key1).StringObjectMapOrEmpty(key2).StringObjectMapOrEmpty(key3).StringObjectMapOrEmpty(key4).StringOrEmpty(key5)
+}
+
+func (s StringObjectMap) StringOrEmpty6(key1 string, key2 string, key3 string, key4 string, key5 string, key6 string) string {
+	return s.StringObjectMapOrEmpty(key1).StringObjectMapOrEmpty(key2).StringObjectMapOrEmpty(key3).StringObjectMapOrEmpty(key4).StringObjectMapOrEmpty(key5).StringOrEmpty(key6)
+}
+
 func (s StringObjectMap) IntOrZero2(key1 string, key2 string) int {
 	return s.StringObjectMapOrEmpty(key1).IntOrZero(key2)
 }
