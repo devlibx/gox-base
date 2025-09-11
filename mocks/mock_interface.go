@@ -44,6 +44,20 @@ func (m *MockTimeService) EXPECT() *MockTimeServiceMockRecorder {
 	return m.recorder
 }
 
+// NormalizeDuration mocks base method.
+func (m *MockTimeService) NormalizeDuration(d time.Duration) time.Duration {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "NormalizeDuration", d)
+	ret0, _ := ret[0].(time.Duration)
+	return ret0
+}
+
+// NormalizeDuration indicates an expected call of NormalizeDuration.
+func (mr *MockTimeServiceMockRecorder) NormalizeDuration(d any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NormalizeDuration", reflect.TypeOf((*MockTimeService)(nil).NormalizeDuration), d)
+}
+
 // Now mocks base method.
 func (m *MockTimeService) Now() time.Time {
 	m.ctrl.T.Helper()
@@ -134,6 +148,20 @@ func (m *MockCrossFunction) Metric() metrics.Scope {
 func (mr *MockCrossFunctionMockRecorder) Metric() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Metric", reflect.TypeOf((*MockCrossFunction)(nil).Metric))
+}
+
+// NormalizeDuration mocks base method.
+func (m *MockCrossFunction) NormalizeDuration(d time.Duration) time.Duration {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "NormalizeDuration", d)
+	ret0, _ := ret[0].(time.Duration)
+	return ret0
+}
+
+// NormalizeDuration indicates an expected call of NormalizeDuration.
+func (mr *MockCrossFunctionMockRecorder) NormalizeDuration(d any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NormalizeDuration", reflect.TypeOf((*MockCrossFunction)(nil).NormalizeDuration), d)
 }
 
 // Now mocks base method.

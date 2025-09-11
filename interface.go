@@ -13,6 +13,7 @@ import (
 type TimeService interface {
 	Now() time.Time
 	Sleep(d time.Duration)
+	NormalizeDuration(d time.Duration) time.Duration
 }
 
 // A holder to keep all cross function objects e.g. logger etc

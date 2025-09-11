@@ -13,3 +13,7 @@ func (t *DefaultTimeService) Now() time.Time {
 func (t *DefaultTimeService) Sleep(d time.Duration) {
 	time.Sleep(d)
 }
+
+func (t *DefaultTimeService) NormalizeDuration(d time.Duration) time.Duration {
+	return d
+}
