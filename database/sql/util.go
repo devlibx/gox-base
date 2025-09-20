@@ -21,8 +21,9 @@ import (
 //   - sql.NullString with Valid=true and String=s
 //
 // Example:
-//   nullStr := StringToSqlNullString("hello")     // {String: "hello", Valid: true}
-//   nullStr := StringToSqlNullString("")          // {String: "", Valid: true}
+//
+//	nullStr := StringToSqlNullString("hello")     // {String: "hello", Valid: true}
+//	nullStr := StringToSqlNullString("")          // {String: "", Valid: true}
 func StringToSqlNullString(s string) sql.NullString {
 	if len(s) == 0 {
 		return sql.NullString{
@@ -48,8 +49,9 @@ func StringToSqlNullString(s string) sql.NullString {
 //   - string: The contained string value if valid, empty string if not valid
 //
 // Example:
-//   str := SqlNullStringToString(sql.NullString{String: "hello", Valid: true})   // "hello"
-//   str := SqlNullStringToString(sql.NullString{String: "", Valid: false})      // ""
+//
+//	str := SqlNullStringToString(sql.NullString{String: "hello", Valid: true})   // "hello"
+//	str := SqlNullStringToString(sql.NullString{String: "", Valid: false})      // ""
 func SqlNullStringToString(s sql.NullString) string {
 	if s.Valid {
 		return s.String
@@ -75,16 +77,17 @@ func SqlNullStringToString(s sql.NullString) string {
 //   - error: Any encryption error, wrapped with context
 //
 // Example:
-//   encryptor := myEncryptionService{}
-//   nullStr, err := StringToEncryptedSqlNullString("sensitive data", encryptor)
-//   if err != nil {
-//       log.Fatal(err)
-//   }
-//   // nullStr.String contains the base64-encoded encrypted data
+//
+//	encryptor := myEncryptionService{}
+//	nullStr, err := StringToEncryptedSqlNullString("sensitive data", encryptor)
+//	if err != nil {
+//	    log.Fatal(err)
+//	}
+//	// nullStr.String contains the base64-encoded encrypted data
 func StringToEncryptedSqlNullString[
-T interface {
-	EncryptAndOutputBase64Ciphertext(data string) (string, error)
-}](
+	T interface {
+		EncryptAndOutputBase64Ciphertext(data string) (string, error)
+	}](
 	s string,
 	encryptor T,
 ) (sql.NullString, error) {
@@ -127,16 +130,17 @@ T interface {
 //   - error: Any decryption error, wrapped with context
 //
 // Example:
-//   decrypter := myDecryptionService{}
-//   originalStr, err := EncryptedSqlNullStringToString(encryptedNullStr, decrypter)
-//   if err != nil {
-//       log.Fatal(err)
-//   }
-//   // originalStr contains the decrypted data
+//
+//	decrypter := myDecryptionService{}
+//	originalStr, err := EncryptedSqlNullStringToString(encryptedNullStr, decrypter)
+//	if err != nil {
+//	    log.Fatal(err)
+//	}
+//	// originalStr contains the decrypted data
 func EncryptedSqlNullStringToString[
-T interface {
-	DecryptFromBase64Ciphertext(data string) (string, error)
-}](
+	T interface {
+		DecryptFromBase64Ciphertext(data string) (string, error)
+	}](
 	s sql.NullString,
 	decrypter T,
 ) (string, error) {
@@ -167,15 +171,16 @@ T interface {
 //   - error: Any JSON deserialization error
 //
 // Example:
-//   type User struct {
-//       Name string `json:"name"`
-//       Age  int    `json:"age"`
-//   }
-//   var user User
-//   user, err := SqlNullStringToStruct[User](jsonNullStr)
-//   if err != nil {
-//       log.Fatal(err)
-//   }
+//
+//	type User struct {
+//	    Name string `json:"name"`
+//	    Age  int    `json:"age"`
+//	}
+//	var user User
+//	user, err := SqlNullStringToStruct[User](jsonNullStr)
+//	if err != nil {
+//	    log.Fatal(err)
+//	}
 func SqlNullStringToStruct[T any](value sql.NullString) (T, error) {
 	var retValue T
 	if value.Valid {
@@ -201,20 +206,148 @@ func SqlNullStringToStruct[T any](value sql.NullString) (T, error) {
 //   - error: Any JSON serialization error, wrapped with context
 //
 // Example:
-//   type User struct {
-//       Name string `json:"name"`
-//       Age  int    `json:"age"`
-//   }
-//   user := User{Name: "John", Age: 30}
-//   nullStr, err := StructToSqlNullString(user)
-//   if err != nil {
-//       log.Fatal(err)
-//   }
-//   // nullStr.String contains: {"name":"John","age":30}
+//
+//	type User struct {
+//	    Name string `json:"name"`
+//	    Age  int    `json:"age"`
+//	}
+//	user := User{Name: "John", Age: 30}
+//	nullStr, err := StructToSqlNullString(user)
+//	if err != nil {
+//	    log.Fatal(err)
+//	}
+//	// nullStr.String contains: {"name":"John","age":30}
 func StructToSqlNullString[T any](value any) (sql.NullString, error) {
 	val, err := goxJsonUtils.ObjectToString(value)
 	if err != nil {
 		return sql.NullString{}, errors2.Wrap(err, "unable to serialize data to JSON")
 	}
 	return sql.NullString{Valid: true, String: val}, nil
+}
+
+// StructToEncryptedSqlNullString serializes a Go struct to JSON, encrypts it, and stores it in a sql.NullString.
+// This generic function combines JSON serialization with encryption for secure storage of complex data structures.
+// The struct is first serialized to JSON, then the JSON string is encrypted using the provided encryptor,
+// and finally stored in a sql.NullString with Valid=true.
+//
+// Type Parameters:
+//   - T: Any type that implements EncryptAndOutputBase64Ciphertext(data string) (string, error)
+//
+// Parameters:
+//   - value: The Go struct/value to serialize and encrypt
+//   - encryptor: The encryption service implementing the required interface
+//
+// Returns:
+//   - sql.NullString: Contains the encrypted JSON string with Valid=true
+//   - error: Any JSON serialization or encryption error, wrapped with context
+//
+// Example:
+//
+//	type UserProfile struct {
+//	    Name   string `json:"name"`
+//	    Email  string `json:"email"`
+//	    Secret string `json:"secret"`
+//	}
+//
+//	profile := UserProfile{
+//	    Name:   "John Doe",
+//	    Email:  "john@example.com",
+//	    Secret: "sensitive-data",
+//	}
+//
+//	encryptor := &MyEncryptor{}
+//	nullStr, err := StructToEncryptedSqlNullString(profile, encryptor)
+//	if err != nil {
+//	    log.Fatal(err)
+//	}
+//	// nullStr.String contains encrypted JSON: base64-encoded ciphertext
+//	// Store nullStr in database for secure persistence
+func StructToEncryptedSqlNullString[
+	T interface {
+		EncryptAndOutputBase64Ciphertext(data string) (string, error)
+	}](
+	value any,
+	encryptor T,
+) (sql.NullString, error) {
+	// First, serialize the struct to JSON
+	jsonStr, err := goxJsonUtils.ObjectToString(value)
+	if err != nil {
+		return sql.NullString{}, errors2.Wrap(err, "unable to serialize struct to JSON before encryption")
+	}
+
+	// Then encrypt the JSON string
+	encryptedData, err := encryptor.EncryptAndOutputBase64Ciphertext(jsonStr)
+	if err != nil {
+		return sql.NullString{}, errors2.Wrap(err, "unable to encrypt JSON data while converting struct to sql.NullString")
+	}
+
+	return sql.NullString{Valid: true, String: encryptedData}, nil
+}
+
+// EncryptedSqlNullStringToStruct decrypts a sql.NullString containing encrypted JSON data and deserializes it to a Go struct.
+// This generic function combines decryption with JSON deserialization for secure retrieval of complex data structures.
+// If the sql.NullString is valid, it decrypts the encrypted JSON string, then deserializes it to the target struct type.
+// If the sql.NullString is not valid (represents NULL), it returns the zero value of type T without error.
+//
+// Type Parameters:
+//   - T: The target Go type to deserialize to (must be JSON deserializable)
+//   - U: Any type that implements DecryptFromBase64Ciphertext(data string) (string, error)
+//
+// Parameters:
+//   - value: The sql.NullString containing encrypted JSON data
+//   - decryptor: The decryption service implementing the required interface
+//
+// Returns:
+//   - T: The deserialized struct of type T, or zero value if sql.NullString is not valid
+//   - error: Any decryption or JSON deserialization error, wrapped with context
+//
+// Example:
+//
+//	type UserProfile struct {
+//	    Name   string `json:"name"`
+//	    Email  string `json:"email"`
+//	    Secret string `json:"secret"`
+//	}
+//
+//	// Retrieve encrypted data from database
+//	var encryptedNullStr sql.NullString
+//	err := db.QueryRow("SELECT encrypted_profile FROM users WHERE id = ?", userID).Scan(&encryptedNullStr)
+//	if err != nil {
+//	    log.Fatal(err)
+//	}
+//
+//	decryptor := &MyDecryptor{}
+//	profile, err := EncryptedSqlNullStringToStruct[UserProfile](encryptedNullStr, decryptor)
+//	if err != nil {
+//	    log.Fatal(err)
+//	}
+//	// profile now contains the decrypted and deserialized UserProfile struct
+func EncryptedSqlNullStringToStruct[
+	T any,
+	U interface {
+		DecryptFromBase64Ciphertext(data string) (string, error)
+	}](
+	value sql.NullString,
+	decryptor U,
+) (T, error) {
+	var retValue T
+
+	if !value.Valid {
+		// Return zero value if sql.NullString represents NULL
+		return retValue, nil
+	}
+
+	// First, decrypt the encrypted JSON string
+	jsonStr, err := decryptor.DecryptFromBase64Ciphertext(value.String)
+	if err != nil {
+		return retValue, errors2.Wrap(err, "unable to decrypt data from sql.NullString before JSON deserialization")
+	}
+
+	// Then deserialize the JSON to the target struct
+	result, err := goxJsonUtils.StringToObject[T](jsonStr)
+	if err != nil {
+		return retValue, errors2.Wrap(err, "unable to deserialize decrypted JSON to struct")
+	}
+
+	return result, nil
 }

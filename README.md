@@ -242,6 +242,90 @@ if err != nil {
 // originalData contains "sensitive data"
 ```
 
+#### Encrypted Struct Serialization
+
+For maximum security, combine struct serialization with encryption for storing sensitive complex data:
+
+```go
+// Define your sensitive data structures
+type UserProfile struct {
+    Name         string   `json:"name"`
+    Email        string   `json:"email"`
+    PersonalData string   `json:"personal_data"`
+    Preferences  []string `json:"preferences"`
+}
+
+type FinancialData struct {
+    AccountNumber string  `json:"account_number"`
+    Balance       float64 `json:"balance"`
+    Transactions  []Transaction `json:"transactions"`
+}
+
+// Setup encryption service (using the built-in AES encryption)
+key, err := encryption.GenerateAESKey(32)
+if err != nil {
+    log.Fatal(err)
+}
+
+encConfig := &encryption.EncryptDecryptConfigs{
+    Group: map[string]*encryption.EncryptDecryptConfig{
+        "user_data": {
+            Algo: "aes_32",
+            AesConfig: &encryption.AesConfig{
+                Base64CodedKey: base64.StdEncoding.EncodeToString(key),
+            },
+        },
+    },
+}
+
+factory, err := encryption.NewServiceFactory(gox.NewNoOpCrossFunction(), encConfig)
+if err != nil {
+    log.Fatal(err)
+}
+
+encryptorDecryptor, err := factory.GetEncryptorDecryptService("user_data")
+if err != nil {
+    log.Fatal(err)
+}
+
+// Encrypt and store sensitive struct data
+profile := UserProfile{
+    Name:         "John Doe",
+    Email:        "john@example.com",
+    PersonalData: "SSN: 123-45-6789",
+    Preferences:  []string{"privacy", "security"},
+}
+
+encryptedProfileData, err := goxSql.StructToEncryptedSqlNullString(profile, encryptorDecryptor)
+if err != nil {
+    log.Fatal(err)
+}
+// encryptedProfileData.String contains fully encrypted JSON - not readable
+
+// Store in database
+query := `INSERT INTO users (id, encrypted_profile) VALUES (?, ?)`
+_, err = db.ExecContext(ctx, query, userID, encryptedProfileData)
+if err != nil {
+    log.Fatal(err)
+}
+
+// Retrieve and decrypt struct data
+var encryptedData sql.NullString
+query = `SELECT encrypted_profile FROM users WHERE id = ?`
+err = db.QueryRowContext(ctx, query, userID).Scan(&encryptedData)
+if err != nil {
+    log.Fatal(err)
+}
+
+// Decrypt back to original struct
+var retrievedProfile UserProfile
+retrievedProfile, err = goxSql.EncryptedSqlNullStringToStruct[UserProfile](encryptedData, encryptorDecryptor)
+if err != nil {
+    log.Fatal(err)
+}
+// retrievedProfile now contains the original decrypted UserProfile data
+```
+
 #### JSON Serialization for Complex Types
 
 Store and retrieve complex Go structs as JSON in database fields:
