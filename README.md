@@ -12,6 +12,12 @@ A comprehensive Go utility library providing essential building blocks for enter
   - Support for parameterized YAML configurations
   - Environment variable substitution in config files
 
+- **SQL Database Utilities**
+  - Type-safe conversions between Go types and `sql.NullString`
+  - Built-in encryption/decryption support for sensitive data
+  - JSON serialization for complex structs in database fields
+  - Comprehensive error handling with contextual messages
+
 - **Rate Limiting**
   - Redis-based distributed rate limiting
   - Support for multiple rate limit types (per second/minute/hour/day)
@@ -176,6 +182,195 @@ For cases where you want to handle errors gracefully:
 // Convert without error handling (returns zero value on error)
 result := goxJsonUtils.StringToObjectSuppressError[MyStruct](jsonStr)
 mapObj := goxJsonUtils.StringToStringObjectMapSuppressError(jsonStr)
+```
+
+### SQL Database Utilities
+
+The library provides comprehensive utilities for working with SQL database operations, particularly for converting between Go types and `sql.NullString` types, with support for encryption/decryption and JSON serialization.
+
+#### Basic String Conversions
+
+```go
+import goxSql "github.com/devlibx/gox-base/v2/database/sql"
+
+// Convert string to sql.NullString (always Valid=true)
+nullStr := goxSql.StringToSqlNullString("hello world")
+// Result: sql.NullString{String: "hello world", Valid: true}
+
+// Convert sql.NullString to string
+str := goxSql.SqlNullStringToString(nullStr)
+// Result: "hello world"
+
+// Handle invalid NullString (represents NULL in database)
+invalidNull := sql.NullString{String: "some value", Valid: false}
+str := goxSql.SqlNullStringToString(invalidNull)
+// Result: "" (empty string)
+```
+
+#### Encrypted Data Storage
+
+For secure data storage, use the encryption-enabled functions:
+
+```go
+// Define your encryption service (must implement the interface)
+type MyEncryptor struct{}
+func (e *MyEncryptor) EncryptAndOutputBase64Ciphertext(data string) (string, error) {
+    // Your encryption logic here
+    return encryptedData, nil
+}
+
+type MyDecryptor struct{}
+func (d *MyDecryptor) DecryptFromBase64Ciphertext(data string) (string, error) {
+    // Your decryption logic here
+    return decryptedData, nil
+}
+
+// Encrypt and store sensitive data
+encryptor := &MyEncryptor{}
+encryptedNull, err := goxSql.StringToEncryptedSqlNullString("sensitive data", encryptor)
+if err != nil {
+    log.Fatal(err)
+}
+// Store encryptedNull.String in database
+
+// Decrypt data when reading from database
+decryptor := &MyDecryptor{}
+originalData, err := goxSql.EncryptedSqlNullStringToString(encryptedNull, decryptor)
+if err != nil {
+    log.Fatal(err)
+}
+// originalData contains "sensitive data"
+```
+
+#### JSON Serialization for Complex Types
+
+Store and retrieve complex Go structs as JSON in database fields:
+
+```go
+// Define your data structures
+type User struct {
+    Name string   `json:"name"`
+    Age  int      `json:"age"`
+    Tags []string `json:"tags,omitempty"`
+}
+
+type UserProfile struct {
+    User     User    `json:"user"`
+    Active   bool    `json:"active"`
+    Score    float64 `json:"score"`
+}
+
+// Serialize struct to sql.NullString
+user := User{
+    Name: "John Doe",
+    Age:  30,
+    Tags: []string{"admin", "developer"},
+}
+
+nullStr, err := goxSql.StructToSqlNullString[User](user)
+if err != nil {
+    log.Fatal(err)
+}
+// nullStr.String contains: {"name":"John Doe","age":30,"tags":["admin","developer"]}
+
+// Deserialize sql.NullString back to struct
+var retrievedUser User
+retrievedUser, err = goxSql.SqlNullStringToStruct[User](nullStr)
+if err != nil {
+    log.Fatal(err)
+}
+// retrievedUser now contains the original user data
+```
+
+#### Complete Database Integration Example
+
+```go
+import (
+    "database/sql"
+    _ "github.com/go-sql-driver/mysql"
+    goxSql "github.com/devlibx/gox-base/v2/database/sql"
+)
+
+type UserRepository struct {
+    db *sql.DB
+}
+
+// Store user with encrypted email and JSON metadata
+func (r *UserRepository) CreateUser(ctx context.Context, user User, email string, metadata UserProfile) error {
+    // Convert struct to JSON for storage
+    metadataJSON, err := goxSql.StructToSqlNullString[UserProfile](metadata)
+    if err != nil {
+        return err
+    }
+    
+    // Encrypt sensitive email data
+    encryptor := &MyEncryptor{}
+    encryptedEmail, err := goxSql.StringToEncryptedSqlNullString(email, encryptor)
+    if err != nil {
+        return err
+    }
+    
+    // Convert regular fields
+    userName := goxSql.StringToSqlNullString(user.Name)
+    
+    query := `INSERT INTO users (name, encrypted_email, metadata_json) VALUES (?, ?, ?)`
+    _, err = r.db.ExecContext(ctx, query, userName, encryptedEmail, metadataJSON)
+    return err
+}
+
+// Retrieve user with decryption and deserialization
+func (r *UserRepository) GetUser(ctx context.Context, userID int) (*User, string, *UserProfile, error) {
+    var userName, encryptedEmail, metadataJSON sql.NullString
+    
+    query := `SELECT name, encrypted_email, metadata_json FROM users WHERE id = ?`
+    err := r.db.QueryRowContext(ctx, query, userID).Scan(&userName, &encryptedEmail, &metadataJSON)
+    if err != nil {
+        return nil, "", nil, err
+    }
+    
+    // Convert basic field
+    name := goxSql.SqlNullStringToString(userName)
+    
+    // Decrypt email
+    decryptor := &MyDecryptor{}
+    email, err := goxSql.EncryptedSqlNullStringToString(encryptedEmail, decryptor)
+    if err != nil {
+        return nil, "", nil, err
+    }
+    
+    // Deserialize JSON metadata
+    var metadata UserProfile
+    metadata, err = goxSql.SqlNullStringToStruct[UserProfile](metadataJSON)
+    if err != nil {
+        return nil, "", nil, err
+    }
+    
+    user := &User{Name: name}
+    return user, email, &metadata, nil
+}
+```
+
+#### Error Handling
+
+All utility functions provide comprehensive error handling:
+
+```go
+// Encryption errors are wrapped with context
+_, err := goxSql.StringToEncryptedSqlNullString("data", failingEncryptor)
+if err != nil {
+    // Error contains: "unable to encrypt data while converting sql to sql.NullString: <original error>"
+}
+
+// JSON serialization errors are wrapped
+_, err = goxSql.StructToSqlNullString[MyStruct](invalidStruct)
+if err != nil {
+    // Error contains: "unable to serialize data to JSON: <original error>"
+}
+
+// Invalid JSON causes deserialization errors
+invalidJSON := sql.NullString{String: "{invalid json}", Valid: true}
+_, err = goxSql.SqlNullStringToStruct[MyStruct](invalidJSON)
+// err will contain JSON parsing error details
 ```
 
 ### Working with Configuration
