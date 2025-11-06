@@ -51,6 +51,8 @@ func NewCrossFunction(args ...interface{}) CrossFunction {
 			obj.timeTracker = o
 		case metrics.Publisher:
 			obj.publisher = o
+		case TimeService:
+			obj.TimeService = o
 		}
 	}
 
