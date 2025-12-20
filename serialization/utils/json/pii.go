@@ -93,3 +93,11 @@ func applyMasker(masker func(string) string, value string) (maskedValue string) 
 	}()
 	return masker(value)
 }
+
+// ClearPiiMaskersForTesting clears the entire PII masking registry.
+// This function should ONLY be used for testing purposes to ensure test isolation.
+func ClearPiiMaskersForTesting() {
+	registryLock.Lock()
+	defer registryLock.Unlock()
+	piiMaskingRegistry = make(map[string]func(string) string)
+}
