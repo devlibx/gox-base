@@ -25,13 +25,11 @@ func TestPrettyStringLoggingSuppressError(t *testing.T) {
 			"email": "john.doe@example.com",
 			"age":   30,
 		}
-
 		expected := `{
 	"age": 30,
 	"email": "masked-email",
 	"name": "John Doe"
 }`
-
 		result := goxJsonUtils.PrettyStringLoggingSuppressError(input)
 		assert.JSONEq(t, expected, result)
 	})
@@ -49,7 +47,6 @@ func TestPrettyStringLoggingSuppressError(t *testing.T) {
 			},
 			"active": true,
 		}
-
 		expected := `{
 	"active": true,
 	"user": {
@@ -57,7 +54,6 @@ func TestPrettyStringLoggingSuppressError(t *testing.T) {
 		"name": "Jane Doe"
 	}
 }`
-
 		result := goxJsonUtils.PrettyStringLoggingSuppressError(input)
 		assert.JSONEq(t, expected, result)
 	})
@@ -101,7 +97,6 @@ func TestPrettyStringLoggingSuppressError(t *testing.T) {
 		}
 	]
 }`, hashedSsn)
-
 		result := goxJsonUtils.PrettyStringLoggingSuppressError(input)
 		assert.JSONEq(t, expected, result)
 	})
@@ -116,29 +111,24 @@ func TestPrettyStringLoggingSuppressError(t *testing.T) {
 			"field":           "some value",
 			"panicking_field": "this will panic",
 		}
-
 		expected := `{
 	"field": "some value",
 	"panicking_field": "***************"
 }`
-
 		result := goxJsonUtils.PrettyStringLoggingSuppressError(input)
 		assert.JSONEq(t, expected, result)
 	})
 
 	t.Run("no masking needed", func(t *testing.T) {
 		goxJsonUtils.ClearPiiMaskersForTesting() // Ensure no maskers are present
-
 		input := map[string]interface{}{
 			"name": "No PII here",
 			"info": "nothing to see",
 		}
-
 		expected := `{
 	"info": "nothing to see",
 	"name": "No PII here"
 }`
-
 		result := goxJsonUtils.PrettyStringLoggingSuppressError(input)
 		assert.JSONEq(t, expected, result)
 	})
@@ -153,12 +143,10 @@ func TestPrettyStringLoggingSuppressError(t *testing.T) {
 			"user_id": 12345,
 			"data":    "some data",
 		}
-
 		expected := `{
 	"data": "some data",
 	"user_id": "masked-id"
 }`
-
 		result := goxJsonUtils.PrettyStringLoggingSuppressError(input)
 		assert.JSONEq(t, expected, result)
 	})
@@ -171,7 +159,6 @@ func TestPrettyStringLoggingSuppressError(t *testing.T) {
 			}
 			return "hashed-" + parts[0] + "@" + parts[1]
 		}
-
 		goxJsonUtils.RegisterPiiMasker("custom_email", hashEmail)
 		defer goxJsonUtils.ClearPiiMaskersForTesting()
 
@@ -179,12 +166,10 @@ func TestPrettyStringLoggingSuppressError(t *testing.T) {
 			"user":         "test_user",
 			"custom_email": "test@example.com",
 		}
-
 		expected := `{
 	"custom_email": "hashed-test@example.com",
 	"user": "test_user"
 }`
-
 		result := goxJsonUtils.PrettyStringLoggingSuppressError(input)
 		assert.JSONEq(t, expected, result)
 	})
@@ -220,11 +205,9 @@ func TestPrettyStringLoggingSuppressError(t *testing.T) {
 		// Test with pointer to struct
 		result = goxJsonUtils.PrettyStringLoggingSuppressError(&input)
 		assert.JSONEq(t, expected, result)
-
-		fmt.Println(result)
 	})
 
-	t.Run("masking with struct object pointer", func(t *testing.T) {
+	t.Run("masking with struct object", func(t *testing.T) {
 		type requestObj struct {
 			Type   string `json:"type"`
 			UserId string `json:"user_id"`
@@ -255,7 +238,5 @@ func TestPrettyStringLoggingSuppressError(t *testing.T) {
 		// Test with pointer to struct
 		result = goxJsonUtils.PrettyStringLoggingSuppressError(&input)
 		assert.JSONEq(t, expected, result)
-
-		fmt.Println(result)
 	})
 }

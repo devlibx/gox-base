@@ -184,6 +184,88 @@ result := goxJsonUtils.StringToObjectSuppressError[MyStruct](jsonStr)
 mapObj := goxJsonUtils.StringToStringObjectMapSuppressError(jsonStr)
 ```
 
+#### Masking Sensitive Data in Logs
+
+When logging complex objects, it's crucial to avoid exposing Personally Identifiable Information (PII) like email addresses or user IDs. The `goxJsonUtils` package provides a powerful and flexible way to automatically mask sensitive data when printing objects as JSON strings for logging.
+
+This is achieved using two main functions: `PrettyStringLoggingSuppressError` and `RegisterPiiMasker`.
+
+- `PrettyStringLoggingSuppressError` works just like `PrettyString`, but it inspects the object's keys and applies any registered "masking" functions to the corresponding values before printing.
+- `RegisterPiiMasker` is used to register a masking function for a specific key (e.g., `"email"` or `"ssn"`). You can define simple string replacements or complex hashing functions.
+
+> **Important Note:** The masking functions you register with `RegisterPiiMasker` are **only** applied when you call `PrettyStringLoggingSuppressError`. This feature is designed specifically for safe logging and does not alter the original object or affect any other serialization functions. It will not mask data stored in databases or sent in API responses.
+
+##### Example: How to Mask PII
+
+Here is a complete example of how to define a struct, register maskers, and print a masked JSON string.
+
+```go
+import (
+	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
+	goxJsonUtils "github.com/devlibx/gox-base/v2/serialization/utils/json"
+)
+
+func main() {
+    // Define a struct with sensitive data
+    type UserActivity struct {
+        EventID  string `json:"event_id"`
+        UserID   string `json:"user_id"`
+        Email    string `json:"email"`
+        SSN      string `json:"ssn"`
+    }
+    
+    // 1. Register masking functions for sensitive keys.
+    // This can be done once during your application's startup.
+    
+    // For "email", we'll replace the value with a fixed string.
+    goxJsonUtils.RegisterPiiMasker("email", func(email string) string {
+        return "***@***.***"
+    })
+    
+    // For "user_id", we might want to show the last few characters.
+    goxJsonUtils.RegisterPiiMasker("user_id", func(userId string) string {
+        if len(userId) > 4 {
+            return "..." + userId[len(userId)-4:]
+        }
+        return "..."
+    })
+
+    // For "ssn", we'll replace it with a SHA256 hash.
+    goxJsonUtils.RegisterPiiMasker("ssn", func(ssn string) string {
+        hasher := sha256.New()
+        hasher.Write([]byte(ssn))
+        return hex.EncodeToString(hasher.Sum(nil))
+    })
+    
+    // 2. Create an instance of your struct
+    activity := UserActivity{
+        EventID:  "evt_12345",
+        UserID:   "user_abcdef1234",
+        Email:    "test.user@example.com",
+        SSN:      "123-45-6789",
+    }
+    
+    // 3. Use PrettyStringLoggingSuppressError to get a masked JSON string.
+    // This is safe to print in logs.
+    maskedJsonString := goxJsonUtils.PrettyStringLoggingSuppressError(activity)
+    
+    fmt.Println(maskedJsonString)
+    
+    // Output will be:
+    // {
+    //     "email": "***@***.***",
+    //     "event_id": "evt_12345",
+    //     "ssn": "984815832a035f99bf16606376839a888b10557876c12521c727192901e51b31",
+    //     "user_id": "...1234"
+    // }
+    
+    // The original `activity` object remains unchanged
+    fmt.Printf("\nOriginal Email: %s\n", activity.Email) // Original Email: test.user@example.com
+}
+```
+
 ### SQL Database Utilities
 
 The library provides comprehensive utilities for working with SQL database operations, particularly for converting between Go types and `sql.NullString` types, with support for encryption/decryption and JSON serialization.
