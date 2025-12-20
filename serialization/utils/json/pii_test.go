@@ -162,4 +162,36 @@ func TestPrettyStringLoggingSuppressError(t *testing.T) {
 		result := goxJsonUtils.PrettyStringLoggingSuppressError(input)
 		assert.JSONEq(t, expected, result)
 	})
+
+	t.Run("masking with struct object", func(t *testing.T) {
+		type requestObj struct {
+			Type   string `json:"type"`
+			UserId string `json:"user_id"`
+			MailId string `json:"mail_id"`
+		}
+
+		goxJsonUtils.RegisterPiiMasker("mail_id", func(mailId string) string {
+			return "masked-mail-id"
+		})
+
+		input := requestObj{
+			Type:   "test_request",
+			UserId: "user-123",
+			MailId: "test.user@example.com",
+		}
+		
+		expected := `{
+	"type": "test_request",
+	"user_id": "masked-id",
+	"mail_id": "masked-mail-id"
+}`
+
+		// Test with struct value
+		result := goxJsonUtils.PrettyStringLoggingSuppressError(input)
+		assert.JSONEq(t, expected, result)
+
+		// Test with pointer to struct
+		result = goxJsonUtils.PrettyStringLoggingSuppressError(&input)
+		assert.JSONEq(t, expected, result)
+	})
 }
