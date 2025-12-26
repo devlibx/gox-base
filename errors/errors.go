@@ -2,6 +2,7 @@ package errors
 
 import (
 	"errors"
+	stderrors "errors"
 	"fmt"
 	errors1 "github.com/pkg/errors"
 )
@@ -61,6 +62,10 @@ func NewError(code string, message string, err error, object interface{}) error 
 
 func As(err error, target interface{}) bool {
 	return errors.As(err, target)
+}
+
+func Is(err, target error) bool {
+	return stderrors.Is(err, target)
 }
 
 func AsTyped[T error](err error) (T, bool) {
