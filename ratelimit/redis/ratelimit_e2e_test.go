@@ -5,8 +5,8 @@ import (
 	"crypto/tls"
 	"github.com/Shopify/toxiproxy/client"
 	"github.com/devlibx/gox-base/ratelimit"
-	goRedis "github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
+	goRedis "github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"os"
@@ -49,7 +49,6 @@ func (rt *rateLimitE2ETestSuite) getRedisClient(url string) *goRedis.ClusterClie
 		Addrs:        strings.Split(url, ","),
 		PoolSize:     10,
 		MinIdleConns: 10,
-		IdleTimeout:  10,
 		Password:     os.Getenv("REDIS_PASS"),
 		TLSConfig: &tls.Config{
 			InsecureSkipVerify: true,
@@ -89,7 +88,6 @@ func (rt *rateLimitE2ETestSuite) TestRateLimitE2E_WithLatency_1sec_latency() {
 		Addrs:        strings.Split(rt.url, ","),
 		PoolSize:     10,
 		MinIdleConns: 10,
-		IdleTimeout:  10,
 		Password:     os.Getenv("REDIS_PASS"),
 		TLSConfig: &tls.Config{
 			InsecureSkipVerify: true,
@@ -126,7 +124,6 @@ func (rt *rateLimitE2ETestSuite) TestRateLimitE2E_RedisIsDown() {
 		Addrs:        strings.Split(rt.url, ","),
 		PoolSize:     10,
 		MinIdleConns: 10,
-		IdleTimeout:  10,
 		Password:     os.Getenv("REDIS_PASS"),
 		TLSConfig: &tls.Config{
 			InsecureSkipVerify: true,

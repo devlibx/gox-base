@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/devlibx/gox-base/ratelimit"
-	goRedis "github.com/go-redis/redis/v8"
-	goRedisRate "github.com/go-redis/redis_rate/v9"
+	goRedisRate "github.com/go-redis/redis_rate/v10"
+	goRedis "github.com/redis/go-redis/v9"
 	"net"
 	"time"
 )
