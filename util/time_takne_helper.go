@@ -2,6 +2,7 @@ package util
 
 import (
 	"fmt"
+	"sync"
 	"time"
 )
 
@@ -25,9 +26,13 @@ type TimeTrack struct {
 type captureImpl struct {
 	times  []TimeTrack
 	enable bool
+	name   string
+	mu     *sync.Mutex
 }
 
 func (t *captureImpl) Record(msg string) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
 	if t.enable {
 		t.times = append(t.times, TimeTrack{
 			Message: msg,
@@ -49,6 +54,8 @@ func (t *captureImpl) DumpNanos() string {
 }
 
 func (t *captureImpl) dump(unit string) string {
+	t.mu.Lock()
+	defer t.mu.Unlock()
 	if !t.enable {
 		return ""
 	}
@@ -84,15 +91,16 @@ func (t *captureImpl) dump(unit string) string {
 
 type timeTrackerImpl struct {
 	enable bool
+	name   string
 }
 
 func (t timeTrackerImpl) Capture() Capture {
 	if t.enable {
-		s := &captureImpl{enable: true, times: make([]TimeTrack, 0)}
+		s := &captureImpl{enable: true, times: make([]TimeTrack, 0), name: t.name, mu: &sync.Mutex{}}
 		s.Record("start")
 		return s
 	} else {
-		s := &captureImpl{enable: false}
+		s := &captureImpl{enable: false, name: t.name, mu: &sync.Mutex{}}
 		s.Record("start")
 		return s
 	}
@@ -100,6 +108,11 @@ func (t timeTrackerImpl) Capture() Capture {
 
 func NewTimeTracker(enable bool) TimeTracker {
 	t := &timeTrackerImpl{enable: enable}
+	return t
+}
+
+func NewTimeTrackerWithName(enable bool, name string) TimeTracker {
+	t := &timeTrackerImpl{enable: enable, name: name}
 	return t
 }
 
