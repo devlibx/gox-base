@@ -20,7 +20,8 @@ func BenchmarkEngine(b *testing.B) {
 			ProcessingFunction: NewNoOpProcessingFunction(),
 		})
 
-		ctx, _ := context.WithCancel(context.TODO())
+		ctx, cancel := context.WithCancel(context.TODO())
+		defer cancel()
 		rawEventChannel := make(chan RawEvent, 1000)
 		processedEventChannel := engine.StartProcessing(ctx, rawEventChannel)
 
@@ -48,7 +49,8 @@ func TestEngine(t *testing.T) {
 		ProcessingFunction: NewNoOpProcessingFunction(),
 	})
 
-	ctx, _ := context.WithCancel(context.TODO())
+	ctx, cancel := context.WithCancel(context.TODO())
+	defer cancel()
 	rawEventChannel := make(chan RawEvent, 100)
 	processedEventChannel := engine.StartProcessing(ctx, rawEventChannel)
 
