@@ -17,6 +17,8 @@ import (
 	"gopkg.in/tylerb/graceful.v1"
 )
 
+var GoxBaseServerDisableTimeLoggingMiddleWare bool = false
+
 type serverImpl struct {
 	server           *http.Server
 	gracefulServer   *graceful.Server
@@ -87,12 +89,14 @@ func (s *serverImpl) setupTimeLogging() negroni.HandlerFunc {
 		start := time.Now()
 		next(rw, r)
 		end := time.Now()
-		logger.Info("",
-			zap.String("requestUrl", r.RequestURI),
-			zap.String("remoteAddr", r.RemoteAddr),
-			zap.String("source", r.Header.Get("X-FORWARDED-FOR")),
-			zap.Int64("duration", end.Sub(start).Milliseconds()),
-		)
+		if !GoxBaseServerDisableTimeLoggingMiddleWare {
+			logger.Info("",
+				zap.String("requestUrl", r.RequestURI),
+				zap.String("remoteAddr", r.RemoteAddr),
+				zap.String("source", r.Header.Get("X-FORWARDED-FOR")),
+				zap.Int64("duration", end.Sub(start).Milliseconds()),
+			)
+		}
 	}
 }
 
