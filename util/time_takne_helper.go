@@ -54,12 +54,13 @@ func (t *captureImpl) DumpNanos() string {
 }
 
 func (t *captureImpl) dump(unit string) string {
+	t.Record("end")
+
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	if !t.enable {
 		return ""
 	}
-	t.Record("end")
 	result := ""
 	length := len(t.times)
 	for i := 1; i < length; i++ {
