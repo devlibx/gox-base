@@ -1,12 +1,15 @@
 package gox
 
 import (
-	"github.com/devlibx/gox-base/v2/metrics"
-	"github.com/stretchr/testify/assert"
-	"go.uber.org/zap"
+	"context"
 	"math/rand"
 	"testing"
 	"time"
+
+	"github.com/devlibx/gox-base/v2/metrics"
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 )
 
 func TestNewNoOpCrossFunction(t *testing.T) {
@@ -42,4 +45,25 @@ func TestLoggerUsingCrossFunction(t *testing.T) {
 
 	cf.Logger().Info("log info", zap.String("key", "value"))
 	cf.Logger().Debug("log debug", zap.String("key", "value"))
+}
+
+func TestNewMe(t *testing.T) {
+	cf := NewCrossFunction()
+	id := uuid.NewString()
+
+	EnableInterceptorInDefaultTimeService = true
+	defer func() {
+		EnableInterceptorInDefaultTimeService = false
+		UnregisterInterceptorDefaultTimeServiceNowFunction(id)
+	}()
+
+	RegisterInterceptorDefaultTimeServiceNowFunction(id, func(ctx context.Context, input any) (bool, time.Time) {
+		if input == "key_to_check" {
+			return true, time.Now().Add(1 * time.Hour)
+		}
+		return false, time.Now()
+	})
+
+	timeToTest := InterceptableCurrentTime(cf, "key_to_check")
+	assert.True(t, timeToTest.After(time.Now().Add(1*time.Minute)))
 }

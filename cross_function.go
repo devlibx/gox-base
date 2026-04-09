@@ -1,6 +1,9 @@
 package gox
 
 import (
+	"context"
+	"time"
+
 	"github.com/devlibx/gox-base/v2/metrics"
 	"github.com/devlibx/gox-base/v2/util"
 	"go.uber.org/zap"
@@ -34,6 +37,15 @@ func (c *crossFunction) Logger() *zap.Logger {
 
 func (c *crossFunction) Config() StringObjectMap {
 	return c.config
+}
+
+func (c *crossFunction) CurrentTime(ctx context.Context, input any) time.Time {
+	if EnableInterceptorInDefaultTimeService {
+		if ts, ok := c.TimeService.(InterceptableTimeService); ok {
+			return ts.CurrentTime(ctx, input)
+		}
+	}
+	return c.Now()
 }
 
 // NewCrossFunction a no-op cross function object which does not have a side effect
@@ -99,4 +111,19 @@ func NewNoOpCrossFunction(args ...interface{}) CrossFunction {
 	obj.timeTracker = util.NewNoOpTimeTracker()
 	obj.publisher = metrics.NewNoOpPublisher()
 	return &obj
+}
+
+// InterceptableCurrentTime this is a helper on top of CF to give current time
+func InterceptableCurrentTime(cf CrossFunction, input any) time.Time {
+	if !EnableInterceptorInDefaultTimeService {
+		return cf.Now()
+	}
+
+	var timeToReturn time.Time
+	if tf, ok := cf.(InterceptableTimeService); ok {
+		timeToReturn = tf.CurrentTime(context.Background(), input)
+	} else {
+		timeToReturn = cf.Now()
+	}
+	return timeToReturn
 }

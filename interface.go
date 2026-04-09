@@ -1,10 +1,11 @@
 package gox
 
 import (
+	"time"
+
 	"github.com/devlibx/gox-base/v2/metrics"
 	"github.com/devlibx/gox-base/v2/util"
 	"go.uber.org/zap"
-	"time"
 )
 
 //go:generate mockgen -source=interface.go -destination=mocks/mock_interface.go -package=mockGox
