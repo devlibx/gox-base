@@ -64,7 +64,7 @@ func (s *serverImpl) Start(handler http.Handler, applicationConfig *config.App) 
 	}
 
 	s.gracefulServer = &graceful.Server{
-		Timeout:           time.Duration(applicationConfig.OutstandingRequestTimeoutMs) * time.Second,
+		Timeout:           time.Duration(applicationConfig.OutstandingRequestTimeoutMs) * time.Millisecond,
 		Server:            s.server,
 		ShutdownInitiated: s.shutdownHookFunc,
 	}
