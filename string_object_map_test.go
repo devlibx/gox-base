@@ -2,9 +2,10 @@ package gox
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/devlibx/gox-base/v2/serialization"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestStringObjectMap_IntOrDefault(t *testing.T) {
@@ -38,7 +39,7 @@ func TestStringObjectMap_IntOrDefault(t *testing.T) {
 		t.Run(tt.TestName, func(t *testing.T) {
 			out := tt.Input.IntOrDefault(tt.Name, tt.DefaultValue)
 			if out != tt.Output {
-				t.Errorf("got %q, want %q", out, tt.Output)
+				t.Errorf("got %d, want %d", out, tt.Output)
 			}
 		})
 	}
@@ -75,7 +76,7 @@ func TestStringObjectMap_Int32OrDefault(t *testing.T) {
 		t.Run(tt.TestName, func(t *testing.T) {
 			out := tt.Input.Int32OrDefault(tt.Name, int32(tt.DefaultValue))
 			if out != int32(tt.Output) {
-				t.Errorf("got %q, want %q", out, tt.Output)
+				t.Errorf("got %d, want %d", out, tt.Output)
 			}
 		})
 	}
@@ -113,7 +114,7 @@ func TestStringObjectMap_Int64OrDefault(t *testing.T) {
 		t.Run(tt.TestName, func(t *testing.T) {
 			out := tt.Input.Int64OrDefault(tt.Name, int64(tt.DefaultValue))
 			if out != int64(tt.Output) {
-				t.Errorf("got %q, want %q", out, tt.Output)
+				t.Errorf("got %d, want %d", out, tt.Output)
 			}
 		})
 	}
